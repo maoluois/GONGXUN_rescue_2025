@@ -75,17 +75,17 @@ void Error_Handler(void);
 #define BIN1_GPIO_Port GPIOE
 #define BIN2_Pin GPIO_PIN_14
 #define BIN2_GPIO_Port GPIOE
-#define AIN1_Pin GPIO_PIN_15
-#define AIN1_GPIO_Port GPIOE
 #define Daplink_TX_Pin GPIO_PIN_14
 #define Daplink_TX_GPIO_Port GPIOB
 #define Daplink_RX_Pin GPIO_PIN_15
 #define Daplink_RX_GPIO_Port GPIOB
+#define AIN1_Pin GPIO_PIN_10
+#define AIN1_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 #define convert_param (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/毫秒)
-#define wheel_distance 0.23156f // 单位：m
-#define wheel_radius 0.0325f // 单位：m
+#define WheelDistance 0.23156f // 单位：m
+#define WheelRadius 0.0325f // 单位：m
 #define wheel_circumference 0.2042f // 单位：m
 #define COUNTERNUM1 ((float)__HAL_TIM_GET_COUNTER(&htim1))
 #define COUNTERNUM2 ((float)__HAL_TIM_GET_COUNTER(&htim2))

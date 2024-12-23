@@ -81,7 +81,7 @@ int buff_index2 = 0;
 
 // Imu JY901s PV
 static volatile char s_cDataUpdate = 0, s_cCmd = 0xff;
-const uint32_t c_uiBaud[10] = {0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600};
+// const uint32_t c_uiBaud[10] = {0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600};
 float fAcc[3], fGyro[3], fAngle[3];
 float pitch = 0, roll = 0, yaw = 0;
 
@@ -98,10 +98,8 @@ float pidOutputYaw = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-
 void SystemClock_Config(void);
 static void MPU_Config(void);
-
 /* USER CODE BEGIN PFP */
 
 // vofa串口调试函数
@@ -156,10 +154,11 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_TIM3_Init();
-  MX_USART1_UART_Init(); // daplink 连接上位机串口 默认115200
-  MX_USART2_UART_Init(115200); // IMU串口 默认115200
+  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
   MX_TIM17_Init();
   MX_TIM2_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   RetargetInit(&huart1);
@@ -182,6 +181,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      Set_pulse1(-300);
+      Set_pulse2(100);
       // 获取角度
       // CmdProcess();
       if(s_cDataUpdate)
@@ -213,6 +214,7 @@ int main(void)
               //printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
               s_cDataUpdate &= ~MAG_UPDATE;
           }
+
       }
     /* USER CODE END WHILE */
 
@@ -433,38 +435,38 @@ float Get_Data(void)
     if (data_Integer_len != 0) // 为两位数
     {
         if (data_Integer_len == 1)
-            Integer = float(DataBuff[data_Start_Num] - 48);
+            Integer = (float)(DataBuff[data_Start_Num] - 48);
         else if (data_Integer_len == 2)
-            Integer = float(DataBuff[data_Start_Num] - 48) * 10 + float(DataBuff[data_Start_Num + 1] - 48);
+            Integer = (float)(DataBuff[data_Start_Num] - 48) * 10 + (float)(DataBuff[data_Start_Num + 1] - 48);
         else if (data_Integer_len == 3)
-            Integer = float(DataBuff[data_Start_Num] - 48) * 100 + float(DataBuff[data_Start_Num + 1] - 48) * 10 +
-            (DataBuff[data_Start_Num + 2] - 48);
+            Integer = (float)(DataBuff[data_Start_Num] - 48) * 100 + (float)(DataBuff[data_Start_Num + 1] - 48) * 10 +
+            (float)(DataBuff[data_Start_Num + 2] - 48);
         else if (data_Integer_len == 4)
-            Integer = float(DataBuff[data_Start_Num] - 48) * 1000 + float(DataBuff[data_Start_Num + 1] - 48) * 100 +
-            float(DataBuff[data_Start_Num + 3] - 48) * 10 + float(DataBuff[data_Start_Num + 4] - 48);
+            Integer = (float)(DataBuff[data_Start_Num] - 48) * 1000 + (float)(DataBuff[data_Start_Num + 1] - 48) * 100 +
+            (float)(DataBuff[data_Start_Num + 3] - 48) * 10 + (float)(DataBuff[data_Start_Num + 4] - 48);
     }
 
     // 计算小数数据
     if (data_Decimal_len != 0) // 为个位数
     {
         if (data_Decimal_len == 1)
-            Decimal = float(DataBuff[data_End_Num] - 48) * 0.1f;
+            Decimal = (float)(DataBuff[data_End_Num] - 48) * 0.1f;
         else if (data_Decimal_len == 2)
-            Decimal = float(DataBuff[data_End_Num - 1] - 48) * 0.1f + float(DataBuff[data_End_Num] - 48) * 0.01f;
+            Decimal = (float)(DataBuff[data_End_Num - 1] - 48) * 0.1f + (float)(DataBuff[data_End_Num] - 48) * 0.01f;
         else if (data_Decimal_len == 3)
-            Decimal = float(DataBuff[data_End_Num - 2] - 48) * 0.1f + float(DataBuff[data_End_Num - 1] - 48) * 0.01f +
-                      float(DataBuff[data_End_Num] - 48) * 0.001f;
+            Decimal = (float)(DataBuff[data_End_Num - 2] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.01f +
+                      (float)(DataBuff[data_End_Num] - 48) * 0.001f;
         else if (data_Decimal_len == 4)
-            Decimal = float(DataBuff[data_End_Num - 3] - 48) * 0.1f + float(DataBuff[data_End_Num - 2] - 48) * 0.01f +
-                      float(DataBuff[data_End_Num - 1] - 48) * 0.001f + float(DataBuff[data_End_Num] - 48) * 0.0001f;
+            Decimal = (float)(DataBuff[data_End_Num - 3] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.01f +
+                      (float)(DataBuff[data_End_Num - 1] - 48) * 0.001f + (float)(DataBuff[data_End_Num] - 48) * 0.0001f;
         else if (data_Decimal_len == 5)
-            Decimal = float(DataBuff[data_End_Num - 4] - 48) * 0.1f + float(DataBuff[data_End_Num - 3] - 48) * 0.01f +
-                      float(DataBuff[data_End_Num - 2] - 48) * 0.001f + float(DataBuff[data_End_Num - 1] - 48) * 0.0001f +
-                      float(DataBuff[data_End_Num] - 48) * 0.00001f;
+            Decimal = (float)(DataBuff[data_End_Num - 4] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 3] - 48) * 0.01f +
+                      (float)(DataBuff[data_End_Num - 2] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.0001f +
+                      (float)(DataBuff[data_End_Num] - 48) * 0.00001f;
         else if (data_Decimal_len == 6)
-            Decimal = float(DataBuff[data_End_Num - 5] - 48) * 0.1f + float(DataBuff[data_End_Num - 4] - 48) * 0.01f +
-                      float(DataBuff[data_End_Num - 3] - 48) * 0.001f + float(DataBuff[data_End_Num - 2] - 48) * 0.0001f +
-                      float(DataBuff[data_End_Num - 1] - 48) * 0.00001f + float(DataBuff[data_End_Num] - 48) * 0.000001f;
+            Decimal = (float)(DataBuff[data_End_Num - 5] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 4] - 48) * 0.01f +
+                      (float)(DataBuff[data_End_Num - 3] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.0001f +
+                      (float)(DataBuff[data_End_Num - 1] - 48) * 0.00001f + (float)(DataBuff[data_End_Num] - 48) * 0.000001f;
     }
     data_return = Integer + Decimal;
     if (minus_Flag == 1)
@@ -591,13 +593,13 @@ void CopeCmdData(unsigned char ucData)
 // 			if(WitSetUartBaud(WIT_BAUD_115200) != WIT_HAL_OK)
 // 				printf("\r\nSet Baud Error\r\n");
 // 			else
-// 				MX_USART2_UART_Init(c_uiBaud[WIT_BAUD_115200]);
+// 				MX_USART2_UART_Init(115200);
 // 			break;
 // 		case 'b':
 // 			if(WitSetUartBaud(WIT_BAUD_9600) != WIT_HAL_OK)
 // 				printf("\r\nSet Baud Error\r\n");
 // 			else
-// 				MX_USART2_UART_Init(c_uiBaud[WIT_BAUD_9600]);
+// 				MX_USART2_UART_Init(9600);
 // 			break;
 // 		case 'R':
 // 			if(WitSetOutputRate(RRATE_10HZ) != WIT_HAL_OK)
@@ -673,7 +675,6 @@ static void AutoScanSensor(void)
 
 	for(i = 1; i < 10; i++)
 	{
-		MX_USART2_UART_Init(c_uiBaud[i]);
 		iRetry = 2;
 		do
 		{
@@ -682,7 +683,7 @@ static void AutoScanSensor(void)
 			HAL_Delay(100);
 			if(s_cDataUpdate != 0)
 			{
-				printf("%d baud find sensor\r\n\r\n", c_uiBaud[i]);
+				printf("*************************************baud find sensor*************************************\r\n\r\n");
 				// ShowHelp();
 				return ;
 			}

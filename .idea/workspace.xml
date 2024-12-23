@@ -23,18 +23,45 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Add JY901s example and transplant to gx.">
+    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Finish PID Part but not Set PID param.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Inc/control.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/control.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/Algorithm.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/Algorithm.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/main.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/main.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Inc/pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/pid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Src/control.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/control.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/stm32h7xx_it.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/stm32h7xx_it.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/tim.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/tim.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/usart.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/usart.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/gpio.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/gpio.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Src/pid.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/pid.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-cf3eb514d4d3ae735f09.json" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-1bd3c00b94c04e0f0f46.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/stm32h7xx_it.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/stm32h7xx_it.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/syscalls.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/syscalls.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/tim.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/tim.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/usart.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/usart.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/cmakeFiles-v1-bbb55c3cd1a9a91f4b0c.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-cf3eb514d4d3ae735f09.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2024-12-21T03-30-26-0473.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-gx.elf-Debug-9120eccaa76d3368bc6b.json" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-gx.elf-Debug-8662c21fc4d72498fe51.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-gx.elf-Debug-9120eccaa76d3368bc6b.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_deps" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.ninja_log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.29.6/CMakeDetermineCompilerABI_C.bin" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.29.6/CMakeDetermineCompilerABI_C.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.29.6/CMakeDetermineCompilerABI_CXX.bin" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/3.29.6/CMakeDetermineCompilerABI_CXX.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CMakeConfigureLog.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/CMakeConfigureLog.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/gpio.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/gpio.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/main.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/main.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/pid.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/pid.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/stm32h7xx_it.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/stm32h7xx_it.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/syscalls.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/syscalls.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/tim.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/tim.c.obj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/usart.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/gx.elf.dir/Src/usart.c.obj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/build.ninja" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.bin" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.hex" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.hex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.map" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.map" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/daplinkf1.cfg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gx.ioc" beforeDir="false" afterPath="$PROJECT_DIR$/gx.ioc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/imu_ex/STM32Core_SDK_Normal(旧版)/STM32Core_SDK_Normal/MDK/Project.uvguix.Administrator" beforeDir="false" afterPath="$PROJECT_DIR$/imu_ex/STM32Core_SDK_Normal(旧版)/STM32Core_SDK_Normal/MDK/Project.uvguix.Administrator" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/imu_ex/STM32Core_SDK_Normal(旧版)/STM32Core_SDK_Normal/Source/APP/Main.c" beforeDir="false" afterPath="$PROJECT_DIR$/imu_ex/STM32Core_SDK_Normal(旧版)/STM32Core_SDK_Normal/Source/APP/Main.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,13 +190,13 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
       </method>
     </configuration>
     <configuration name="gx.elf" type="com.jetbrains.cidr.embedded.openocd.conf.type" factoryName="com.jetbrains.cidr.embedded.openocd.conf.factory" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="gx" TARGET_NAME="gx.elf" CONFIG_NAME="Debug" version="1" RUN_TARGET_PROJECT_NAME="gx" RUN_TARGET_NAME="gx.elf">
-      <openocd version="1" gdb-port="3333" telnet-port="4444" board-config="C:\Users\Administrator\Desktop\project\gx\daplinkf1.cfg" reset-type="INIT" download-type="UPDATED_ONLY">
+      <openocd version="1" gdb-port="3333" telnet-port="4444" board-config="C:\Users\Administrator\Desktop\project\gx\daplinkh7.cfg" reset-type="INIT" download-type="UPDATED_ONLY">
         <debugger toolchainName="MinGW-stm32" />
       </openocd>
       <method v="2">
@@ -193,7 +220,8 @@
       <workItem from="1734696648856" duration="20933000" />
       <workItem from="1734772152352" duration="352000" />
       <workItem from="1734848069455" duration="6825000" />
-      <workItem from="1734916964582" duration="5409000" />
+      <workItem from="1734916964582" duration="7043000" />
+      <workItem from="1734924308987" duration="3906000" />
     </task>
     <task id="LOCAL-00001" summary="Init controller.">
       <option name="closed" value="true" />
@@ -235,7 +263,15 @@
       <option name="project" value="LOCAL" />
       <updated>1734920140362</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Finish PID Part but not Set PID param.">
+      <option name="closed" value="true" />
+      <created>1734922956059</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1734922956059</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -273,7 +309,8 @@
     <MESSAGE value="Init controller." />
     <MESSAGE value="Set CubeMx." />
     <MESSAGE value="Add JY901s example and transplant to gx." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add JY901s example and transplant to gx." />
+    <MESSAGE value="Finish PID Part but not Set PID param." />
+    <option name="LAST_COMMIT_MESSAGE" value="Finish PID Part but not Set PID param." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

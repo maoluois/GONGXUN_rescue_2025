@@ -43,7 +43,6 @@ static void Delayms(uint16_t ucMs);
 
 int main(void)
 {
-	WitStartMagCali();
 	float fAcc[3], fGyro[3], fAngle[3];
 	int i;
 	

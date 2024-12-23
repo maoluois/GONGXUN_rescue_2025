@@ -41,7 +41,7 @@ extern UART_HandleTypeDef huart2;
 /* USER CODE END Private defines */
 
 void MX_USART1_UART_Init(void);
-void MX_USART2_UART_Init(uint32_t baudrate);
+void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 HAL_StatusTypeDef Uart2Send(uint8_t *p_data, uint16_t uiSize);
