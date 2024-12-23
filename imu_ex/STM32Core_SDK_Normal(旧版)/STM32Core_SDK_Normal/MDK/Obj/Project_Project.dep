@@ -1,0 +1,115 @@
+Dependencies for Project 'Project', Target 'Project': (DO NOT MODIFY !)
+CompilerVersion: 6220000::V6.22::ARMCLANG
+F (..\Source\APP\Main.c)(0x6767CF76)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/main.o -MMD)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+I (..\Source\STM32F10xLib\inc\stm32f10x_gpio.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\stm32f10x_rcc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\misc.h)(0x6767B693)
+I (..\Source\wit_c_sdk\wit_c_sdk.h)(0x6767B694)
+I (..\Source\wit_c_sdk\REG.h)(0x6767B694)
+I (..\Source\Drive\UART1.h)(0x6767B693)
+I (..\Source\Drive\UART2.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\stm32f10x_usart.h)(0x6767B693)
+I (..\Source\Drive\delay.h)(0x6767B693)
+F (..\Source\wit_c_sdk\REG.h)(0x6767B694)()
+F (..\Source\wit_c_sdk\wit_c_sdk.c)(0x6767CF76)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/wit_c_sdk.o -MMD)
+I (..\Source\wit_c_sdk\wit_c_sdk.h)(0x6767B694)
+I (..\Source\wit_c_sdk\REG.h)(0x6767B694)
+F (..\Source\Drive\UART2.c)(0x6767B693)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/uart2.o -MMD)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+I (..\Source\STM32F10xLib\inc\stm32f10x_gpio.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\stm32f10x_usart.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\stm32f10x_rcc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\misc.h)(0x6767B693)
+I (..\Source\wit_c_sdk\wit_c_sdk.h)(0x6767B694)
+I (..\Source\wit_c_sdk\REG.h)(0x6767B694)
+F (..\Source\Drive\UART1.c)(0x6767CB02)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/uart1.o -MMD)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+I (..\Source\STM32F10xLib\inc\stm32f10x_gpio.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\stm32f10x_usart.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\stm32f10x_rcc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\inc\misc.h)(0x6767B693)
+I (..\Source\Drive\UART1.h)(0x6767B693)
+F (..\Source\Drive\delay.c)(0x6767B693)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/delay.o -MMD)
+I (..\Source\Drive\delay.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+I (..\Source\STM32F10xLib\inc\misc.h)(0x6767B693)
+F (..\Source\STM32F10xLib\M3\system_stm32f10x.c)(0x6767B694)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/system_stm32f10x.o -MMD)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+F (..\Source\STM32F10xLib\src\misc.c)(0x6767B694)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/misc.o -MMD)
+I (..\Source\STM32F10xLib\inc\misc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+F (..\Source\STM32F10xLib\src\stm32f10x_gpio.c)(0x6767B694)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/stm32f10x_gpio.o -MMD)
+I (..\Source\STM32F10xLib\inc\stm32f10x_gpio.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+I (..\Source\STM32F10xLib\inc\stm32f10x_rcc.h)(0x6767B693)
+F (..\Source\STM32F10xLib\src\stm32f10x_rcc.c)(0x6767B694)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/stm32f10x_rcc.o -MMD)
+I (..\Source\STM32F10xLib\inc\stm32f10x_rcc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+F (..\Source\STM32F10xLib\src\stm32f10x_usart.c)(0x6767B694)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/stm32f10x_usart.o -MMD)
+I (..\Source\STM32F10xLib\inc\stm32f10x_usart.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+I (..\Source\STM32F10xLib\inc\stm32f10x_rcc.h)(0x6767B693)
+F (..\Source\STM32F10xLib\M3\stm32f10x_it.c)(0x6767B694)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/stm32f10x_it.o -MMD)
+I (..\Source\STM32F10xLib\M3\stm32f10x_it.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+F (..\Source\STM32F10xLib\startup\startup_stm32f10x_hd.s)(0x6767B694)(--cpu Cortex-M3 -g --pd "__MICROLIB SETA 1" --diag_suppress=A1950W-I.\RTE\_Project-IE:\Keil_v5\ARM\Packs\ARM\CMSIS\6.1.0\CMSIS\Core\Include-IE:\Keil_v5\ARM\Packs\Keil\STM32F1xx_DFP\2.4.1\Device\Include--pd "__UVISION_VERSION SETA 541"--pd "STM32F10X_MD SETA 1"--pd "_RTE_ SETA 1"--list .\list\startup_stm32f10x_hd.lst--xref -o .\obj\startup_stm32f10x_hd.o--depend .\obj\startup_stm32f10x_hd.d)
+F (..\Source\STM32F10xLib\src\stm32f10x_pwr.c)(0x6767B694)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -fsigned-char -fshort-enums -fshort-wchar-D__MICROLIB -gdwarf-4 -O1 -ffunction-sections -I ../Source/APP -I ../Source/STM32F10xLib/inc -I ../Source/STM32F10xLib/M3 -I ../Source/Drive -I ../Source/wit_c_sdk-I./RTE/_Project-IE:/Keil_v5/ARM/Packs/ARM/CMSIS/6.1.0/CMSIS/Core/Include-IE:/Keil_v5/ARM/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="541" -DSTM32F10X_MD -D_RTE_ -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ./obj/stm32f10x_pwr.o -MMD)
+I (..\Source\STM32F10xLib\inc\stm32f10x_pwr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\core_cm3.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmInstr.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\core_cmFunc.h)(0x6767B693)
+I (..\Source\STM32F10xLib\M3\system_stm32f10x.h)(0x6767B694)
+I (..\Source\STM32F10xLib\M3\stm32f10x_conf.h)(0x6767B694)
+I (..\Source\STM32F10xLib\inc\stm32f10x_rcc.h)(0x6767B693)

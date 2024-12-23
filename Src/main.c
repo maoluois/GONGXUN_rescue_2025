@@ -30,8 +30,10 @@
 #include "fliter.h"
 #include "Algorithm.h"
 #include "pid.h"
+#include "wit_c_sdk.h"
 #include <stdio.h>
 #include <string.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -80,6 +82,10 @@ float pitch = 0;
 float roll = 0;
 float yaw = 0;
 
+// Imu JY901s PV
+static volatile char s_cDataUpdate = 0, s_cCmd = 0xff;
+const uint32_t c_uiBaud[10] = {0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600};
+float fAcc[3], fGyro[3], fAngle[3];
 
 // struct PID
 PID_ControllerTypeDef motor1PID;
@@ -94,11 +100,23 @@ float pid_end = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
+
 void SystemClock_Config(void);
 static void MPU_Config(void);
+
 /* USER CODE BEGIN PFP */
+
+// vofa串口调试函数
 void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
 float Get_Data(void);
+
+// JY901s配置函数
+// static void CmdProcess(void);
+static void AutoScanSensor(void);
+static void SensorUartSend(uint8_t *p_data, uint32_t uiSize);
+static void SensorDataUpdata(uint32_t uiReg, uint32_t uiRegNum);
+static void Delayms(uint16_t ucMs);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -140,12 +158,18 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_TIM3_Init();
-  MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
+  MX_USART1_UART_Init(); // daplink 连接上位机串口 默认115200
+  MX_USART2_UART_Init(115200); // IMU串口 默认115200
   MX_TIM17_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+
   RetargetInit(&huart1);
+  WitInit(WIT_PROTOCOL_NORMAL, 0x50);
+  WitSerialWriteRegister(SensorUartSend);
+  WitRegisterCallBack(SensorDataUpdata);
+  WitDelayMsRegister(Delayms);
+  AutoScanSensor();
   HAL_TIM_Base_Init(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
@@ -154,13 +178,43 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim17);
   HAL_UART_Receive_IT(&huart1, RxBuffer, 1);
 
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      // CmdProcess();
+      if(s_cDataUpdate)
+      {
+          for(int i = 0; i < 3; i++)
+          {
+              fAcc[i] = (float)sReg[AX+i] / 32768.0f * 16.0f;
+              fGyro[i] = (float)sReg[GX+i] / 32768.0f * 2000.0f;
+              fAngle[i] = (float)sReg[Roll+i] / 32768.0f * 180.0f;
+          }
+          if(s_cDataUpdate & ACC_UPDATE)
+          {
+              //printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
+              s_cDataUpdate &= ~ACC_UPDATE;
+          }
+          if(s_cDataUpdate & GYRO_UPDATE)
+          {
+              //printf("gyro:%.3f %.3f %.3f\r\n", fGyro[0], fGyro[1], fGyro[2]);
+              s_cDataUpdate &= ~GYRO_UPDATE;
+          }
+          if(s_cDataUpdate & ANGLE_UPDATE)
+          {
+              //printf("angle:%.3f %.3f %.3f\r\n", fAngle[0], fAngle[1], fAngle[2]);
+              printf("%.3f,%.3f,%.3f\n", fAngle[0], fAngle[1], fAngle[2]);
+              s_cDataUpdate &= ~ANGLE_UPDATE;
+          }
+          if(s_cDataUpdate & MAG_UPDATE)
+          {
+              //printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
+              s_cDataUpdate &= ~MAG_UPDATE;
+          }
+      }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -241,11 +295,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         totalAngle2 = pluse2;
 
         // 计算速度
-        wheel1_speed = ((float)(RELOADVALUE / 2.0 - totalAngle1) / convert_param) * 100;  // 编码器计数方向相反
-        wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / convert_param) * 100;
+        wheel1_speed = ((float)(totalAngle1 - RELOADVALUE / 2.0) / convert_param) * 1000 * wheel_circumference;  // 单位：米/秒
+        wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / convert_param) * 1000 * wheel_circumference;  // 单位：米/秒
 
         // 获取角度
-
+        // ...
 
         // 滤波
         mean_buff1[buff_index1++] = wheel1_speed;
@@ -254,6 +308,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         wheel1_speed = mean_fliter(mean_buff1, buff_index1);
         wheel2_speed = mean_fliter(mean_buff2, buff_index1);
         pitch = mean_fliter(mean_buff3, buff_index2);
+
 
         // 索引更新
         if (buff_index1 >= fliter_mean_sample1)
@@ -271,15 +326,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // 计算PID
         // pidoutputv1 = PID_Velocity(&motor1PID, speed1);
         // pidoutputv2 = PID_Velocity(&motor2PID, speed2);
-        pidoutputv = PID_Velocity2(&motor1PID, wheel1_speed, wheel2_speed, pitch);
-        pidoutputBc = PID_Balance_Calc(&IMUPID, pitch);
-
-        // 串级pid运算
-        pid_end = pidoutputBc - pidoutputv;
-
-        // PID死区 && 执行操作
-        stand(pid_end);
-        // stand(pidoutputBc);
 
         // if ((SetSpeed - speed1) > 0.01 || (SetSpeed - speed1) < -0.01) {
         //           printf("哈哈我又来啦");
@@ -370,58 +416,38 @@ float Get_Data(void)
     if (data_Integer_len != 0) // 为两位数
     {
         if (data_Integer_len == 1)
-        {
             Integer = float(DataBuff[data_Start_Num] - 48);
-        }
         else if (data_Integer_len == 2)
-        {
             Integer = float(DataBuff[data_Start_Num] - 48) * 10 + float(DataBuff[data_Start_Num + 1] - 48);
-        }
         else if (data_Integer_len == 3)
-        {
             Integer = float(DataBuff[data_Start_Num] - 48) * 100 + float(DataBuff[data_Start_Num + 1] - 48) * 10 +
             (DataBuff[data_Start_Num + 2] - 48);
-        }
         else if (data_Integer_len == 4)
-        {
             Integer = float(DataBuff[data_Start_Num] - 48) * 1000 + float(DataBuff[data_Start_Num + 1] - 48) * 100 +
             float(DataBuff[data_Start_Num + 3] - 48) * 10 + float(DataBuff[data_Start_Num + 4] - 48);
-        }
     }
+
     // 计算小数数据
     if (data_Decimal_len != 0) // 为个位数
     {
         if (data_Decimal_len == 1)
-        {
             Decimal = float(DataBuff[data_End_Num] - 48) * 0.1f;
-        }
         else if (data_Decimal_len == 2)
-        {
             Decimal = float(DataBuff[data_End_Num - 1] - 48) * 0.1f + float(DataBuff[data_End_Num] - 48) * 0.01f;
-        }
         else if (data_Decimal_len == 3)
-        {
             Decimal = float(DataBuff[data_End_Num - 2] - 48) * 0.1f + float(DataBuff[data_End_Num - 1] - 48) * 0.01f +
                       float(DataBuff[data_End_Num] - 48) * 0.001f;
-        }
         else if (data_Decimal_len == 4)
-        {
             Decimal = float(DataBuff[data_End_Num - 3] - 48) * 0.1f + float(DataBuff[data_End_Num - 2] - 48) * 0.01f +
                       float(DataBuff[data_End_Num - 1] - 48) * 0.001f + float(DataBuff[data_End_Num] - 48) * 0.0001f;
-        }
         else if (data_Decimal_len == 5)
-        {
             Decimal = float(DataBuff[data_End_Num - 4] - 48) * 0.1f + float(DataBuff[data_End_Num - 3] - 48) * 0.01f +
                       float(DataBuff[data_End_Num - 2] - 48) * 0.001f + float(DataBuff[data_End_Num - 1] - 48) * 0.0001f +
                       float(DataBuff[data_End_Num] - 48) * 0.00001f;
-        }
         else if (data_Decimal_len == 6)
-        {
             Decimal = float(DataBuff[data_End_Num - 5] - 48) * 0.1f + float(DataBuff[data_End_Num - 4] - 48) * 0.01f +
                       float(DataBuff[data_End_Num - 3] - 48) * 0.001f + float(DataBuff[data_End_Num - 2] - 48) * 0.0001f +
                       float(DataBuff[data_End_Num - 1] - 48) * 0.00001f + float(DataBuff[data_End_Num] - 48) * 0.000001f;
-        }
-
     }
     data_return = Integer + Decimal;
     if (minus_Flag == 1)
@@ -491,6 +517,182 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
 
     }
 }
+
+void CopeCmdData(unsigned char ucData)
+{
+	 static unsigned char s_ucData[50], s_ucRxCnt = 0;
+
+	 s_ucData[s_ucRxCnt++] = ucData;
+	 if(s_ucRxCnt<3)return;										//Less than three data returned
+	 if(s_ucRxCnt >= 50) s_ucRxCnt = 0;
+	 if(s_ucRxCnt >= 3)
+	 {
+		 if((s_ucData[1] == '\r') && (s_ucData[2] == '\n'))
+		 {
+		  	s_cCmd = s_ucData[0];
+//			  printf("%c", s_cCmd);
+			  memset(s_ucData,0,50);
+			  s_ucRxCnt = 0;
+	   }
+		 else
+		 {
+			 s_ucData[0] = s_ucData[1];
+			 s_ucData[1] = s_ucData[2];
+			 s_ucRxCnt = 2;
+			}
+	  }
+}
+
+// static void ShowHelp(void)
+// {
+// 	printf("\r\n************************	 WIT_SDK_DEMO	************************");
+// 	printf("\r\n************************          HELP           ************************\r\n");
+// 	printf("UART SEND:a\\r\\n   Acceleration calibration.\r\n");
+// 	printf("UART SEND:m\\r\\n   Magnetic field calibration,After calibration send:   e\\r\\n   to indicate the end\r\n");
+// 	printf("UART SEND:U\\r\\n   Bandwidth increase.\r\n");
+// 	printf("UART SEND:u\\r\\n   Bandwidth reduction.\r\n");
+// 	printf("UART SEND:B\\r\\n   Baud rate increased to 115200.\r\n");
+// 	printf("UART SEND:b\\r\\n   Baud rate reduction to 9600.\r\n");
+// 	printf("UART SEND:R\\r\\n   The return rate increases to 10Hz.\r\n");
+// 	printf("UART SEND:r\\r\\n   The return rate reduction to 1Hz.\r\n");
+// 	printf("UART SEND:C\\r\\n   Basic return content: acceleration, angular velocity, angle, magnetic field.\r\n");
+// 	printf("UART SEND:c\\r\\n   Return content: acceleration.\r\n");
+// 	printf("UART SEND:h\\r\\n   help.\r\n");
+// 	printf("******************************************************************************\r\n");
+// }
+
+// static void CmdProcess(void)
+// {
+// 	switch(s_cCmd)
+// 	{
+// 		case 'a':
+// //			printf("yes");
+// 			if(WitStartAccCali() != WIT_HAL_OK)
+// 				printf("\r\nSet AccCali Error\r\n");
+// 			break;
+// 		case 'm':
+// 			if(WitStartMagCali() != WIT_HAL_OK)
+// 				printf("\r\nSet MagCali Error\r\n");
+// 			break;
+// 		case 'e':
+// 			if(WitStopMagCali() != WIT_HAL_OK)
+// 				printf("\r\nSet MagCali Error\r\n");
+// 			break;
+// 		case 'u':
+// 			if(WitSetBandwidth(BANDWIDTH_5HZ) != WIT_HAL_OK)
+// 				printf("\r\nSet Bandwidth Error\r\n");
+// 			break;
+// 		case 'U':
+// 			if(WitSetBandwidth(BANDWIDTH_256HZ) != WIT_HAL_OK)
+// 				printf("\r\nSet Bandwidth Error\r\n");
+// 			break;
+// 		case 'B':
+// 			if(WitSetUartBaud(WIT_BAUD_115200) != WIT_HAL_OK)
+// 				printf("\r\nSet Baud Error\r\n");
+// 			else
+// 				MX_USART2_UART_Init(c_uiBaud[WIT_BAUD_115200]);
+// 			break;
+// 		case 'b':
+// 			if(WitSetUartBaud(WIT_BAUD_9600) != WIT_HAL_OK)
+// 				printf("\r\nSet Baud Error\r\n");
+// 			else
+// 				MX_USART2_UART_Init(c_uiBaud[WIT_BAUD_9600]);
+// 			break;
+// 		case 'R':
+// 			if(WitSetOutputRate(RRATE_10HZ) != WIT_HAL_OK)
+// 				printf("\r\nSet Rate Error\r\n");
+// 			break;
+// 		case 'r':
+// 			if(WitSetOutputRate(RRATE_1HZ) != WIT_HAL_OK)
+// 				printf("\r\nSet Rate Error\r\n");
+// 			break;
+// 		case 'C':
+// 			if(WitSetContent(RSW_ACC|RSW_GYRO|RSW_ANGLE|RSW_MAG) != WIT_HAL_OK)
+// 				printf("\r\nSet RSW Error\r\n");
+// 			break;
+// 		case 'c':
+// 			if(WitSetContent(RSW_ACC) != WIT_HAL_OK)
+// 				printf("\r\nSet RSW Error\r\n");
+// 			break;
+// 		case 'h':
+// 			ShowHelp();
+// 			break;
+// 	}
+// 	s_cCmd = 0xff;
+// }
+
+static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
+{
+	Uart2Send(p_data, uiSize);
+}
+
+static void Delayms(uint16_t ucMs)
+{
+	HAL_Delay(ucMs);
+}
+
+static void SensorDataUpdata(uint32_t uiReg, uint32_t uiRegNum)
+{
+	int i;
+    for(i = 0; i < uiRegNum; i++)
+    {
+        switch(uiReg)
+        {
+//            case AX:
+//            case AY:
+            case AZ:
+				s_cDataUpdate |= ACC_UPDATE;
+            break;
+//            case GX:
+//            case GY:
+            case GZ:
+				s_cDataUpdate |= GYRO_UPDATE;
+            break;
+//            case HX:
+//            case HY:
+            case HZ:
+				s_cDataUpdate |= MAG_UPDATE;
+            break;
+//            case Roll:
+//            case Pitch:
+            case Yaw:
+				s_cDataUpdate |= ANGLE_UPDATE;
+            break;
+            default:
+				s_cDataUpdate |= READ_UPDATE;
+			break;
+        }
+		uiReg++;
+    }
+}
+
+static void AutoScanSensor(void)
+{
+	int i, iRetry;
+
+	for(i = 1; i < 10; i++)
+	{
+		MX_USART2_UART_Init(c_uiBaud[i]);
+		iRetry = 2;
+		do
+		{
+			s_cDataUpdate = 0;
+			WitReadReg(AX, 3);
+			HAL_Delay(100);
+			if(s_cDataUpdate != 0)
+			{
+				printf("%d baud find sensor\r\n\r\n", c_uiBaud[i]);
+				// ShowHelp();
+				return ;
+			}
+			iRetry--;
+		}while(iRetry);
+	}
+	printf("can not find sensor\r\n");
+	printf("please check your connection\r\n");
+}
+
+
 /* USER CODE END 4 */
 
  /* MPU Configuration */

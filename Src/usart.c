@@ -73,7 +73,7 @@ void MX_USART1_UART_Init(void)
 }
 /* USART2 init function */
 
-void MX_USART2_UART_Init(void)
+void MX_USART2_UART_Init(uint32_t baudrate)
 {
 
   /* USER CODE BEGIN USART2_Init 0 */
@@ -84,7 +84,7 @@ void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = baudrate;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -233,5 +233,18 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
-
+// void Uart2Send(unsigned char *p_data, unsigned int uiSize)
+// {
+//   unsigned int i;
+//   for(i = 0; i < uiSize; i++)
+//   {
+//     while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
+//     USART_SendData(USART2, *p_data++);
+//   }
+//   while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
+// }
+HAL_StatusTypeDef Uart2Send(uint8_t *p_data, uint16_t uiSize)
+{
+  return HAL_UART_Transmit(&huart2, p_data, uiSize, HAL_MAX_DELAY);
+}
 /* USER CODE END 1 */

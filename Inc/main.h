@@ -83,15 +83,21 @@ void Error_Handler(void);
 #define Daplink_RX_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-#define convert_param (30.0f*28.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4)
+#define convert_param (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/毫秒)
 #define wheel_distance 0.23156f // 单位：m
 #define wheel_radius 0.0325f // 单位：m
+#define wheel_circumference 0.2042f // 单位：m
 #define COUNTERNUM1 ((float)__HAL_TIM_GET_COUNTER(&htim1))
 #define COUNTERNUM2 ((float)__HAL_TIM_GET_COUNTER(&htim2))
 #define RELOADVALUE 20000
 #define fliter_mean_sample1 6
 #define fliter_buffer_size 100
-
+// JY901s cfg
+#define ACC_UPDATE		0x01
+#define GYRO_UPDATE		0x02
+#define ANGLE_UPDATE	0x04
+#define MAG_UPDATE		0x08
+#define READ_UPDATE		0x80
 
 /* USER CODE END Private defines */
 
