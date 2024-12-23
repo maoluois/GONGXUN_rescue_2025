@@ -18,10 +18,6 @@ void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float set
     pid->output = 0.0f;
 }
 
-// 设置PID目标速度
-//void PID_SetSetpoint(PID_ControllerTypeDef *pid, float setpoint) {
-//    pid->setpoint = setpoint;
-//}
 
 // 更新PID控制器并计算输出
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
@@ -44,8 +40,8 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     return pid->output;
 }
 
-float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedleft, float currentSpeedright, float angle) {
-    float error = pid->setpoint - (currentSpeedleft + currentSpeedright) / 2;
+float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float currentSpeedRight, float angle) {
+    float error = pid->setpoint - (currentSpeedLeft + currentSpeedRight) / 2;
 
     // 计算PID控制量
     float proportional = pid->Kp * error;
@@ -69,15 +65,13 @@ float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedleft, float cu
 }
 
 // 转向环
-float PID_Turn_Calc(PID_ControllerTypeDef *pid, float Angle, float targetAngle)
+float PID_Turn_Calc(PID_ControllerTypeDef *pid, float Angle, float Gyro)
 {
     float Angle_bias, Gyro_bias;
-    Angle_bias = tatgetAngle - Angle;
-    float Gyro = Angle - pid->lastError;
+    Angle_bias = pid->setpoint - Angle;
     Gyro_bias = 0 - Gyro;
     pid->output= -pid->Kp * Angle_bias - Gyro_bias * pid->Kd;
     pid->lastError = Angle;
-
     return pid->output;
 }
 

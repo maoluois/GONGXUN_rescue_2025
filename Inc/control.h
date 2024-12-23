@@ -6,5 +6,5 @@
 #define CONTROL_H
 void Set_pulse1(float speed);
 void Set_pulse2(float speed);
-void stand(float speed);
+
 #endif //CONTROL_H

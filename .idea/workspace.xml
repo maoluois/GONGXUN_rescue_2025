@@ -23,20 +23,16 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Set CubeMx.">
-      <change afterPath="$PROJECT_DIR$/Inc/REG.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Inc/wit_c_sdk.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Src/wit_c_sdk.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/editor.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/editor.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Add JY901s example and transplant to gx.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Inc/main.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/main.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Inc/usart.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/usart.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/control.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/control.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/pid.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/control.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/control.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Src/usart.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/usart.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-cf3eb514d4d3ae735f09.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/pid.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/pid.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-cf3eb514d4d3ae735f09.json" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-1bd3c00b94c04e0f0f46.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2024-12-21T03-30-26-0473.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-gx.elf-Debug-9120eccaa76d3368bc6b.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-gx.elf-Debug-9120eccaa76d3368bc6b.json" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/target-gx.elf-Debug-8662c21fc4d72498fe51.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/clion-Debug-log.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/build.ninja" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/build.ninja" afterDir="false" />
     </list>
@@ -167,6 +163,11 @@
     </key>
   </component>
   <component name="RunManager">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="gx.elf" type="com.jetbrains.cidr.embedded.openocd.conf.type" factoryName="com.jetbrains.cidr.embedded.openocd.conf.factory" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="gx" TARGET_NAME="gx.elf" CONFIG_NAME="Debug" version="1" RUN_TARGET_PROJECT_NAME="gx" RUN_TARGET_NAME="gx.elf">
       <openocd version="1" gdb-port="3333" telnet-port="4444" board-config="C:\Users\Administrator\Desktop\project\gx\daplinkf1.cfg" reset-type="INIT" download-type="UPDATED_ONLY">
         <debugger toolchainName="MinGW-stm32" />
@@ -192,7 +193,7 @@
       <workItem from="1734696648856" duration="20933000" />
       <workItem from="1734772152352" duration="352000" />
       <workItem from="1734848069455" duration="6825000" />
-      <workItem from="1734916964582" duration="2621000" />
+      <workItem from="1734916964582" duration="5409000" />
     </task>
     <task id="LOCAL-00001" summary="Init controller.">
       <option name="closed" value="true" />
@@ -218,7 +219,23 @@
       <option name="project" value="LOCAL" />
       <updated>1734772308265</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Add JY901s example and transplant to gx.">
+      <option name="closed" value="true" />
+      <created>1734920061733</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1734920061733</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Add JY901s example and transplant to gx.">
+      <option name="closed" value="true" />
+      <created>1734920140362</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1734920140362</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -255,7 +272,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Init controller." />
     <MESSAGE value="Set CubeMx." />
-    <option name="LAST_COMMIT_MESSAGE" value="Set CubeMx." />
+    <MESSAGE value="Add JY901s example and transplant to gx." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add JY901s example and transplant to gx." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -6,6 +6,8 @@
 #define PID_H
 
 //直立环的机械中值
+#define Middle_angle 0
+
 typedef struct{
     float Kp;
     float Ki;
@@ -17,10 +19,10 @@ typedef struct{
 
 }PID_ControllerTypeDef;
 
+void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float setpoint);
 float PID_Clamp(float value, float min, float max);
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed);
-float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedleft, float currentSpeedright, float angle);
-void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float setpoint);
-float PID_Balance_Calc(PID_ControllerTypeDef *pid, float Angle);
-
+float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float currentSpeedRight, float angle);
+float PID_Balance_Calc(PID_ControllerTypeDef *pid, float Angle, float targetAngle);
+float PID_Turn_Calc(PID_ControllerTypeDef *pid, float Angle, float Gyro);
 #endif //PID_H

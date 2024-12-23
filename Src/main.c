@@ -61,14 +61,16 @@ int32_t totalAngle2 = 0;
 int32_t lastAngle = 0;        // 上一次的角度
 // int16_t loopNum1 = 0;          // 防超上限
 // int16_t loopNum2 = 0;
-float wheel1_speed = 0;              // 转�?�单位：�?????/秒）
+float wheel1_speed = 0;              // 轮子速度 （单位：m/s）
 float wheel2_speed = 0;
 
 // usart PV
 uint8_t RxBuffer[1];          // 串口接收缓冲
 uint16_t RxLine = 0;          // 指令长度
 uint8_t DataBuff[200];        // 指令内容
-float SetSpeed = 0;           // 设置目标速度（单位：m/s）
+float SetSpeed1 = 0;          // 设置目标速度（单位：m/s）
+float SetSpeed2 = 0;
+float SetSpeed6 = 0;
 
 // fliter PV
 float mean_buff1[fliter_buffer_size];             // 滤波缓冲
@@ -77,25 +79,21 @@ float mean_buff3[fliter_buffer_size];
 int buff_index1 = 0;                // 滤波缓冲区索引
 int buff_index2 = 0;
 
-// i2c PV
-float pitch = 0;
-float roll = 0;
-float yaw = 0;
-
 // Imu JY901s PV
 static volatile char s_cDataUpdate = 0, s_cCmd = 0xff;
 const uint32_t c_uiBaud[10] = {0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600};
 float fAcc[3], fGyro[3], fAngle[3];
+float pitch = 0, roll = 0, yaw = 0;
 
 // struct PID
 PID_ControllerTypeDef motor1PID;
 PID_ControllerTypeDef motor2PID;
-PID_ControllerTypeDef IMUPID;
-float pidoutputv1 = 0;
-float pidoutputv2 = 0;
-float pidoutputv = 0;
-float pidoutputBc = 0;
-float pid_end = 0;
+PID_ControllerTypeDef ImuPID;
+float pidOutputV1 = 0;
+float pidOutputV2 = 0;
+float pidOutputYaw = 0;
+// float pidOutputBc = 0;
+// float pid_end = 0;
 
 /* USER CODE END PV */
 
@@ -184,6 +182,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      // 获取角度
       // CmdProcess();
       if(s_cDataUpdate)
       {
@@ -206,7 +205,7 @@ int main(void)
           if(s_cDataUpdate & ANGLE_UPDATE)
           {
               //printf("angle:%.3f %.3f %.3f\r\n", fAngle[0], fAngle[1], fAngle[2]);
-              printf("%.3f,%.3f,%.3f\n", fAngle[0], fAngle[1], fAngle[2]);
+              // printf("%.3f,%.3f,%.3f\n", fAngle[0], fAngle[1], fAngle[2]);
               s_cDataUpdate &= ~ANGLE_UPDATE;
           }
           if(s_cDataUpdate & MAG_UPDATE)
@@ -298,16 +297,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         wheel1_speed = ((float)(totalAngle1 - RELOADVALUE / 2.0) / convert_param) * 1000 * wheel_circumference;  // 单位：米/秒
         wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / convert_param) * 1000 * wheel_circumference;  // 单位：米/秒
 
-        // 获取角度
-        // ...
 
         // 滤波
         mean_buff1[buff_index1++] = wheel1_speed;
         mean_buff2[buff_index1++] = wheel2_speed;
-        mean_buff3[buff_index2++] = pitch;
+        mean_buff3[buff_index2++] = fAngle[2];
         wheel1_speed = mean_fliter(mean_buff1, buff_index1);
         wheel2_speed = mean_fliter(mean_buff2, buff_index1);
-        pitch = mean_fliter(mean_buff3, buff_index2);
+        yaw = mean_fliter(mean_buff3, buff_index2);
 
 
         // 索引更新
@@ -323,9 +320,29 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //      printf("%f, %f\n", (float)(totalAngle - lastAngle), speed);               // 调试使用
 //      lastAngle = totalAngle;
 
-        // 计算PID
-        // pidoutputv1 = PID_Velocity(&motor1PID, speed1);
-        // pidoutputv2 = PID_Velocity(&motor2PID, speed2);
+        // 计算速度PID
+        pidOutputV1 = PID_Velocity(&motor1PID, wheel1_speed);
+        pidOutputV2 = PID_Velocity(&motor2PID, wheel2_speed);
+
+        // 输出PWM（用于调试速度PID）
+        Set_pulse1(pidOutputV1);
+        Set_pulse2(pidOutputV2);
+
+        // // 计算角度PID
+        // pidOutputYaw = PID_Turn_Calc(&ImuPID, yaw, fGyro[2]);
+        //
+        // // 输出PWM（用于调试角度PID）
+        // if (pidOutputYaw > 0)           // 方向不一定正确，需要根据实际情况调整
+        // {
+        //     Set_pulse1(pidOutputYaw);
+        //     Set_pulse2(-pidOutputYaw);
+        // }
+        // else
+        // {
+        //     Set_pulse1(-pidOutputYaw);
+        //     Set_pulse2(pidOutputYaw);
+        // }
+
 
         // if ((SetSpeed - speed1) > 0.01 || (SetSpeed - speed1) < -0.01) {
         //           printf("哈哈我又来啦");
@@ -364,7 +381,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 
             USART_PID_Adjust(1, &motor1PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             USART_PID_Adjust(2, &motor2PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            USART_PID_Adjust(6, &IMUPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
 
             memset(DataBuff, 0, sizeof(DataBuff));  // 清空接收缓存
             RxLine = 0;  // 重置接收长度计数
@@ -474,13 +491,11 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
             pid->Kd = data_Get;     // 速度环D参数
         else if ((DataBuff[0] == 'S' && DataBuff[1] == 'p') && DataBuff[2] == 'e')
             pid->setpoint = data_Get;     // 目标速度
-            SetSpeed = pid->setpoint;
-
+            SetSpeed1 = pid->setpoint;
     }
 
     if (Motor_n == 2)  // 电机2
     {
-
         if (DataBuff[0] == 'P' && DataBuff[1] == '2')
             pid->Kp = data_Get;     // 速度环P参数
         else if (DataBuff[0] == 'I' && DataBuff[1] == '2')
@@ -489,32 +504,18 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
             pid->Kd = data_Get;     // 速度环D参数
         else if ((DataBuff[0] == 'S' && DataBuff[1] == 'p') && DataBuff[2] == 'e')
             pid->setpoint = data_Get;     // 目标速度
-        SetSpeed = pid->setpoint;
-
-    }
-    if (Motor_n == 1)  // 电机1
-    {
-
-        if (DataBuff[0] == 'P' && DataBuff[1] == '1')
-            pid->Kp = data_Get;     // 速度环P参数
-        else if (DataBuff[0] == 'I' && DataBuff[1] == '1')
-            pid->Ki = data_Get;     // 速度环I参数
-        else if (DataBuff[0] == 'D' && DataBuff[1] == '1')
-            pid->Kd = data_Get;     // 速度环D参数
-        else if ((DataBuff[0] == 'S' && DataBuff[1] == 'p') && DataBuff[2] == 'e')
-            pid->setpoint = data_Get;     // 目标速度
-        SetSpeed = pid->setpoint;
-
+            SetSpeed2 = pid->setpoint;
     }
 
     if (Motor_n == 6)  // IMU
     {
-
         if (DataBuff[0] == 'P' && DataBuff[1] == '6')
             pid->Kp = data_Get;     // 速度环P参数
         else if (DataBuff[0] == 'D' && DataBuff[1] == '6')
             pid->Kd = data_Get;     // 速度环D参数
-
+        else if ((DataBuff[0] == 'S' && DataBuff[1] == 'p') && DataBuff[2] == 'e')
+            pid->setpoint = data_Get;  // 目标速度
+            SetSpeed6 = pid->setpoint;
     }
 }
 
