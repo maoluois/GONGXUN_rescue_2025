@@ -79,19 +79,25 @@ void Error_Handler(void);
 #define Daplink_TX_GPIO_Port GPIOB
 #define Daplink_RX_Pin GPIO_PIN_15
 #define Daplink_RX_GPIO_Port GPIOB
-#define AIN1_Pin GPIO_PIN_10
+#define AIN1_Pin GPIO_PIN_11
 #define AIN1_GPIO_Port GPIOD
+#define Servo1_Pin GPIO_PIN_13
+#define Servo1_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
-#define convert_param (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/毫秒)
-#define WheelDistance 0.23156f // 单位：m
-#define WheelRadius 0.0325f // 单位：m
-#define wheel_circumference 0.2042f // 单位：m
+#define convert_param (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/10毫秒)
+#define WheelDistance 23.156f // 单位：cm
+#define WheelRadius 3.25f // 单位：cm
+#define wheel_circumference 20.42f // 单位：cm
 #define COUNTERNUM1 ((float)__HAL_TIM_GET_COUNTER(&htim1))
 #define COUNTERNUM2 ((float)__HAL_TIM_GET_COUNTER(&htim2))
-#define RELOADVALUE 20000
-#define fliter_mean_sample1 6
-#define fliter_buffer_size 100
+#define RELOADVALUE 60000
+#define fliter_mean_sample1 166
+#define fliter_buffer_size 1000
+#define low_pase_a 0.1f
+#define motor1 0
+#define motor2 1
+#define motor3 2
 // JY901s cfg
 #define ACC_UPDATE		0x01
 #define GYRO_UPDATE		0x02

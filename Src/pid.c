@@ -64,8 +64,30 @@ float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float cu
     return pid->output;
 }
 
+// 位置环
+float PID_Position(PID_ControllerTypeDef *pid, float currentPosition) {
+    // 计算位置误差
+    float positionError = pid->setpoint - currentPosition;
+
+    // 计算PID控制量
+    float proportional = pid->Kp * positionError;
+    float integral = pid->integral + pid->Ki * positionError;
+    float derivative = pid->Kd * (positionError - pid->lastError);
+
+    pid->output = proportional + integral + derivative;
+
+    // 限制PID输出在合理范围内
+    pid->output = PID_Clamp(pid->output, -1000, 1000);
+
+    // 更新积分项和记录上一次误差
+    pid->integral = integral;
+    pid->lastError = positionError;
+
+    return pid->output;
+}
+
 // 转向环
-float PID_Turn_Calc(PID_ControllerTypeDef *pid, float Angle, float Gyro)
+float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro)
 {
     float Angle_bias, Gyro_bias;
     Angle_bias = pid->setpoint - Angle;
@@ -77,14 +99,14 @@ float PID_Turn_Calc(PID_ControllerTypeDef *pid, float Angle, float Gyro)
 
 
 // 直立环
-float PID_Balance_Calc(PID_ControllerTypeDef *pid, float Angle)
+float PID_Balance(PID_ControllerTypeDef *pid, float Angle)
 {
     float Angle_bias, Gyro_bias;
-    Angle_bias = Middle_angle - Angle;                    				//求出平衡的角度中值 和机械相关
-    float Gyro = Angle - pid->lastError;                          				//求出角速度
+    Angle_bias = Middle_angle - Angle;                    			//求出平衡的角度中值 和机械相关
+    float Gyro = Angle - pid->lastError;                          	//求出角速度
     Gyro_bias = 0 - Gyro;
-    pid->output= -pid->Kp * Angle_bias - Gyro_bias * pid->Kd ; //计算平衡控制的电机PWM  PD控制   kp是P系数 kd是D系数
-    pid->lastError = Angle;                                				//记录角度
+    pid->output= -pid->Kp * Angle_bias - Gyro_bias * pid->Kd ;      //计算平衡控制的电机PWM  PD控制   kp是P系数 kd是D系数
+    pid->lastError = Angle;                                			//记录角度
 
     return pid->output;
 }

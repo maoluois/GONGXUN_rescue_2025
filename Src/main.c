@@ -27,7 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "retarget.h"
 #include "control.h"
-#include "fliter.h"
+#include "filter.h"
 #include "Algorithm.h"
 #include "pid.h"
 #include "wit_c_sdk.h"
@@ -56,19 +56,21 @@
 /* USER CODE BEGIN PV */
 
 // encoder PV
-int32_t totalAngle1 = 0;       // 总的角度
+int32_t totalAngle1 = 0;      // 总的角度
 int32_t totalAngle2 = 0;
 int32_t lastAngle = 0;        // 上一次的角度
-// int16_t loopNum1 = 0;          // 防超上限
+// int16_t loopNum1 = 0;      // 防超上限
 // int16_t loopNum2 = 0;
-float wheel1_speed = 0;              // 轮子速度 （单位：m/s）
+float wheel1_speed = 0;       // 轮子速度 （单位：cm/s）
 float wheel2_speed = 0;
+float last_wheel1_speed = 0;  // 上一次的轮子速度
+float last_wheel2_speed = 0;
 
 // usart PV
 uint8_t RxBuffer[1];          // 串口接收缓冲
 uint16_t RxLine = 0;          // 指令长度
 uint8_t DataBuff[200];        // 指令内容
-float SetSpeed1 = 0;          // 设置目标速度（单位：m/s）
+float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
 float SetSpeed2 = 0;
 float SetSpeed6 = 0;
 
@@ -181,8 +183,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      Set_pulse1(-300);
-      Set_pulse2(100);
+      // Set_pulse1(100);
+      printf("%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2, pitch, SetSpeed6);
       // 获取角度
       // CmdProcess();
       if(s_cDataUpdate)
@@ -249,12 +251,12 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 5;
-  RCC_OscInitStruct.PLL.PLLN = 192;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 80;
   RCC_OscInitStruct.PLL.PLLP = 2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_2;
+  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
   RCC_OscInitStruct.PLL.PLLFRACN = 0;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -284,23 +286,23 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    // 定时1ms(480000000 / 480 / 1000 = 10000)
+    // 定时10ms(115000000 / 115 / 10000 = 100)
     if (htim->Instance == htim17.Instance)
     {
         // 获取脉冲
         int16_t pluse1 = COUNTERNUM1;
         int16_t pluse2 = COUNTERNUM2;
-        //    printf("%f,%f\n", COUNTERNUM1, COUNTERNUM2);
+        // printf("%f,%f\n", COUNTERNUM1, COUNTERNUM2);
 
         totalAngle1 = pluse1;
         totalAngle2 = pluse2;
 
         // 计算速度
-        wheel1_speed = ((float)(totalAngle1 - RELOADVALUE / 2.0) / convert_param) * 1000 * wheel_circumference;  // 单位：米/秒
-        wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / convert_param) * 1000 * wheel_circumference;  // 单位：米/秒
+        wheel1_speed = -((float)(totalAngle1 - RELOADVALUE / 2.0) / convert_param) * 100 * wheel_circumference;  // 单位：厘米/秒 （AB相反）
+        wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / convert_param) * 100 * wheel_circumference;  // 单位：厘米/秒
 
 
-        // 滤波
+        // 均值滤波
         mean_buff1[buff_index1++] = wheel1_speed;
         mean_buff2[buff_index1++] = wheel2_speed;
         mean_buff3[buff_index2++] = fAngle[2];
@@ -308,30 +310,43 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         wheel2_speed = mean_fliter(mean_buff2, buff_index1);
         yaw = mean_fliter(mean_buff3, buff_index2);
 
+        // // 滑动窗口均值滤波
+        // wheel1_speed = Filter_SlidingWindowAvg(motor1, wheel1_speed);
+        // wheel2_speed = Filter_SlidingWindowAvg(motor2, wheel2_speed);
 
         // 索引更新
         if (buff_index1 >= fliter_mean_sample1)
         {
             buff_index1 = 0;
+            // 记录上一次的速度
+            last_wheel1_speed = wheel1_speed;
         }
          if (buff_index2 >= fliter_mean_sample1)
         {
             buff_index2 = 0;
+            // 记录上一次的速度
+            last_wheel2_speed = wheel2_speed;
         }
+
 //      printf("%d, %d\n", totalAngle, lastAngle);                                // 调试使用
 //      printf("%f, %f\n", (float)(totalAngle - lastAngle), speed);               // 调试使用
 //      lastAngle = totalAngle;
 
-        // 计算速度PID
+        // 位置PID
+        // pid_end = PID_Position(&motor1PID, currentPosition);
+
+        // 速度PID
         pidOutputV1 = PID_Velocity(&motor1PID, wheel1_speed);
         pidOutputV2 = PID_Velocity(&motor2PID, wheel2_speed);
+        // printf("%f,%f\n", pidOutputV1, pidOutputV2);
 
         // 输出PWM（用于调试速度PID）
+        //
         Set_pulse1(pidOutputV1);
         Set_pulse2(pidOutputV2);
 
         // // 计算角度PID
-        // pidOutputYaw = PID_Turn_Calc(&ImuPID, yaw, fGyro[2]);
+        // pidOutputYaw = PID_Turn(&ImuPID, yaw, fGyro[2]);
         //
         // // 输出PWM（用于调试角度PID）
         // if (pidOutputYaw > 0)           // 方向不一定正确，需要根据实际情况调整
@@ -355,6 +370,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         //           printf("哈哈我又来啦");
         // Set_pulse2(pidoutput2);
         // }
+
+
+
 
         // 重置计数器 （重置到重装值的中间值，也可以重置到0，不过反转得到的数需要取补码）
         __HAL_TIM_SetCounter(&htim1, RELOADVALUE / 2);

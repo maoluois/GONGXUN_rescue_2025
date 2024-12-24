@@ -23,6 +23,7 @@ void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float set
 float PID_Clamp(float value, float min, float max);
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed);
 float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float currentSpeedRight, float angle);
-float PID_Balance_Calc(PID_ControllerTypeDef *pid, float Angle);
-float PID_Turn_Calc(PID_ControllerTypeDef *pid, float Angle, float Gyro);
+float PID_Position(PID_ControllerTypeDef *pid, float currentPos);
+float PID_Balance(PID_ControllerTypeDef *pid, float Angle);
+float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro);
 #endif //PID_H
