@@ -31,7 +31,7 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     pid->output = proportional + integral + derivative;
 
     // 限制PID输出在合理范围内
-    pid->output = PID_Clamp(pid->output, -1000, 1000);
+    pid->output = PID_Clamp(pid->output, -100, 100);
 
     // 更新积分项和记录上一次误差
     pid->integral = integral;

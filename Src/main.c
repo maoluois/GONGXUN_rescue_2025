@@ -65,6 +65,16 @@ float wheel1_speed = 0;       // 轮子速度 （单位：cm/s）
 float wheel2_speed = 0;
 float last_wheel1_speed = 0;  // 上一次的轮子速度
 float last_wheel2_speed = 0;
+float wheel1_speedF = 0;      // 滤波后的轮子速度
+float wheel2_speedF = 0;
+
+// car centre PV
+float CurrentPositionX = 0;    // 当前位置
+float CurrentPositionY = 0;
+float CurrentDistance = 0;
+float lastPosition = 0;       // 上一次的位置
+float linear_speed = 0;       // 线速度
+float angular_speed = 0;      // 角速度
 
 // usart PV
 uint8_t RxBuffer[1];          // 串口接收缓冲
@@ -86,6 +96,7 @@ static volatile char s_cDataUpdate = 0, s_cCmd = 0xff;
 // const uint32_t c_uiBaud[10] = {0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600};
 float fAcc[3], fGyro[3], fAngle[3];
 float pitch = 0, roll = 0, yaw = 0;
+float yawF = 0; // 滤波后的yaw
 
 // struct PID
 PID_ControllerTypeDef motor1PID;
@@ -164,11 +175,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   RetargetInit(&huart1);
-  WitInit(WIT_PROTOCOL_NORMAL, 0x50);
-  WitSerialWriteRegister(SensorUartSend);
-  WitRegisterCallBack(SensorDataUpdata);
-  WitDelayMsRegister(Delayms);
-  AutoScanSensor();
+  // WitInit(WIT_PROTOCOL_NORMAL, 0x50);
+  // WitSerialWriteRegister(SensorUartSend);
+  // WitRegisterCallBack(SensorDataUpdata);
+  // WitDelayMsRegister(Delayms);
+  // AutoScanSensor();
   HAL_TIM_Base_Init(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
@@ -184,40 +195,45 @@ int main(void)
   while (1)
   {
       // Set_pulse1(100);
-      printf("%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2, pitch, SetSpeed6);
+      // Set_pulse2(100);
+      // HAL_Delay(500);
+      Set_pulse1(-10);
+      Set_pulse2( -10);
+      HAL_Delay(500);
+      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel2_speed, SetSpeed1, yaw, COUNTERNUM1, COUNTERNUM2);
       // 获取角度
       // CmdProcess();
-      if(s_cDataUpdate)
-      {
-          for(int i = 0; i < 3; i++)
-          {
-              fAcc[i] = (float)sReg[AX+i] / 32768.0f * 16.0f;
-              fGyro[i] = (float)sReg[GX+i] / 32768.0f * 2000.0f;
-              fAngle[i] = (float)sReg[Roll+i] / 32768.0f * 180.0f;
-          }
-          if(s_cDataUpdate & ACC_UPDATE)
-          {
-              //printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
-              s_cDataUpdate &= ~ACC_UPDATE;
-          }
-          if(s_cDataUpdate & GYRO_UPDATE)
-          {
-              //printf("gyro:%.3f %.3f %.3f\r\n", fGyro[0], fGyro[1], fGyro[2]);
-              s_cDataUpdate &= ~GYRO_UPDATE;
-          }
-          if(s_cDataUpdate & ANGLE_UPDATE)
-          {
-              //printf("angle:%.3f %.3f %.3f\r\n", fAngle[0], fAngle[1], fAngle[2]);
-              // printf("%.3f,%.3f,%.3f\n", fAngle[0], fAngle[1], fAngle[2]);
-              s_cDataUpdate &= ~ANGLE_UPDATE;
-          }
-          if(s_cDataUpdate & MAG_UPDATE)
-          {
-              //printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
-              s_cDataUpdate &= ~MAG_UPDATE;
-          }
-
-      }
+      // if(s_cDataUpdate)
+      // {
+      //     for(int i = 0; i < 3; i++)
+      //     {
+      //         fAcc[i] = (float)sReg[AX+i] / 32768.0f * 16.0f;
+      //         fGyro[i] = (float)sReg[GX+i] / 32768.0f * 2000.0f;
+      //         fAngle[i] = (float)sReg[Roll+i] / 32768.0f * 180.0f;
+      //     }
+      //     if(s_cDataUpdate & ACC_UPDATE)
+      //     {
+      //         //printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
+      //         s_cDataUpdate &= ~ACC_UPDATE;
+      //     }
+      //     if(s_cDataUpdate & GYRO_UPDATE)
+      //     {
+      //         //printf("gyro:%.3f %.3f %.3f\r\n", fGyro[0], fGyro[1], fGyro[2]);
+      //         s_cDataUpdate &= ~GYRO_UPDATE;
+      //     }
+      //     if(s_cDataUpdate & ANGLE_UPDATE)
+      //     {
+      //         //printf("angle:%.3f %.3f %.3f\r\n", fAngle[0], fAngle[1], fAngle[2]);
+      //         // printf("%.3f,%.3f,%.3f\n", fAngle[0], fAngle[1], fAngle[2]);
+      //         s_cDataUpdate &= ~ANGLE_UPDATE;
+      //     }
+      //     if(s_cDataUpdate & MAG_UPDATE)
+      //     {
+      //         //printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
+      //         s_cDataUpdate &= ~MAG_UPDATE;
+      //     }
+      //
+      // }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -286,29 +302,34 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    // 定时10ms(115000000 / 115 / 10000 = 100)
+    // 定时10ms(115000000 / 1150 / 500 = 200)
     if (htim->Instance == htim17.Instance)
     {
         // 获取脉冲
         int16_t pluse1 = COUNTERNUM1;
         int16_t pluse2 = COUNTERNUM2;
-        // printf("%f,%f\n", COUNTERNUM1, COUNTERNUM2);
+
 
         totalAngle1 = pluse1;
         totalAngle2 = pluse2;
 
         // 计算速度
-        wheel1_speed = -((float)(totalAngle1 - RELOADVALUE / 2.0) / convert_param) * 100 * wheel_circumference;  // 单位：厘米/秒 （AB相反）
-        wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / convert_param) * 100 * wheel_circumference;  // 单位：厘米/秒
+        wheel1_speed = -((float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒 （AB相反）
+        wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒
+        // printf("%f,%f,%f,%f\n", wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2);
 
+        // 解算车身线速度和角速度
+        // Kinematics_differential(wheel1_speed, wheel2_speed, WheelDistance, &linear_speed, &angular_speed);
+        // angular_speed = fGyro[2];
+        // CurrentPositionX += linear_speed * 0.01 * cos(yaw);
 
         // 均值滤波
         mean_buff1[buff_index1++] = wheel1_speed;
         mean_buff2[buff_index1++] = wheel2_speed;
         mean_buff3[buff_index2++] = fAngle[2];
-        wheel1_speed = mean_fliter(mean_buff1, buff_index1);
-        wheel2_speed = mean_fliter(mean_buff2, buff_index1);
-        yaw = mean_fliter(mean_buff3, buff_index2);
+        wheel1_speedF = mean_fliter(mean_buff1, buff_index1);
+        wheel2_speedF = mean_fliter(mean_buff2, buff_index1);
+        yawF = mean_fliter(mean_buff3, buff_index2);
 
         // // 滑动窗口均值滤波
         // wheel1_speed = Filter_SlidingWindowAvg(motor1, wheel1_speed);
@@ -318,14 +339,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (buff_index1 >= fliter_mean_sample1)
         {
             buff_index1 = 0;
-            // 记录上一次的速度
-            last_wheel1_speed = wheel1_speed;
+            // // 记录上一次的速度
+            // last_wheel1_speed = wheel1_speed;
         }
          if (buff_index2 >= fliter_mean_sample1)
         {
             buff_index2 = 0;
-            // 记录上一次的速度
-            last_wheel2_speed = wheel2_speed;
+            // // 记录上一次的速度
+            // last_wheel2_speed = wheel2_speed;
         }
 
 //      printf("%d, %d\n", totalAngle, lastAngle);                                // 调试使用
@@ -335,15 +356,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // 位置PID
         // pid_end = PID_Position(&motor1PID, currentPosition);
 
-        // 速度PID
-        pidOutputV1 = PID_Velocity(&motor1PID, wheel1_speed);
-        pidOutputV2 = PID_Velocity(&motor2PID, wheel2_speed);
-        // printf("%f,%f\n", pidOutputV1, pidOutputV2);
+       // 速度PID
+        pidOutputV1 = PID_Velocity(&motor1PID, wheel1_speedF);
+        pidOutputV2 = PID_Velocity(&motor2PID, wheel2_speedF);
 
-        // 输出PWM（用于调试速度PID）
-        //
-        Set_pulse1(pidOutputV1);
-        Set_pulse2(pidOutputV2);
+       // 输出PWM（用于调试速度PID)
+        // Set_pulse1(pidOutputV1);
+        // Set_pulse2(pidOutputV2);
+        // printf("%f,%f,%f\n", pidOutputV1, pidOutputV2, SetSpeed1);
+
+
 
         // // 计算角度PID
         // pidOutputYaw = PID_Turn(&ImuPID, yaw, fGyro[2]);
@@ -371,8 +393,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // Set_pulse2(pidoutput2);
         // }
 
-
-
+        // printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2, pitch, SetSpeed6, COUNTERNUM1, COUNTERNUM2);
 
         // 重置计数器 （重置到重装值的中间值，也可以重置到0，不过反转得到的数需要取补码）
         __HAL_TIM_SetCounter(&htim1, RELOADVALUE / 2);
@@ -461,7 +482,10 @@ float Get_Data(void)
             (float)(DataBuff[data_Start_Num + 2] - 48);
         else if (data_Integer_len == 4)
             Integer = (float)(DataBuff[data_Start_Num] - 48) * 1000 + (float)(DataBuff[data_Start_Num + 1] - 48) * 100 +
-            (float)(DataBuff[data_Start_Num + 3] - 48) * 10 + (float)(DataBuff[data_Start_Num + 4] - 48);
+            (float)(DataBuff[data_Start_Num + 2] - 48) * 10 + (float)(DataBuff[data_Start_Num + 3] - 48);
+        else if (data_Integer_len == 5)
+            Integer = (float)(DataBuff[data_Start_Num] - 48) * 10000 + (float)(DataBuff[data_Start_Num + 1] - 48) * 1000 +
+            (float)(DataBuff[data_Start_Num + 2] - 48) * 100 + (float)(DataBuff[data_Start_Num + 3] - 48) * 10 + (float)(DataBuff[data_Start_Num + 4] - 48);
     }
 
     // 计算小数数据

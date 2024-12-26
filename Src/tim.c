@@ -264,9 +264,9 @@ void MX_TIM17_Init(void)
 
   /* USER CODE END TIM17_Init 1 */
   htim17.Instance = TIM17;
-  htim17.Init.Prescaler = 115-1;
+  htim17.Init.Prescaler = 1150-1;
   htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim17.Init.Period = 10000-1;
+  htim17.Init.Period = 1000-1;
   htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim17.Init.RepetitionCounter = 0;
   htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -368,7 +368,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     __HAL_RCC_TIM17_CLK_ENABLE();
 
     /* TIM17 interrupt Init */
-    HAL_NVIC_SetPriority(TIM17_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(TIM17_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(TIM17_IRQn);
   /* USER CODE BEGIN TIM17_MspInit 1 */
 

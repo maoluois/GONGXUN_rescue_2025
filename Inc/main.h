@@ -85,10 +85,10 @@ void Error_Handler(void);
 #define Servo1_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
-#define convert_param (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/10毫秒)
+#define ConvertParam (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/10毫秒)
 #define WheelDistance 23.156f // 单位：cm
 #define WheelRadius 3.25f // 单位：cm
-#define wheel_circumference 20.42f // 单位：cm
+#define WheelCircumference 20.42f // 单位：cm
 #define COUNTERNUM1 ((float)__HAL_TIM_GET_COUNTER(&htim1))
 #define COUNTERNUM2 ((float)__HAL_TIM_GET_COUNTER(&htim2))
 #define RELOADVALUE 60000
