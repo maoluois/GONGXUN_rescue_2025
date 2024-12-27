@@ -26,8 +26,8 @@ float PID_Incremental(PID_ControllerTypeDef *pid, float currentSpeed) {
     float deltaError2 = error - 2 * pid->lastError + pid->lastLastError;
 
     // 计算增量PID控制量
-    // float deltaOutput = pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2;
-    float deltaOutput = (pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2) / 100.0f;
+    float deltaOutput = pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2;
+    // float deltaOutput = (pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2);
 
     // 更新PID输出
     pid->output += deltaOutput;
@@ -48,17 +48,23 @@ float PID_Incremental(PID_ControllerTypeDef *pid, float currentSpeed) {
 
 // 更新PID控制器并计算输出
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
-    float error = pid->setpoint - currentSpeed;
-
     // 计算PID控制量
+    float integral;
+    float error = pid->setpoint - currentSpeed;
+    // 如果达到目标速度，清零积分项
+    // if (error < 0.1 && error > -0.1) integral = pid->integral;
+    // else  integral = pid->integral + pid->Ki * error;
+    integral = pid->integral + pid->Ki * error;
     float proportional = pid->Kp * error;
-    float integral = pid->integral + pid->Ki * error;
+
     float derivative = pid->Kd * (error - pid->lastError);
 
-    pid->output = proportional + integral + derivative;
+    pid->output = (proportional + integral + derivative) / 10.0f;
 
     // 限制PID输出在合理范围内
     pid->output = PID_Clamp(pid->output, -100, 100);
+
+    if (pid->setpoint < 0.1 && pid->setpoint > -0.1) integral = pid->integral;
 
     // 更新积分项和记录上一次误差
     pid->integral = integral;

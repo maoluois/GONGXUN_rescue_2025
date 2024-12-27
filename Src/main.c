@@ -204,10 +204,10 @@ int main(void)
       // Set_pulse1(10);
       // Set_pulse2( 10);
       // HAL_Delay(500);
-      // Set_pulse1(10);
+      // Set_pulse1(-10);
       // Set_pulse2(-10);
 
-      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel2_speed, SetSpeed1, yaw, COUNTERNUM1, COUNTERNUM2);
+      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, yaw);
       // 获取角度
       // CmdProcess();
       // if(s_cDataUpdate)
@@ -331,8 +331,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // CurrentPositionX += linear_speed * 0.01 * cos(yaw);
 
         // 均值滤波
-        mean_buff1[buff_index1++] = wheel1_speed;
-        mean_buff2[buff_index1++] = wheel2_speed;
+        mean_buff1[buff_index1] = wheel1_speed;
+        mean_buff2[buff_index1] = wheel2_speed;
+        buff_index1 ++;
         mean_buff3[buff_index2++] = fAngle[2];
         wheel1_speedF = mean_fliter(mean_buff1, buff_index1);
         wheel2_speedF = mean_fliter(mean_buff2, buff_index1);
@@ -364,12 +365,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // pid_end = PID_Position(&motor1PID, currentPosition);
 
        // 速度PID
-        pidOutputV1 = PID_Incremental(&motor1PID, wheel1_speedF);
-        pidOutputV2 = PID_Incremental(&motor2PID, wheel2_speedF);
+        pidOutputV1 = PID_Velocity(&motor1PID, wheel1_speedF);
+        pidOutputV2 = PID_Velocity(&motor2PID, wheel2_speedF);
 
-       // 输出PWM（用于调试速度PID)
-        // Set_pulse1(pidOutputV1);
-        // Set_pulse2(pidOutputV2);
+        // 输出PWM（用于调试速度PID)
+        Set_pulse1(pidOutputV1);
+        Set_pulse2(pidOutputV2);
         // printf("%f,%f,%f\n", pidOutputV1, pidOutputV2, SetSpeed1);
 
 
