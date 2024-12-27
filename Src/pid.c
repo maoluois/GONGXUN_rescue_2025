@@ -14,10 +14,37 @@ void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float set
     pid->Kd = kd;
     pid->setpoint = setpoint;
     pid->lastError = 0.0f;
+    pid->lastLastError = 0.0f;
     pid->integral = 0.0f;
     pid->output = 0.0f;
 }
 
+// 增量PID控制
+float PID_Incremental(PID_ControllerTypeDef *pid, float currentSpeed) {
+    float error = pid->setpoint - currentSpeed;
+    float deltaError = error - pid->lastError;
+    float deltaError2 = error - 2 * pid->lastError + pid->lastLastError;
+
+    // 计算增量PID控制量
+    // float deltaOutput = pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2;
+    float deltaOutput = (pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2) / 100.0f;
+
+    // 更新PID输出
+    pid->output += deltaOutput;
+
+    // 限制PID输出在合理范围内
+    pid->output = PID_Clamp(pid->output, -100, 100);
+
+    if (pid->setpoint < 0.1 || pid->setpoint > -0.1) {
+        pid->Ki = 0;
+    }
+
+    // 更新误差
+    pid->lastLastError = pid->lastError;
+    pid->lastError = error;
+
+    return pid->output;
+}
 
 // 更新PID控制器并计算输出
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {

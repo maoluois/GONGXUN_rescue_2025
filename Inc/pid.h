@@ -14,6 +14,7 @@ typedef struct{
     float Kd;
     float setpoint;
     float lastError;
+    float lastLastError;
     float integral;
     float output;
 
@@ -21,6 +22,7 @@ typedef struct{
 
 void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float setpoint);
 float PID_Clamp(float value, float min, float max);
+float PID_Incremental(PID_ControllerTypeDef *pid, float currentSpeed);
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed);
 float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float currentSpeedRight, float angle);
 float PID_Position(PID_ControllerTypeDef *pid, float currentPos);
