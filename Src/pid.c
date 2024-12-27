@@ -59,7 +59,7 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
 
     float derivative = pid->Kd * (error - pid->lastError);
 
-    pid->output = (proportional + integral + derivative) / 10.0f;
+    pid->output = proportional + integral + derivative;
 
     // 限制PID输出在合理范围内
     pid->output = PID_Clamp(pid->output, -100, 100);
@@ -69,6 +69,8 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     // 更新积分项和记录上一次误差
     pid->integral = integral;
     pid->lastError = error;
+    // 死区控制
+    if (pid->setpoint < 0.1 && pid->setpoint > -0.1) pid->integral = 0;
 
     return pid->output;
 }

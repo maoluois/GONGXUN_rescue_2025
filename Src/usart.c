@@ -21,7 +21,9 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-
+static unsigned char TxBuffer[256];
+static unsigned char TxCounter=0;
+static unsigned char count=0;
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart5;
@@ -339,18 +341,31 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
-// void Uart2Send(unsigned char *p_data, unsigned int uiSize)
-// {
-//   unsigned int i;
-//   for(i = 0; i < uiSize; i++)
-//   {
-//     while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
-//     USART_SendData(USART2, *p_data++);
-//   }
-//   while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
-// }
-HAL_StatusTypeDef Uart2Send(uint8_t *p_data, uint16_t uiSize)
+void UART2_send_char(unsigned char data)
 {
-  return HAL_UART_Transmit(&huart2, p_data, uiSize, HAL_MAX_DELAY);
+  TxBuffer[count++] = data;
 }
+
+void UART2_send_string(unsigned char *str)
+{
+  while(*str)
+  {
+    if(*str=='\r')UART2_send_char(0x0d);
+    else if(*str=='\n')UART2_send_char(0x0a);
+    else UART2_send_char(*str);
+    str++;
+  }
+}
+
+uint8_t Rxdata;
+extern void uart2_read_data(unsigned char ucData);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance==USART2)
+  {
+    HAL_UART_Receive_IT(&huart2, &Rxdata, 1);
+    uart2_read_data(Rxdata);	//处理数据
+  }
+}
+
 /* USER CODE END 1 */

@@ -513,4 +513,43 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 /* USER CODE BEGIN 1 */
 
+extern struct STime		stcTime;
+extern struct SAcc 		stcAcc;
+extern struct SGyro 		stcGyro;
+extern struct SAngle 	stcAngle;
+extern struct SMag 		stcMag;
+extern struct SDStatus stcDStatus;
+extern struct SPress 	stcPress;
+extern struct SLonLat 	stcLonLat;
+extern struct SGPSV 		stcGPSV;
+extern struct SQ       stcQ;
+
+float gyro_data;
+float gyroz,gyroz_last;
+float anglez;
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if(htim->Instance==TIM6)
+  {
+    gyro_data=(float)stcGyro.w[2] / 32768 * 200 * 180;
+
+    gyroz_last=gyroz;
+    gyroz=(gyro_data + 0) * 10 / 164;
+    gyroz = gyroz * 0.9 + gyroz_last * 0.1;
+    anglez+=(float)(gyroz)*0.01;
+
+
+    if (anglez > 180)
+    {
+      anglez = -180;
+    }
+    if (anglez < -180)
+    {
+      anglez = 180;
+    }
+  }
+}
+
 /* USER CODE END 1 */

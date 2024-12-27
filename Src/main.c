@@ -33,6 +33,7 @@
 #include "wit_c_sdk.h"
 #include <stdio.h>
 #include <string.h>
+#include <jy901s.h>
 
 /* USER CODE END Includes */
 
@@ -92,8 +93,12 @@ int buff_index1 = 0;                // 滤波缓冲区索引
 int buff_index2 = 0;
 
 // Imu JY901s PV
-static volatile char s_cDataUpdate = 0, s_cCmd = 0xff;
-// const uint32_t c_uiBaud[10] = {0, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600};
+
+extern char ACCCALSW[5];//进入加速度校准模式
+extern char SAVACALSW[5];//保存当前配置
+extern char MAGNETICCALAM[5];      //磁力计校准
+extern char SAVEMAGNETICCALAM[5];  //保存配置
+extern uint8_t Rxdata;
 float fAcc[3], fGyro[3], fAngle[3];
 float pitch = 0, roll = 0, yaw = 0;
 float yawF = 0; // 滤波后的yaw
@@ -122,11 +127,7 @@ void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
 float Get_Data(void);
 
 // JY901s配置函数
-// static void CmdProcess(void);
-static void AutoScanSensor(void);
-static void SensorUartSend(uint8_t *p_data, uint32_t uiSize);
-static void SensorDataUpdata(uint32_t uiReg, uint32_t uiRegNum);
-static void Delayms(uint16_t ucMs);
+
 
 /* USER CODE END PFP */
 
@@ -176,13 +177,11 @@ int main(void)
   MX_TIM4_Init();
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
-
+  sendcmd(ACCCALSW);HAL_Delay(100); //加速度计校准
+  sendcmd(SAVACALSW);HAL_Delay(100);//保存当前配置
+  sendcmd(MAGNETICCALAM);	HAL_Delay(100);   //磁力计校准
+  sendcmd(SAVEMAGNETICCALAM);HAL_Delay(100);//保存当前配置
   RetargetInit(&huart1);
-  // WitInit(WIT_PROTOCOL_NORMAL, 0x50);
-  // WitSerialWriteRegister(SensorUartSend);
-  // WitRegisterCallBack(SensorDataUpdata);
-  // WitDelayMsRegister(Delayms);
-  // AutoScanSensor();
   HAL_TIM_Base_Init(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
@@ -207,40 +206,10 @@ int main(void)
       // Set_pulse1(-10);
       // Set_pulse2(-10);
 
-      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, yaw);
+      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, yaw);
       // 获取角度
-      // CmdProcess();
-      // if(s_cDataUpdate)
-      // {
-      //     for(int i = 0; i < 3; i++)
-      //     {
-      //         fAcc[i] = (float)sReg[AX+i] / 32768.0f * 16.0f;
-      //         fGyro[i] = (float)sReg[GX+i] / 32768.0f * 2000.0f;
-      //         fAngle[i] = (float)sReg[Roll+i] / 32768.0f * 180.0f;
-      //     }
-      //     if(s_cDataUpdate & ACC_UPDATE)
-      //     {
-      //         //printf("acc:%.3f %.3f %.3f\r\n", fAcc[0], fAcc[1], fAcc[2]);
-      //         s_cDataUpdate &= ~ACC_UPDATE;
-      //     }
-      //     if(s_cDataUpdate & GYRO_UPDATE)
-      //     {
-      //         //printf("gyro:%.3f %.3f %.3f\r\n", fGyro[0], fGyro[1], fGyro[2]);
-      //         s_cDataUpdate &= ~GYRO_UPDATE;
-      //     }
-      //     if(s_cDataUpdate & ANGLE_UPDATE)
-      //     {
-      //         //printf("angle:%.3f %.3f %.3f\r\n", fAngle[0], fAngle[1], fAngle[2]);
-      //         // printf("%.3f,%.3f,%.3f\n", fAngle[0], fAngle[1], fAngle[2]);
-      //         s_cDataUpdate &= ~ANGLE_UPDATE;
-      //     }
-      //     if(s_cDataUpdate & MAG_UPDATE)
-      //     {
-      //         //printf("mag:%d %d %d\r\n", sReg[HX], sReg[HY], sReg[HZ]);
-      //         s_cDataUpdate &= ~MAG_UPDATE;
-      //     }
-      //
-      // }
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -438,24 +407,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         HAL_UART_Receive_IT(&huart1, (uint8_t *)RxBuffer, 1);  // 重新启动串口中断接收下一个字符
     }
 
-    if (UartHandle->Instance == UART5)  // 判断是否是串口5产生的中断
-    {
-        RxLine++;                        // 每接收到一个数据，接收长度加1
-        DataBuff[RxLine - 1] = RxBuffer[0];  // 将接收到的数据存入缓存数组
-
-        if (RxBuffer[0] == '!')         // 判断是否接收到结束标志（这里以0x21为例，可以根据实际情况修改）
-        {
-            // printf("RXLen=%d\r\n", RxLine);  // 输出接收到的指令长度
-            // for (int i = 0; i < RxLine; i++)
-            //    printf("UART DataBuff[%d] = %c\r\n", i, DataBuff[i]);  // 输出接收到的完整指令
-            Get_Data_Xbox();
-            memset(DataBuff, 0, sizeof(DataBuff));  // 清空接收缓存
-            RxLine = 0;  // 重置接收长度计数
-        }
-
-        RxBuffer[0] = 0;  // 清空接收缓冲
-        HAL_UART_Receive_IT(&huart5, (uint8_t *)RxBuffer, 1);  // 重新启动串口中断接收下一个字符
-    }
 }
 
 float Get_Data_Xbox(void)
@@ -668,178 +619,6 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
     }
 }
 
-void CopeCmdData(unsigned char ucData)
-{
-	 static unsigned char s_ucData[50], s_ucRxCnt = 0;
-
-	 s_ucData[s_ucRxCnt++] = ucData;
-	 if(s_ucRxCnt<3)return;										//Less than three data returned
-	 if(s_ucRxCnt >= 50) s_ucRxCnt = 0;
-	 if(s_ucRxCnt >= 3)
-	 {
-		 if((s_ucData[1] == '\r') && (s_ucData[2] == '\n'))
-		 {
-		  	s_cCmd = s_ucData[0];
-//			  printf("%c", s_cCmd);
-			  memset(s_ucData,0,50);
-			  s_ucRxCnt = 0;
-	   }
-		 else
-		 {
-			 s_ucData[0] = s_ucData[1];
-			 s_ucData[1] = s_ucData[2];
-			 s_ucRxCnt = 2;
-			}
-	  }
-}
-
-// static void ShowHelp(void)
-// {
-// 	printf("\r\n************************	 WIT_SDK_DEMO	************************");
-// 	printf("\r\n************************          HELP           ************************\r\n");
-// 	printf("UART SEND:a\\r\\n   Acceleration calibration.\r\n");
-// 	printf("UART SEND:m\\r\\n   Magnetic field calibration,After calibration send:   e\\r\\n   to indicate the end\r\n");
-// 	printf("UART SEND:U\\r\\n   Bandwidth increase.\r\n");
-// 	printf("UART SEND:u\\r\\n   Bandwidth reduction.\r\n");
-// 	printf("UART SEND:B\\r\\n   Baud rate increased to 115200.\r\n");
-// 	printf("UART SEND:b\\r\\n   Baud rate reduction to 9600.\r\n");
-// 	printf("UART SEND:R\\r\\n   The return rate increases to 10Hz.\r\n");
-// 	printf("UART SEND:r\\r\\n   The return rate reduction to 1Hz.\r\n");
-// 	printf("UART SEND:C\\r\\n   Basic return content: acceleration, angular velocity, angle, magnetic field.\r\n");
-// 	printf("UART SEND:c\\r\\n   Return content: acceleration.\r\n");
-// 	printf("UART SEND:h\\r\\n   help.\r\n");
-// 	printf("******************************************************************************\r\n");
-// }
-
-// static void CmdProcess(void)
-// {
-// 	switch(s_cCmd)
-// 	{
-// 		case 'a':
-// //			printf("yes");
-// 			if(WitStartAccCali() != WIT_HAL_OK)
-// 				printf("\r\nSet AccCali Error\r\n");
-// 			break;
-// 		case 'm':
-// 			if(WitStartMagCali() != WIT_HAL_OK)
-// 				printf("\r\nSet MagCali Error\r\n");
-// 			break;
-// 		case 'e':
-// 			if(WitStopMagCali() != WIT_HAL_OK)
-// 				printf("\r\nSet MagCali Error\r\n");
-// 			break;
-// 		case 'u':
-// 			if(WitSetBandwidth(BANDWIDTH_5HZ) != WIT_HAL_OK)
-// 				printf("\r\nSet Bandwidth Error\r\n");
-// 			break;
-// 		case 'U':
-// 			if(WitSetBandwidth(BANDWIDTH_256HZ) != WIT_HAL_OK)
-// 				printf("\r\nSet Bandwidth Error\r\n");
-// 			break;
-// 		case 'B':
-// 			if(WitSetUartBaud(WIT_BAUD_115200) != WIT_HAL_OK)
-// 				printf("\r\nSet Baud Error\r\n");
-// 			else
-// 				MX_USART2_UART_Init(115200);
-// 			break;
-// 		case 'b':
-// 			if(WitSetUartBaud(WIT_BAUD_9600) != WIT_HAL_OK)
-// 				printf("\r\nSet Baud Error\r\n");
-// 			else
-// 				MX_USART2_UART_Init(9600);
-// 			break;
-// 		case 'R':
-// 			if(WitSetOutputRate(RRATE_10HZ) != WIT_HAL_OK)
-// 				printf("\r\nSet Rate Error\r\n");
-// 			break;
-// 		case 'r':
-// 			if(WitSetOutputRate(RRATE_1HZ) != WIT_HAL_OK)
-// 				printf("\r\nSet Rate Error\r\n");
-// 			break;
-// 		case 'C':
-// 			if(WitSetContent(RSW_ACC|RSW_GYRO|RSW_ANGLE|RSW_MAG) != WIT_HAL_OK)
-// 				printf("\r\nSet RSW Error\r\n");
-// 			break;
-// 		case 'c':
-// 			if(WitSetContent(RSW_ACC) != WIT_HAL_OK)
-// 				printf("\r\nSet RSW Error\r\n");
-// 			break;
-// 		case 'h':
-// 			ShowHelp();
-// 			break;
-// 	}
-// 	s_cCmd = 0xff;
-// }
-
-static void SensorUartSend(uint8_t *p_data, uint32_t uiSize)
-{
-	Uart2Send(p_data, uiSize);
-}
-
-static void Delayms(uint16_t ucMs)
-{
-	HAL_Delay(ucMs);
-}
-
-static void SensorDataUpdata(uint32_t uiReg, uint32_t uiRegNum)
-{
-	int i;
-    for(i = 0; i < uiRegNum; i++)
-    {
-        switch(uiReg)
-        {
-//            case AX:
-//            case AY:
-            case AZ:
-				s_cDataUpdate |= ACC_UPDATE;
-            break;
-//            case GX:
-//            case GY:
-            case GZ:
-				s_cDataUpdate |= GYRO_UPDATE;
-            break;
-//            case HX:
-//            case HY:
-            case HZ:
-				s_cDataUpdate |= MAG_UPDATE;
-            break;
-//            case Roll:
-//            case Pitch:
-            case Yaw:
-				s_cDataUpdate |= ANGLE_UPDATE;
-            break;
-            default:
-				s_cDataUpdate |= READ_UPDATE;
-			break;
-        }
-		uiReg++;
-    }
-}
-
-static void AutoScanSensor(void)
-{
-	int i, iRetry;
-
-	for(i = 1; i < 10; i++)
-	{
-		iRetry = 2;
-		do
-		{
-			s_cDataUpdate = 0;
-			WitReadReg(AX, 3);
-			HAL_Delay(100);
-			if(s_cDataUpdate != 0)
-			{
-				printf("*************************************baud find sensor*************************************\r\n\r\n");
-				// ShowHelp();
-				return ;
-			}
-			iRetry--;
-		}while(iRetry);
-	}
-	printf("can not find sensor\r\n");
-	printf("please check your connection\r\n");
-}
 
 
 /* USER CODE END 4 */
