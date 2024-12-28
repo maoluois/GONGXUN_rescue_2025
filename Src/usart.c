@@ -19,9 +19,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
-#include "main.h"
-#include "string.h"
+
 /* USER CODE BEGIN 0 */
+uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
+volatile uint8_t Rx_len8;  //接收一帧数据的长度
+volatile uint8_t Rx_flag; //一帧数据接收完成标志
 static unsigned char TxBuffer[256];
 static unsigned char TxCounter=0;
 static unsigned char count=0;
@@ -73,10 +75,10 @@ void MX_UART8_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN UART8_Init 2 */
-  //在usart初始化函数中添加的代码
+  //在uart初始化函数中添加的代码
   __HAL_UART_ENABLE_IT(&huart8, UART_IT_IDLE); //使能IDLE中断
   //DMA接收函数，此句一定要加，不加接收不到第一次传进来的实数据，是空的，且此时接收到的数据长度为缓存器的数据长度
-  HAL_UART_Receive_DMA(&huart8,rx_buffer,BUFFER_SIZE);
+  HAL_UART_Receive_DMA(&huart8, Rx_data8,BUFFER_SIZE);
 
   /* USER CODE END UART8_Init 2 */
 
@@ -224,9 +226,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart8_rx);
 
-    /* UART8 interrupt Init */
-    HAL_NVIC_SetPriority(UART8_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(UART8_IRQn);
   /* USER CODE BEGIN UART8_MspInit 1 */
 
   /* USER CODE END UART8_MspInit 1 */
@@ -326,9 +325,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
     /* UART8 DMA DeInit */
     HAL_DMA_DeInit(uartHandle->hdmarx);
-
-    /* UART8 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(UART8_IRQn);
   /* USER CODE BEGIN UART8_MspDeInit 1 */
 
   /* USER CODE END UART8_MspDeInit 1 */
@@ -392,35 +388,5 @@ void UART2_send_string(unsigned char *str)
   }
 }
 
-uint8_t Rxdata;
-extern void uart2_read_data(unsigned char ucData);
-void DMA_Uart8_Send(uint8_t *buf,uint8_t len)//串口发送封装
-{
-  if(HAL_UART_Transmit_DMA(&huart1, buf,len)!= HAL_OK) //判断是否发送正常，如果出现异常则进入异常中断函数
-  {
-    Error_Handler();
-  }
-}
-
-void DMA_Uart8_Read(uint8_t *Data,uint8_t len) //串口接收封装
-{
-  HAL_UART_Receive_DMA(&huart8,Data,len);//重新打开DMA接收
-}
-
-uint8_t get_date_uart(unsigned char *pd,unsigned short *len)
-{
-
-  if(Flags == 19)
-  {
-    *len = rx_len;
-    //清除计数
-    memcpy(pd,rx_tmp, *len);
-    memset(rx_tmp, 0, *len);
-    rx_len = 0;
-    Flags = 10;
-    return 1;
-  }
-  return 0;
-}
 
 /* USER CODE END 1 */

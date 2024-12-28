@@ -88,12 +88,6 @@ float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
 float SetSpeed2 = 0;
 float SetSpeed6 = 0;
 
-// DMA PV
-const uint8_t buf1[28]={0xce, 0xf7, 0xc3, 0xe6};
-const uint8_t buf2[17]={0xc9, 0xcf, 0xcc, 0xec, 0xcc, 0xc3};
-uint8_t tmp[BUFFER_SIZE]={0};//用户数据缓存区
-uint16_t xlen;
-
 
 // fliter PV
 float mean_buff1[fliter_buffer_size];             // 滤波缓冲
@@ -103,8 +97,13 @@ int buff_index1 = 0;                // 滤波缓冲区索引
 int buff_index2 = 0;
 
 // Xbox PV
-extern uint16_t XboxData[4];           // Xbox数据
-uint8_t DMABuffer[RX_BUFFER_SIZE];  // DMA接收缓冲区
+uint16_t XboxData[4];
+
+// DMA PV
+extern uint8_t Rx_data8[BUFFER_SIZE];    // 接收数组
+extern uint8_t Rx_len8;    // 接收长度
+extern volatile uint8_t Rx_flag; // 接收标志
+
 // Imu JY901s PV
 extern struct STime		stcTime;
 extern struct SAcc 		stcAcc;
@@ -144,15 +143,29 @@ float pidOutputYaw = 0;
 void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
+// number calculate function
+uint16_t data_Integer_calculate(uint8_t data_Integer_len, uint8_t data_Start_Num, uint8_t *DataBuff);
+double data_Decimal_calculate(uint8_t data_Decimal_len, uint8_t data_Point_Num, uint8_t *Data);
 // xbox串口调试函数
-extern void Get_Data_Xbox(uint16_t *data_return);
+void Get_Data_Xbox(uint8_t *Rx_data);
 // DMA串口调试函数
-uint8_t get_date_uart(unsigned char *pd,unsigned short *len);
-void DMA_Uart1_Send(uint8_t *buf,uint8_t len);//dma发送
-void DMA_Uart8_Read(uint8_t *buf,uint8_t len);//dma接收
+void DMA_Uart8_Send(uint8_t *buf,uint8_t len)   //dma发送
+{
+    if (HAL_UART_Transmit_DMA(&huart8,buf,len)!=HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+void DMA_Uart8_Read(uint8_t *buf,uint8_t len) //dma接收
+{
+    HAL_UART_Receive_DMA(&huart8, buf, len);
+}
+
 // vofa串口调试函数
 void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
 float Get_Data(void);
+// imu串口调试函数
+extern void uart2_read_data(unsigned char ucData);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -215,7 +228,8 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim17);
   HAL_UART_Receive_IT(&huart1, RxBuffer, 1);
   HAL_UART_Receive_IT(&huart2, RxBuffer, 1);
-  HAL_UART_Receive_DMA(&huart8, DMABuffer, RX_BUFFER_SIZE);
+  DMA_Uart8_Read(Rx_data8, 36);
+
 
 
   /* USER CODE END 2 */
@@ -224,6 +238,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+      if (Rx_flag == 1)
+      {
+          printf("enter\n");
+          // 处理接收到的数据
+          Get_Data_Xbox(Rx_data8);
+          // 重新启动 DMA 传输
+          HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
+          Rx_flag = 0;
+      }
+
+      HAL_Delay(100);
+
+
+
       // Set_pulse1(100);
       // Set_pulse2(100);
       // HAL_Delay(500);
@@ -234,7 +263,7 @@ int main(void)
       // Set_pulse2(-10);
 
       // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, yaw);
-      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+      printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
       // 获取角度
 
 
@@ -447,95 +476,89 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         RxBuffer[0] = 0;  // 清空接收缓冲
         HAL_UART_Receive_IT(&huart1, (uint8_t *)RxBuffer, 1);  // 重新启动串口中断接收下一个字符
     }
-
-
-    if (UartHandle->Instance==USART2)
+    if (UartHandle->Instance == UART8)
     {
-        HAL_UART_Receive_IT(&huart2, &Rxdata, 1);
-        uart2_read_data(Rxdata);	//处理数据
+        // 处理接收到的数据
+        Get_Data_Xbox(Rx_data8);
+        // 重新启动 DMA 传输
+        HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
     }
+
+    // if (UartHandle->Instance==USART2)
+    // {
+    //     HAL_UART_Receive_IT(&huart2, &Rxdata, 1);
+    //     uart2_read_data(Rxdata);	//处理数据
+    // }
 }
 
 
-uint8_t data_Integer_calculate(uint8_t data_Integer_len, uint8_t data_Start_Num) {
+uint16_t data_Integer_calculate(uint8_t data_Integer_len, uint8_t data_Start_Num, uint8_t *Data) {
     uint16_t data_return = 0;
     // 计算整数数据
-    if (data_Integer_len != 0)
-    {
-        if (data_Integer_len == 1)
-            data_return = DataBuff[data_Start_Num] - 48;
-        else if (data_Integer_len == 2)
-            data_return = (DataBuff[data_Start_Num] - 48) * 10 + (DataBuff[data_Start_Num + 1] - 48);
-        else if (data_Integer_len == 3)
-            data_return = (DataBuff[data_Start_Num] - 48) * 100 + (DataBuff[data_Start_Num + 1] - 48) * 10 +
-            (DataBuff[data_Start_Num + 2] - 48);
-        else if (data_Integer_len == 4)
-            data_return = (DataBuff[data_Start_Num] - 48) * 1000 + (DataBuff[data_Start_Num + 1] - 48) * 100 +
-            (DataBuff[data_Start_Num + 2] - 48) * 10 + (DataBuff[data_Start_Num + 3] - 48);
-        else if (data_Integer_len == 5)
-            data_return = (DataBuff[data_Start_Num] - 48) * 10000 + (DataBuff[data_Start_Num + 1] - 48) * 1000 +
-            (DataBuff[data_Start_Num + 2] - 48) * 100 + (DataBuff[data_Start_Num + 3] - 48) * 10 + (DataBuff[data_Start_Num + 4] - 48);
+    if (data_Integer_len != 0) {
+        for (uint8_t i = 0; i < data_Integer_len; i++) {
+            data_return = data_return * 10 + (Data[data_Start_Num + i] - '0'); // 逐位计算
+        }
     }
     return data_return;
 }
 
-void Get_Data_Xbox(uint16_t *data_return)
-{
-    uint8_t up_Start_Num = 0;   // 数据位开始位置
-    uint8_t up_End_Num = 0;     // 数据位结束位置
-    uint8_t up_Integer_len = 0; // 整数数据长度
-    uint8_t down_Start_Num = 0;   // 数据位开始位置
-    uint8_t down_End_Num = 0;     // 数据位结束位置
-    uint8_t down_Integer_len = 0; // 整数数据长度
-    uint8_t x_Start_Num = 0;   // 数据位开始位置
-    uint8_t x_End_Num = 0;     // 数据位结束位置
-    uint8_t x_Integer_len = 0; // 整数数据长度
-    uint8_t y_Start_Num = 0;   // 数据位开始位置
-    uint8_t y_End_Num = 0;     // 数据位结束位置
-    uint8_t y_Integer_len = 0; // 整数数据长度
+double data_Decimal_calculate(uint8_t data_Decimal_len, uint8_t data_Point_Num, uint8_t *Data) {
+    double data_return = 0;
+    // 计算小数数据
+    if (data_Decimal_len != 0) {
+        for (uint8_t i = 0; i < data_Decimal_len; i++) {
+            data_return = data_return + (Data[data_Point_Num + i + 1] - '0') * pow(10, -i - 1); // 逐位计算
+        }
+    }
+    return data_return;
+}
+
+void Get_Data_Xbox(uint8_t *Rx_data) {
+    uint8_t up_Start_Num = 0, up_End_Num = 0;
+    uint8_t down_Start_Num = 0, down_End_Num = 0;
+    uint8_t x_Start_Num = 0, x_End_Num = 0;
+    uint8_t y_Start_Num = 0, y_End_Num = 0;
+    uint8_t flag = 0;          // 开始寻找标志位
 
     // 查找等号、小数点和感叹号的位置
-    for (uint8_t i = 0; i < 200; i++)
-    {
-        if (DataBuff8[i] == 'u')
-        {
-             up_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+    for (uint8_t i = 0; i < 200; i++) {
+        if (Rx_data[i] == '\n') {
+            flag = 1;  // 找到换行符，标志接收开始
         }
-        if (DataBuff8[i] == 'd')
-        {
-            up_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
-            down_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+        if (Rx_data[i] == 'u' && flag == 1) {
+            up_Start_Num = i + 1;
         }
-        if (DataBuff8[i] == 'x')
-        {
-            down_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
-            x_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+        if (Rx_data[i] == 'd' && flag == 1) {
+            up_End_Num = i - 1;
+            down_Start_Num = i + 1;
         }
-        if (DataBuff8[i] == 'y')
-        {
-            x_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
-            y_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+        if (Rx_data[i] == 'x' && flag == 1) {
+            down_End_Num = i - 1;
+            x_Start_Num = i + 1;
         }
-        if (DataBuff8[i] == '!')
-        {
-            y_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
+        if (Rx_data[i] == 'y' && flag == 1) {
+            x_End_Num = i - 1;
+            y_Start_Num = i + 1;
+        }
+        if (Rx_data[i] == '!' && flag == 1) {
+            y_End_Num = i - 1;
             break;
         }
     }
 
-    // 计算整数长度
-    up_Integer_len = up_End_Num - up_Start_Num;
-    down_Integer_len = down_End_Num - down_Start_Num;
-    x_Integer_len = x_End_Num - x_Start_Num;
-    y_Integer_len = y_End_Num - y_Start_Num;
+    // 计算整数数据的长度
+    uint8_t up_Integer_len = up_End_Num - up_Start_Num + 1;
+    uint8_t down_Integer_len = down_End_Num - down_Start_Num + 1;
+    uint8_t x_Integer_len = x_End_Num - x_Start_Num + 1;
+    uint8_t y_Integer_len = y_End_Num - y_Start_Num + 1;
 
     // 计算返回值
-    data_return[0] = data_Integer_calculate(up_Integer_len, up_Start_Num);
-    data_return[1] = data_Integer_calculate(down_Integer_len, down_Start_Num);
-    data_return[2] = data_Integer_calculate(x_Integer_len, x_Start_Num);
-    data_return[3] = data_Integer_calculate(y_Integer_len, y_Start_Num);
+    XboxData[0] = data_Integer_calculate(up_Integer_len, up_Start_Num, Rx_data);
+    XboxData[1] = data_Integer_calculate(down_Integer_len, down_Start_Num, Rx_data);
+    XboxData[2] = data_Integer_calculate(x_Integer_len, x_Start_Num, Rx_data);
+    XboxData[3] = data_Integer_calculate(y_Integer_len, y_Start_Num, Rx_data);
 }
-
 // 解析从指令缓存中提取数据
 float Get_Data(void)
 {
@@ -574,45 +597,31 @@ float Get_Data(void)
     data_Decimal_len = data_End_Num - data_Point_Num;
 
     // 计算整数数据
-    if (data_Integer_len != 0) // 为两位数
-    {
-        if (data_Integer_len == 1)
-            Integer = (float)(DataBuff[data_Start_Num] - 48);
-        else if (data_Integer_len == 2)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 10 + (float)(DataBuff[data_Start_Num + 1] - 48);
-        else if (data_Integer_len == 3)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 100 + (float)(DataBuff[data_Start_Num + 1] - 48) * 10 +
-            (float)(DataBuff[data_Start_Num + 2] - 48);
-        else if (data_Integer_len == 4)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 1000 + (float)(DataBuff[data_Start_Num + 1] - 48) * 100 +
-            (float)(DataBuff[data_Start_Num + 2] - 48) * 10 + (float)(DataBuff[data_Start_Num + 3] - 48);
-        else if (data_Integer_len == 5)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 10000 + (float)(DataBuff[data_Start_Num + 1] - 48) * 1000 +
-            (float)(DataBuff[data_Start_Num + 2] - 48) * 100 + (float)(DataBuff[data_Start_Num + 3] - 48) * 10 + (float)(DataBuff[data_Start_Num + 4] - 48);
-    }
+    Integer = data_Integer_calculate(data_Integer_len, data_Start_Num, DataBuff);
 
     // 计算小数数据
-    if (data_Decimal_len != 0) // 为个位数
-    {
-        if (data_Decimal_len == 1)
-            Decimal = (float)(DataBuff[data_End_Num] - 48) * 0.1f;
-        else if (data_Decimal_len == 2)
-            Decimal = (float)(DataBuff[data_End_Num - 1] - 48) * 0.1f + (float)(DataBuff[data_End_Num] - 48) * 0.01f;
-        else if (data_Decimal_len == 3)
-            Decimal = (float)(DataBuff[data_End_Num - 2] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num] - 48) * 0.001f;
-        else if (data_Decimal_len == 4)
-            Decimal = (float)(DataBuff[data_End_Num - 3] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num - 1] - 48) * 0.001f + (float)(DataBuff[data_End_Num] - 48) * 0.0001f;
-        else if (data_Decimal_len == 5)
-            Decimal = (float)(DataBuff[data_End_Num - 4] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 3] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num - 2] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.0001f +
-                      (float)(DataBuff[data_End_Num] - 48) * 0.00001f;
-        else if (data_Decimal_len == 6)
-            Decimal = (float)(DataBuff[data_End_Num - 5] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 4] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num - 3] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.0001f +
-                      (float)(DataBuff[data_End_Num - 1] - 48) * 0.00001f + (float)(DataBuff[data_End_Num] - 48) * 0.000001f;
-    }
+    Decimal = data_Decimal_calculate(data_Decimal_len, data_Point_Num, DataBuff);
+    // if (data_Decimal_len != 0) // 为个位数
+    // {
+    //     if (data_Decimal_len == 1)
+    //         Decimal = (float)(DataBuff[data_End_Num] - 48) * 0.1f;
+    //     else if (data_Decimal_len == 2)
+    //         Decimal = (float)(DataBuff[data_End_Num - 1] - 48) * 0.1f + (float)(DataBuff[data_End_Num] - 48) * 0.01f;
+    //     else if (data_Decimal_len == 3)
+    //         Decimal = (float)(DataBuff[data_End_Num - 2] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.01f +
+    //                   (float)(DataBuff[data_End_Num] - 48) * 0.001f;
+    //     else if (data_Decimal_len == 4)
+    //         Decimal = (float)(DataBuff[data_End_Num - 3] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.01f +
+    //                   (float)(DataBuff[data_End_Num - 1] - 48) * 0.001f + (float)(DataBuff[data_End_Num] - 48) * 0.0001f;
+    //     else if (data_Decimal_len == 5)
+    //         Decimal = (float)(DataBuff[data_End_Num - 4] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 3] - 48) * 0.01f +
+    //                   (float)(DataBuff[data_End_Num - 2] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.0001f +
+    //                   (float)(DataBuff[data_End_Num] - 48) * 0.00001f;
+    //     else if (data_Decimal_len == 6)
+    //         Decimal = (float)(DataBuff[data_End_Num - 5] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 4] - 48) * 0.01f +
+    //                   (float)(DataBuff[data_End_Num - 3] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.0001f +
+    //                   (float)(DataBuff[data_End_Num - 1] - 48) * 0.00001f + (float)(DataBuff[data_End_Num] - 48) * 0.000001f;
+    // }
     data_return = Integer + Decimal;
     if (minus_Flag == 1)
         data_return = -data_return;  // 如果是负数，取负值

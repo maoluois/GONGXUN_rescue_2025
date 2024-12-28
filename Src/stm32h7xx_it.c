@@ -20,11 +20,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32h7xx_it.h"
-#include "usart.h"
-#include "string.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
+#include "usart.h"
+#include "retarget.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,11 +44,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-volatile uint8_t rx_len ;  //接收一帧数据的长度
-volatile uint8_t recv_end_flag; //一帧数据接收完成标志
-uint8_t rx_buffer[BUFFER_SIZE];  //接收数据缓存数组
-uint16_t lens,Flags;
-uint8_t rx_tmp[BUFFER_SIZE];
+extern uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
+extern volatile uint8_t Rx_len8;  //接收一帧数据的长度
+extern volatile uint8_t Rx_flag; //一帧数据接收完成标志
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -256,38 +254,15 @@ void USART2_IRQHandler(void)
   */
 void UART8_IRQHandler(void)
 {
-  /* USER CODE BEGIN UART8_IRQn 0 */
-  uint32_t tmp_flag = 0;
-  uint32_t temp;
-  tmp_flag =__HAL_UART_GET_FLAG(&huart8,UART_FLAG_IDLE); //获取IDLE标志位
-
-  if((tmp_flag != RESET))//idle标志被置位
+  uint32_t tmp_flag = 0, temp;
+  tmp_flag = __HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE); // 获取 IDLE 标志
+  if ((tmp_flag != RESET)) // 如果 IDLE 标志被置位
   {
-    __HAL_UART_CLEAR_IDLEFLAG(&huart8);//清除标志位
-    //temp = huart8.Instance->SR;  //清除状态寄存器SR,读取SR寄存器可以实现清除SR寄存器的功能
-    //temp = huart8.Instance->DR; //读取数据寄存器中的数据
-    //这两句和上面那句等效
-
-    HAL_UART_DMAStop(&huart8); //停止传输
-    temp  =  __HAL_DMA_GET_COUNTER(&hdma_uart8_rx); // 获取DMA中未传输的数据个数
-    //temp  = hdma_usart8_rx.Instance->NDTR;
-    //读取NDTR寄存器 获取DMA中未传输的数据个数，
-    //这句和上面那句等效
-    rx_len =  BUFFER_SIZE - temp;
-    //总计数减去未传输的数据个数，得到已经接收的数据个数
-    recv_end_flag = 1; // 接受完成标志位置1
+    __HAL_UART_CLEAR_IDLEFLAG(&huart8); // 清除标志位
+    temp = __HAL_DMA_GET_COUNTER(&hdma_uart8_rx); // 获得剩余数据量
+    Rx_len8 = BUFFER_SIZE - temp; // 计算接收到的数据长度
+    Rx_flag = 1; // 标志位，通知上层接收完成
   }
-  if(recv_end_flag == 1)  //接收完成标志
-  {
-    // DMA_Usart1_Send(rx_buffer, rx_len);
-    memcpy(rx_tmp,rx_buffer,rx_len);
-    Flags = 19;
-
-    recv_end_flag = 0;//清除接收结束标志位
-    //清接收缓存
-    memset(rx_buffer, 0, rx_len);
-  }
-  HAL_UART_Receive_DMA(&huart8,rx_buffer,BUFFER_SIZE);//重新打开DMA接收
   /* USER CODE END UART8_IRQn 0 */
   HAL_UART_IRQHandler(&huart8);
   /* USER CODE BEGIN UART8_IRQn 1 */

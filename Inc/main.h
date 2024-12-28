@@ -106,8 +106,7 @@ void Error_Handler(void);
 #define motor1 0
 #define motor2 1
 #define motor3 2
-#define RX_BUFFER_SIZE 256  //接收缓存数组大小
-#define BUFFER_SIZE  100  //数组容量大小
+#define BUFFER_SIZE  36  //数组容量大小
 // JY901s cfg
 #define ACC_UPDATE		0x01
 #define GYRO_UPDATE		0x02
