@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "memorymap.h"
 #include "tim.h"
 #include "usart.h"
@@ -34,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <jy901s.h>
+#include "dma.h"
 
 /* USER CODE END Includes */
 
@@ -78,12 +80,20 @@ float linear_speed = 0;       // 线速度
 float angular_speed = 0;      // 角速度
 
 // usart PV
-uint8_t RxBuffer[1];          // 串口接收缓冲
+uint8_t RxBuffer[10];          // 串口接收缓冲
 uint16_t RxLine = 0;          // 指令长度
 uint8_t DataBuff[200];        // 指令内容
+uint8_t DataBuff8[200];        // 指令内容
 float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
 float SetSpeed2 = 0;
 float SetSpeed6 = 0;
+
+// DMA PV
+const uint8_t buf1[28]={0xce, 0xf7, 0xc3, 0xe6};
+const uint8_t buf2[17]={0xc9, 0xcf, 0xcc, 0xec, 0xcc, 0xc3};
+uint8_t tmp[BUFFER_SIZE]={0};//用户数据缓存区
+uint16_t xlen;
+
 
 // fliter PV
 float mean_buff1[fliter_buffer_size];             // 滤波缓冲
@@ -92,8 +102,23 @@ float mean_buff3[fliter_buffer_size];
 int buff_index1 = 0;                // 滤波缓冲区索引
 int buff_index2 = 0;
 
+// Xbox PV
+extern uint16_t XboxData[4];           // Xbox数据
+uint8_t DMABuffer[RX_BUFFER_SIZE];  // DMA接收缓冲区
 // Imu JY901s PV
-
+extern struct STime		stcTime;
+extern struct SAcc 		stcAcc;
+extern struct SGyro   stcGyro;
+extern struct SAngle 	stcAngle;
+extern struct SMag 		stcMag;
+extern struct SDStatus stcDStatus;
+extern struct SPress 	stcPress;
+extern struct SLonLat 	stcLonLat;
+extern struct SGPSV 		stcGPSV;
+extern struct SQ       stcQ;
+float gyro_data;
+float gyroz,gyroz_last;
+float anglez;
 extern char ACCCALSW[5];//进入加速度校准模式
 extern char SAVACALSW[5];//保存当前配置
 extern char MAGNETICCALAM[5];      //磁力计校准
@@ -120,15 +145,14 @@ void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
 // xbox串口调试函数
-float Get_Data_Xbox(void);
-
+extern void Get_Data_Xbox(uint16_t *data_return);
+// DMA串口调试函数
+uint8_t get_date_uart(unsigned char *pd,unsigned short *len);
+void DMA_Uart1_Send(uint8_t *buf,uint8_t len);//dma发送
+void DMA_Uart8_Read(uint8_t *buf,uint8_t len);//dma接收
 // vofa串口调试函数
 void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
 float Get_Data(void);
-
-// JY901s配置函数
-
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -168,6 +192,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM3_Init();
   MX_USART1_UART_Init();
@@ -175,12 +200,12 @@ int main(void)
   MX_TIM17_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
-  MX_UART5_Init();
+  MX_UART8_Init();
   /* USER CODE BEGIN 2 */
-  sendcmd(ACCCALSW);HAL_Delay(100); //加速度计校准
-  sendcmd(SAVACALSW);HAL_Delay(100);//保存当前配置
-  sendcmd(MAGNETICCALAM);	HAL_Delay(100);   //磁力计校准
-  sendcmd(SAVEMAGNETICCALAM);HAL_Delay(100);//保存当前配置
+  // sendcmd(ACCCALSW);HAL_Delay(100); //加速度计校准
+  // sendcmd(SAVACALSW);HAL_Delay(100);//保存当前配置
+  // sendcmd(MAGNETICCALAM);HAL_Delay(100);   //磁力计校准
+  // sendcmd(SAVEMAGNETICCALAM);HAL_Delay(100);//保存当前配置
   RetargetInit(&huart1);
   HAL_TIM_Base_Init(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
@@ -189,7 +214,9 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   HAL_TIM_Base_Start_IT(&htim17);
   HAL_UART_Receive_IT(&huart1, RxBuffer, 1);
-  HAL_UART_Receive_IT(&huart5, RxBuffer, 1);
+  HAL_UART_Receive_IT(&huart2, RxBuffer, 1);
+  HAL_UART_Receive_DMA(&huart8, DMABuffer, RX_BUFFER_SIZE);
+
 
   /* USER CODE END 2 */
 
@@ -207,6 +234,7 @@ int main(void)
       // Set_pulse2(-10);
 
       // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, yaw);
+      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
       // 获取角度
 
 
@@ -285,9 +313,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         int16_t pluse1 = COUNTERNUM1;
         int16_t pluse2 = COUNTERNUM2;
 
-
         totalAngle1 = pluse1;
         totalAngle2 = pluse2;
+
+        // 获取角度
+        gyro_data = (float)stcGyro.w[2] / 32768 * 200 * 180;
+        gyroz_last = gyroz;
+        gyroz = (gyro_data + 0) * 10 / 164;
+        gyroz = gyroz * 0.9 + gyroz_last * 0.1;
+        anglez += (float)(gyroz) * 0.01;
+
+        if (anglez > 180)
+        {
+            anglez = -180;
+        }
+        if (anglez < -180)
+        {
+            anglez = 180;
+        }
 
         // 计算速度
         wheel1_speed = -((float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒 （AB相反）
@@ -377,7 +420,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         __HAL_TIM_SetCounter(&htim2, RELOADVALUE / 2);
 
     //  printf("%f, %f, %f, %f, %f, %f\n", motor1PID.Kp, motor1PID.Ki, motor1PID.Kd, speed, SetSpeed, (float)(totalAngle - RELOADVALUE / 2.0)); // 调试使用
-
     }
 
 }
@@ -402,93 +444,98 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
             memset(DataBuff, 0, sizeof(DataBuff));  // 清空接收缓存
             RxLine = 0;  // 重置接收长度计数
         }
-
         RxBuffer[0] = 0;  // 清空接收缓冲
         HAL_UART_Receive_IT(&huart1, (uint8_t *)RxBuffer, 1);  // 重新启动串口中断接收下一个字符
     }
 
+
+    if (UartHandle->Instance==USART2)
+    {
+        HAL_UART_Receive_IT(&huart2, &Rxdata, 1);
+        uart2_read_data(Rxdata);	//处理数据
+    }
 }
 
-float Get_Data_Xbox(void)
+
+uint8_t data_Integer_calculate(uint8_t data_Integer_len, uint8_t data_Start_Num) {
+    uint16_t data_return = 0;
+    // 计算整数数据
+    if (data_Integer_len != 0)
+    {
+        if (data_Integer_len == 1)
+            data_return = DataBuff[data_Start_Num] - 48;
+        else if (data_Integer_len == 2)
+            data_return = (DataBuff[data_Start_Num] - 48) * 10 + (DataBuff[data_Start_Num + 1] - 48);
+        else if (data_Integer_len == 3)
+            data_return = (DataBuff[data_Start_Num] - 48) * 100 + (DataBuff[data_Start_Num + 1] - 48) * 10 +
+            (DataBuff[data_Start_Num + 2] - 48);
+        else if (data_Integer_len == 4)
+            data_return = (DataBuff[data_Start_Num] - 48) * 1000 + (DataBuff[data_Start_Num + 1] - 48) * 100 +
+            (DataBuff[data_Start_Num + 2] - 48) * 10 + (DataBuff[data_Start_Num + 3] - 48);
+        else if (data_Integer_len == 5)
+            data_return = (DataBuff[data_Start_Num] - 48) * 10000 + (DataBuff[data_Start_Num + 1] - 48) * 1000 +
+            (DataBuff[data_Start_Num + 2] - 48) * 100 + (DataBuff[data_Start_Num + 3] - 48) * 10 + (DataBuff[data_Start_Num + 4] - 48);
+    }
+    return data_return;
+}
+
+void Get_Data_Xbox(uint16_t *data_return)
 {
-    float Decimal = 0;            // 小数数据
-    float Integer = 0;            // 整数数据
-    uint8_t data_Decimal_len = 0; // 小数数据长度
-    uint8_t data_Integer_len = 0; // 整数数据长度
-    uint8_t data_Point_Num = 0;   // 小数点位置
-    uint8_t data_Start_Num = 0;   // 数据位开始位置
-    uint8_t data_End_Num = 0;     // 数据位结束位置
-    uint8_t minus_Flag = 0;       // 负数标志
-    float data_return = 0;        // 解析得到的数据
+    uint8_t up_Start_Num = 0;   // 数据位开始位置
+    uint8_t up_End_Num = 0;     // 数据位结束位置
+    uint8_t up_Integer_len = 0; // 整数数据长度
+    uint8_t down_Start_Num = 0;   // 数据位开始位置
+    uint8_t down_End_Num = 0;     // 数据位结束位置
+    uint8_t down_Integer_len = 0; // 整数数据长度
+    uint8_t x_Start_Num = 0;   // 数据位开始位置
+    uint8_t x_End_Num = 0;     // 数据位结束位置
+    uint8_t x_Integer_len = 0; // 整数数据长度
+    uint8_t y_Start_Num = 0;   // 数据位开始位置
+    uint8_t y_End_Num = 0;     // 数据位结束位置
+    uint8_t y_Integer_len = 0; // 整数数据长度
+
     // 查找等号、小数点和感叹号的位置
     for (uint8_t i = 0; i < 200; i++)
     {
-        if (DataBuff[i] == '!')
+        if (DataBuff8[i] == 'u')
         {
-            data_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
+             up_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+        }
+        if (DataBuff8[i] == 'd')
+        {
+            up_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
+            down_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+        }
+        if (DataBuff8[i] == 'x')
+        {
+            down_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
+            x_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+        }
+        if (DataBuff8[i] == 'y')
+        {
+            x_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
+            y_Start_Num = i;  // 找到等号后面的位置作为数据起始位
+        }
+        if (DataBuff8[i] == '!')
+        {
+            y_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
             break;
         }
     }
 
-    // 判断数据是否为负数
-    if (DataBuff[data_Start_Num] == '-')
-    {
-        data_Start_Num += 1;  // 如果是负数，数据起始位后移一位
-        minus_Flag = 1;       // 设置负数标志
-    }
     // 计算整数长度
-    data_Integer_len = data_Point_Num - data_Start_Num;
-    // 计算小数长度
-    data_Decimal_len = data_End_Num - data_Point_Num;
+    up_Integer_len = up_End_Num - up_Start_Num;
+    down_Integer_len = down_End_Num - down_Start_Num;
+    x_Integer_len = x_End_Num - x_Start_Num;
+    y_Integer_len = y_End_Num - y_Start_Num;
 
-    // 计算整数数据
-    if (data_Integer_len != 0) // 为两位数
-    {
-        if (data_Integer_len == 1)
-            Integer = (float)(DataBuff[data_Start_Num] - 48);
-        else if (data_Integer_len == 2)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 10 + (float)(DataBuff[data_Start_Num + 1] - 48);
-        else if (data_Integer_len == 3)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 100 + (float)(DataBuff[data_Start_Num + 1] - 48) * 10 +
-            (float)(DataBuff[data_Start_Num + 2] - 48);
-        else if (data_Integer_len == 4)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 1000 + (float)(DataBuff[data_Start_Num + 1] - 48) * 100 +
-            (float)(DataBuff[data_Start_Num + 2] - 48) * 10 + (float)(DataBuff[data_Start_Num + 3] - 48);
-        else if (data_Integer_len == 5)
-            Integer = (float)(DataBuff[data_Start_Num] - 48) * 10000 + (float)(DataBuff[data_Start_Num + 1] - 48) * 1000 +
-            (float)(DataBuff[data_Start_Num + 2] - 48) * 100 + (float)(DataBuff[data_Start_Num + 3] - 48) * 10 + (float)(DataBuff[data_Start_Num + 4] - 48);
-    }
-
-    // 计算小数数据
-    if (data_Decimal_len != 0) // 为个位数
-    {
-        if (data_Decimal_len == 1)
-            Decimal = (float)(DataBuff[data_End_Num] - 48) * 0.1f;
-        else if (data_Decimal_len == 2)
-            Decimal = (float)(DataBuff[data_End_Num - 1] - 48) * 0.1f + (float)(DataBuff[data_End_Num] - 48) * 0.01f;
-        else if (data_Decimal_len == 3)
-            Decimal = (float)(DataBuff[data_End_Num - 2] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num] - 48) * 0.001f;
-        else if (data_Decimal_len == 4)
-            Decimal = (float)(DataBuff[data_End_Num - 3] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num - 1] - 48) * 0.001f + (float)(DataBuff[data_End_Num] - 48) * 0.0001f;
-        else if (data_Decimal_len == 5)
-            Decimal = (float)(DataBuff[data_End_Num - 4] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 3] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num - 2] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.0001f +
-                      (float)(DataBuff[data_End_Num] - 48) * 0.00001f;
-        else if (data_Decimal_len == 6)
-            Decimal = (float)(DataBuff[data_End_Num - 5] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 4] - 48) * 0.01f +
-                      (float)(DataBuff[data_End_Num - 3] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.0001f +
-                      (float)(DataBuff[data_End_Num - 1] - 48) * 0.00001f + (float)(DataBuff[data_End_Num] - 48) * 0.000001f;
-    }
-    data_return = Integer + Decimal;
-    if (minus_Flag == 1)
-        data_return = -data_return;  // 如果是负数，取负值
-
-    // printf("data_return:%lf\n", data_return);
-
-    return data_return;  // 返回解析得到的数据
+    // 计算返回值
+    data_return[0] = data_Integer_calculate(up_Integer_len, up_Start_Num);
+    data_return[1] = data_Integer_calculate(down_Integer_len, down_Start_Num);
+    data_return[2] = data_Integer_calculate(x_Integer_len, x_Start_Num);
+    data_return[3] = data_Integer_calculate(y_Integer_len, y_Start_Num);
 }
+
 // 解析从指令缓存中提取数据
 float Get_Data(void)
 {
@@ -618,8 +665,6 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
             SetSpeed6 = pid->setpoint;
     }
 }
-
-
 
 /* USER CODE END 4 */
 

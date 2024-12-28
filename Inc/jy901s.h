@@ -6,7 +6,6 @@
  
 
 
-
 void sendcmd(char cmd[]);
 void uart2_read_data(unsigned char ucData);
  
@@ -84,8 +83,8 @@ void uart2_read_data(unsigned char ucData);
 #define DIO_MODE_DOH 2
 #define DIO_MODE_DOL 3
 #define DIO_MODE_DOPWM 4
-#define DIO_MODE_GPS 5		
- 
+#define DIO_MODE_GPS 5
+
 struct STime
 {
 	unsigned char ucYear;
@@ -96,13 +95,14 @@ struct STime
 	unsigned char ucSecond;
 	unsigned short usMiliSecond;
 };
- 
+
 struct SAcc
 {
 	short a[3];
 	short T;
 };
- 
+
+
 struct SGyro
 {
 	short w[3];

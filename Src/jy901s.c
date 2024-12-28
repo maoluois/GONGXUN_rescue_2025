@@ -24,13 +24,13 @@ char SAVEMAGNETICCALAM[5] = {0XFF,0XAA,0X00,0X00,0X00};
 void sendcmd(char cmd[])
 {
   char i;
-  for(i=0;i<5;i++)
+  for (i = 0;i < 5;i ++)
     UART2_send_char(cmd[i]);
 }
 
 
 
-void uart3_read_data(unsigned char ucData)
+void uart2_read_data(unsigned char ucData)
 {
   static unsigned char ucRxBuffer[256];
   static unsigned char ucRxCount = 0;

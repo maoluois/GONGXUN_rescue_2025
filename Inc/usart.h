@@ -32,7 +32,7 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef huart5;
+extern UART_HandleTypeDef huart8;
 
 extern UART_HandleTypeDef huart1;
 
@@ -42,11 +42,21 @@ extern UART_HandleTypeDef huart2;
 
 /* USER CODE END Private defines */
 
-void MX_UART5_Init(void);
+void MX_UART8_Init(void);
 void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+
+
+extern volatile uint8_t rx_len;  //接收一帧数据的长度
+extern volatile uint8_t recv_end_flag; //一帧数据接收完成标志
+extern uint8_t rx_buffer[BUFFER_SIZE];  //接收数据缓存数组
+extern uint16_t lens,Flags;
+extern uint8_t rx_tmp[BUFFER_SIZE];
+extern void DMA_Uart8_Send(uint8_t *buf,uint8_t len);//dma发送
+extern void DMA_Uart8_Read(uint8_t *buf,uint8_t len);//dma接收
+
 void UART2_send_char(unsigned char data);
 void UART2_send_string(unsigned char *str);
 extern void uart2_read_data(unsigned char ucData);

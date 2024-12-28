@@ -57,6 +57,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define E2A_Pin GPIO_PIN_0
+#define E2A_GPIO_Port GPIOA
+#define E2B_Pin GPIO_PIN_1
+#define E2B_GPIO_Port GPIOA
 #define IMU_TX_Pin GPIO_PIN_2
 #define IMU_TX_GPIO_Port GPIOA
 #define IMU_RX_Pin GPIO_PIN_3
@@ -83,6 +87,10 @@ void Error_Handler(void);
 #define AIN1_GPIO_Port GPIOD
 #define Servo1_Pin GPIO_PIN_13
 #define Servo1_GPIO_Port GPIOD
+#define XBOX_RX_Pin GPIO_PIN_0
+#define XBOX_RX_GPIO_Port GPIOE
+#define XBOX_TX_Pin GPIO_PIN_1
+#define XBOX_TX_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 #define ConvertParam (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/10毫秒)
@@ -98,6 +106,8 @@ void Error_Handler(void);
 #define motor1 0
 #define motor2 1
 #define motor3 2
+#define RX_BUFFER_SIZE 256  //接收缓存数组大小
+#define BUFFER_SIZE  100  //数组容量大小
 // JY901s cfg
 #define ACC_UPDATE		0x01
 #define GYRO_UPDATE		0x02
