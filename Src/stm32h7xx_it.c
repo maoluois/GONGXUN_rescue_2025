@@ -62,7 +62,6 @@ extern volatile uint8_t Rx_flag; //一帧数据接收完成标志
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim17;
 extern DMA_HandleTypeDef hdma_uart8_rx;
-extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
@@ -247,27 +246,6 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 1 */
 
   /* USER CODE END USART2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles UART8 global interrupt.
-  */
-void UART8_IRQHandler(void)
-{
-  uint32_t tmp_flag = 0, temp;
-  tmp_flag = __HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE); // 获取 IDLE 标志
-  if ((tmp_flag != RESET)) // 如果 IDLE 标志被置位
-  {
-    __HAL_UART_CLEAR_IDLEFLAG(&huart8); // 清除标志位
-    temp = __HAL_DMA_GET_COUNTER(&hdma_uart8_rx); // 获得剩余数据量
-    Rx_len8 = BUFFER_SIZE - temp; // 计算接收到的数据长度
-    Rx_flag = 1; // 标志位，通知上层接收完成
-  }
-  /* USER CODE END UART8_IRQn 0 */
-  HAL_UART_IRQHandler(&huart8);
-  /* USER CODE BEGIN UART8_IRQn 1 */
-
-  /* USER CODE END UART8_IRQn 1 */
 }
 
 /**

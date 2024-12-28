@@ -3,8 +3,8 @@
 //
 #include "tim.h"
 #include "control.h"
-#include "pid.h"
-
+#include <math.h>
+#include <stdint.h>
 
 void Set_pulse1(float speed)
 {
@@ -44,4 +44,12 @@ void Set_pulse2(float speed)
     }
 
 }
+
+void Set_YSpeed(float *V1, float *V2, float Vx)
+{
+   *V1 = Vx;
+   *V2 = Vx;
+}
+
+
 

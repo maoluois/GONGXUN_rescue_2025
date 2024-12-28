@@ -23,15 +23,16 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Fix XBOX Receive Bu">
+    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="DMA fix xbox receiving.">
       <change afterPath="$PROJECT_DIR$/imu_ex/022 JY901S/022 JY901S/.idea/.gitignore" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/imu_ex/022 JY901S/022 JY901S/.idea/022 JY901S.iml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/imu_ex/022 JY901S/022 JY901S/Core/Src/.idea/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.mxproject" beforeDir="false" afterPath="$PROJECT_DIR$/.mxproject" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/Algorithm.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/Algorithm.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/control.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/control.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Inc/main.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/main.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Inc/stm32h7xx_it.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/stm32h7xx_it.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Inc/usart.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/usart.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/Algorithm.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/Algorithm.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/control.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/control.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/main.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/stm32h7xx_it.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/stm32h7xx_it.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/usart.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/usart.c" afterDir="false" />
@@ -211,6 +212,87 @@
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Inc/jy901s.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Inc/pid.h" root0="FORCE_HIGHLIGHTING" />
   </component>
@@ -231,7 +313,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "CMake 应用程序.gx.elf.executor": "Run",
-    "OpenOCD 下载并运行.gx.elf.executor": "Debug",
+    "OpenOCD 下载并运行.gx.elf.executor": "Run",
     "RunOnceActivity.RadMigrateCodeStyle": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
@@ -307,7 +389,7 @@
       <workItem from="1735216464685" duration="21137000" />
       <workItem from="1735288899302" duration="14612000" />
       <workItem from="1735352673451" duration="13440000" />
-      <workItem from="1735366504126" duration="21704000" />
+      <workItem from="1735366504126" duration="26067000" />
     </task>
     <task id="LOCAL-00001" summary="Init controller.">
       <option name="closed" value="true" />
@@ -421,7 +503,15 @@
       <option name="project" value="LOCAL" />
       <updated>1735374047653</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="DMA fix xbox receiving.">
+      <option name="closed" value="true" />
+      <created>1735396581365</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1735396581365</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -468,7 +558,8 @@
     <MESSAGE value="Fix buff_index1." />
     <MESSAGE value="Finish PID_velocity and fix imu recognize." />
     <MESSAGE value="Fix XBOX Receive Bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix XBOX Receive Bug" />
+    <MESSAGE value="DMA fix xbox receiving." />
+    <option name="LAST_COMMIT_MESSAGE" value="DMA fix xbox receiving." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -486,13 +577,7 @@
     </breakpoint-manager>
     <watches-manager>
       <configuration name="com.jetbrains.cidr.embedded.openocd.conf.type">
-        <watch expression="pidOutputV1" />
-        <watch expression="pidOutputV2" />
-        <watch expression="integral" />
-        <watch expression="pid-&gt;integral" language="C++" />
-        <watch expression="XboxData" language="C++" />
-        <watch expression="Rx_data8" language="C++" />
-        <watch expression="@ ALREADY PREPROCESSED @Rx_flag" />
+        <watch expression="Rx_data8" />
       </configuration>
     </watches-manager>
   </component>

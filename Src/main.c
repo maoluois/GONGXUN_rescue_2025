@@ -77,6 +77,7 @@ float CurrentPositionY = 0;
 float CurrentDistance = 0;
 float lastPosition = 0;       // 上一次的位置
 float linear_speed = 0;       // 线速度
+float SpeedY = 0;         // 目标速度（单位：cm/s）
 float angular_speed = 0;      // 角速度
 
 // usart PV
@@ -220,6 +221,8 @@ int main(void)
   // sendcmd(MAGNETICCALAM);HAL_Delay(100);   //磁力计校准
   // sendcmd(SAVEMAGNETICCALAM);HAL_Delay(100);//保存当前配置
   RetargetInit(&huart1);
+  PID_Init(&motor1PID, 8.8, 0.066, 39.9, 0);
+  PID_Init(&motor2PID, 8.1, 0.066, 38.8, 0);
   HAL_TIM_Base_Init(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
@@ -232,27 +235,13 @@ int main(void)
 
 
 
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-      if (Rx_flag == 1)
-      {
-          printf("enter\n");
-          // 处理接收到的数据
-          Get_Data_Xbox(Rx_data8);
-          // 重新启动 DMA 传输
-          HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
-          Rx_flag = 0;
-      }
-
-      HAL_Delay(100);
-
-
-
       // Set_pulse1(100);
       // Set_pulse2(100);
       // HAL_Delay(500);
@@ -261,9 +250,10 @@ int main(void)
       // HAL_Delay(500);
       // Set_pulse1(-10);
       // Set_pulse2(-10);
-
-      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, yaw);
-      printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+      calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
+      Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
+      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SpeedY, yaw);
+      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
       // 获取角度
 
 
@@ -338,6 +328,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // 定时10ms(115000000 / 1150 / 500 = 200)
     if (htim->Instance == htim17.Instance)
     {
+        // 读取Xbox(esp32)数据
+        if (Rx_flag == 1)
+        {
+            // 处理接收到的数据
+            Get_Data_Xbox(Rx_data8);
+            // 重新启动 DMA 传输
+            HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
+            Rx_flag = 0;
+        }
+
+
         // 获取脉冲
         int16_t pluse1 = COUNTERNUM1;
         int16_t pluse2 = COUNTERNUM2;

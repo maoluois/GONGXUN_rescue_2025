@@ -6,5 +6,5 @@
 #define CONTROL_H
 void Set_pulse1(float speed);
 void Set_pulse2(float speed);
-
+void Set_YSpeed(float *V1, float *V2, float Vx);
 #endif //CONTROL_H
