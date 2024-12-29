@@ -31,10 +31,9 @@
 #include "filter.h"
 #include "Algorithm.h"
 #include "pid.h"
-#include "wit_c_sdk.h"
 #include <stdio.h>
 #include <string.h>
-#include <jy901s.h>
+
 #include "dma.h"
 
 /* USER CODE END Includes */
@@ -106,24 +105,6 @@ extern uint8_t Rx_len8;    // 接收长度
 extern volatile uint8_t Rx_flag; // 接收标志
 
 // Imu JY901s PV
-extern struct STime		stcTime;
-extern struct SAcc 		stcAcc;
-extern struct SGyro   stcGyro;
-extern struct SAngle 	stcAngle;
-extern struct SMag 		stcMag;
-extern struct SDStatus stcDStatus;
-extern struct SPress 	stcPress;
-extern struct SLonLat 	stcLonLat;
-extern struct SGPSV 		stcGPSV;
-extern struct SQ       stcQ;
-float gyro_data;
-float gyroz,gyroz_last;
-float anglez;
-extern char ACCCALSW[5];//进入加速度校准模式
-extern char SAVACALSW[5];//保存当前配置
-extern char MAGNETICCALAM[5];      //磁力计校准
-extern char SAVEMAGNETICCALAM[5];  //保存配置
-extern uint8_t Rxdata;
 float fAcc[3], fGyro[3], fAngle[3];
 float pitch = 0, roll = 0, yaw = 0;
 float yawF = 0; // 滤波后的yaw
@@ -144,11 +125,14 @@ float pidOutputYaw = 0;
 void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
+
 // number calculate function
 uint16_t data_Integer_calculate(uint8_t data_Integer_len, uint8_t data_Start_Num, uint8_t *DataBuff);
 double data_Decimal_calculate(uint8_t data_Decimal_len, uint8_t data_Point_Num, uint8_t *Data);
+
 // xbox串口调试函数
 void Get_Data_Xbox(uint8_t *Rx_data);
+
 // DMA串口调试函数
 void DMA_Uart8_Send(uint8_t *buf,uint8_t len)   //dma发送
 {
@@ -165,8 +149,9 @@ void DMA_Uart8_Read(uint8_t *buf,uint8_t len) //dma接收
 // vofa串口调试函数
 void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
 float Get_Data(void);
+
 // imu串口调试函数
-extern void uart2_read_data(unsigned char ucData);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -216,10 +201,7 @@ int main(void)
   MX_TIM4_Init();
   MX_UART8_Init();
   /* USER CODE BEGIN 2 */
-  // sendcmd(ACCCALSW);HAL_Delay(100); //加速度计校准
-  // sendcmd(SAVACALSW);HAL_Delay(100);//保存当前配置
-  // sendcmd(MAGNETICCALAM);HAL_Delay(100);   //磁力计校准
-  // sendcmd(SAVEMAGNETICCALAM);HAL_Delay(100);//保存当前配置
+
   RetargetInit(&huart1);
   PID_Init(&motor1PID, 8.8, 0.066, 39.9, 0);
   PID_Init(&motor2PID, 8.1, 0.066, 38.8, 0);
@@ -232,7 +214,6 @@ int main(void)
   HAL_UART_Receive_IT(&huart1, RxBuffer, 1);
   HAL_UART_Receive_IT(&huart2, RxBuffer, 1);
   DMA_Uart8_Read(Rx_data8, 36);
-
 
 
 
@@ -250,8 +231,9 @@ int main(void)
       // HAL_Delay(500);
       // Set_pulse1(-10);
       // Set_pulse2(-10);
-      calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
-      Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
+
+      // calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
+      // Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
       printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SpeedY, yaw);
       // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
       // 获取角度
@@ -346,21 +328,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         totalAngle1 = pluse1;
         totalAngle2 = pluse2;
 
-        // 获取角度
-        gyro_data = (float)stcGyro.w[2] / 32768 * 200 * 180;
-        gyroz_last = gyroz;
-        gyroz = (gyro_data + 0) * 10 / 164;
-        gyroz = gyroz * 0.9 + gyroz_last * 0.1;
-        anglez += (float)(gyroz) * 0.01;
-
-        if (anglez > 180)
-        {
-            anglez = -180;
-        }
-        if (anglez < -180)
-        {
-            anglez = 180;
-        }
 
         // 计算速度
         wheel1_speed = -((float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒 （AB相反）
@@ -432,17 +399,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         //     Set_pulse2(pidOutputYaw);
         // }
 
-
-        // if ((SetSpeed - speed1) > 0.01 || (SetSpeed - speed1) < -0.01) {
-        //           printf("哈哈我又来啦");
-        // Set_pulse1(pidoutput1);
-        // }
-        //
-        // if ((SetSpeed - speed2) > 0.01 || (SetSpeed - speed2) < -0.01) {
-        //           printf("哈哈我又来啦");
-        // Set_pulse2(pidoutput2);
-        // }
-
         // printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2, pitch, SetSpeed6, COUNTERNUM1, COUNTERNUM2);
 
         // 重置计数器 （重置到重装值的中间值，也可以重置到0，不过反转得到的数需要取补码）
@@ -485,11 +441,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
     }
 
-    // if (UartHandle->Instance==USART2)
-    // {
-    //     HAL_UART_Receive_IT(&huart2, &Rxdata, 1);
-    //     uart2_read_data(Rxdata);	//处理数据
-    // }
 }
 
 
@@ -602,27 +553,7 @@ float Get_Data(void)
 
     // 计算小数数据
     Decimal = data_Decimal_calculate(data_Decimal_len, data_Point_Num, DataBuff);
-    // if (data_Decimal_len != 0) // 为个位数
-    // {
-    //     if (data_Decimal_len == 1)
-    //         Decimal = (float)(DataBuff[data_End_Num] - 48) * 0.1f;
-    //     else if (data_Decimal_len == 2)
-    //         Decimal = (float)(DataBuff[data_End_Num - 1] - 48) * 0.1f + (float)(DataBuff[data_End_Num] - 48) * 0.01f;
-    //     else if (data_Decimal_len == 3)
-    //         Decimal = (float)(DataBuff[data_End_Num - 2] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.01f +
-    //                   (float)(DataBuff[data_End_Num] - 48) * 0.001f;
-    //     else if (data_Decimal_len == 4)
-    //         Decimal = (float)(DataBuff[data_End_Num - 3] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.01f +
-    //                   (float)(DataBuff[data_End_Num - 1] - 48) * 0.001f + (float)(DataBuff[data_End_Num] - 48) * 0.0001f;
-    //     else if (data_Decimal_len == 5)
-    //         Decimal = (float)(DataBuff[data_End_Num - 4] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 3] - 48) * 0.01f +
-    //                   (float)(DataBuff[data_End_Num - 2] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 1] - 48) * 0.0001f +
-    //                   (float)(DataBuff[data_End_Num] - 48) * 0.00001f;
-    //     else if (data_Decimal_len == 6)
-    //         Decimal = (float)(DataBuff[data_End_Num - 5] - 48) * 0.1f + (float)(DataBuff[data_End_Num - 4] - 48) * 0.01f +
-    //                   (float)(DataBuff[data_End_Num - 3] - 48) * 0.001f + (float)(DataBuff[data_End_Num - 2] - 48) * 0.0001f +
-    //                   (float)(DataBuff[data_End_Num - 1] - 48) * 0.00001f + (float)(DataBuff[data_End_Num] - 48) * 0.000001f;
-    // }
+
     data_return = Integer + Decimal;
     if (minus_Flag == 1)
         data_return = -data_return;  // 如果是负数，取负值
