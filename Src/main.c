@@ -33,6 +33,8 @@
 #include "pid.h"
 #include <stdio.h>
 #include <string.h>
+#include "JY901s.h"
+#include "Xbox.h"
 
 #include "dma.h"
 
@@ -97,7 +99,7 @@ int buff_index1 = 0;                // 滤波缓冲区索引
 int buff_index2 = 0;
 
 // Xbox PV
-uint16_t XboxData[4];
+extern  uint16_t XboxData[4];
 
 // DMA PV
 extern uint8_t Rx_data8[BUFFER_SIZE];    // 接收数组
@@ -105,6 +107,7 @@ extern uint8_t Rx_len8;    // 接收长度
 extern volatile uint8_t Rx_flag; // 接收标志
 
 // Imu JY901s PV
+extern User_USART JY901_data;
 float fAcc[3], fGyro[3], fAngle[3];
 float pitch = 0, roll = 0, yaw = 0;
 float yawF = 0; // 滤波后的yaw
@@ -127,12 +130,6 @@ static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
 
 // number calculate function
-uint16_t data_Integer_calculate(uint8_t data_Integer_len, uint8_t data_Start_Num, uint8_t *DataBuff);
-double data_Decimal_calculate(uint8_t data_Decimal_len, uint8_t data_Point_Num, uint8_t *Data);
-
-// xbox串口调试函数
-void Get_Data_Xbox(uint8_t *Rx_data);
-
 // DMA串口调试函数
 void DMA_Uart8_Send(uint8_t *buf,uint8_t len)   //dma发送
 {
@@ -145,7 +142,10 @@ void DMA_Uart8_Read(uint8_t *buf,uint8_t len) //dma接收
 {
     HAL_UART_Receive_DMA(&huart8, buf, len);
 }
-
+void DMA_USART2_Read(uint8_t *buf,uint8_t len) //dma接收
+{
+    HAL_UART_Receive_DMA(&huart2, buf, len);
+}
 // vofa串口调试函数
 void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
 float Get_Data(void);
@@ -212,8 +212,9 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   HAL_TIM_Base_Start_IT(&htim17);
   HAL_UART_Receive_IT(&huart1, RxBuffer, 1);
-  HAL_UART_Receive_IT(&huart2, RxBuffer, 1);
   DMA_Uart8_Read(Rx_data8, 36);
+  DMA_USART2_Read(JY901_data.RxBuffer, 33);
+  JY_USART_Init(&JY901_data);  // 初始化JY901串口
 
 
 
@@ -232,10 +233,27 @@ int main(void)
       // Set_pulse1(-10);
       // Set_pulse2(-10);
 
-      // calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
-      // Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
-      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SpeedY, yaw);
-      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+      // 遥控模式
+      if (XboxData[0] != 0 || XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是65488
+      {
+          motor1PID.setpoint = 0;
+          motor2PID.setpoint = 0;
+      }
+      else
+      {
+          calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
+          if (SpeedY < 6 && SpeedY > -4)   // 死区防止静止时抖动
+          {
+              SpeedY = 0;
+          }
+          Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
+      }
+      HAL_Delay(10);
+
+      yaw = JY901_data.angle.angle[2];
+      // printf("%f", yaw);
+      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SpeedY, yaw);
+      printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
       // 获取角度
 
 
@@ -310,16 +328,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     // 定时10ms(115000000 / 1150 / 500 = 200)
     if (htim->Instance == htim17.Instance)
     {
-        // 读取Xbox(esp32)数据
-        if (Rx_flag == 1)
-        {
-            // 处理接收到的数据
-            Get_Data_Xbox(Rx_data8);
-            // 重新启动 DMA 传输
-            HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
-            Rx_flag = 0;
-        }
-
 
         // 获取脉冲
         int16_t pluse1 = COUNTERNUM1;
@@ -433,6 +441,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         RxBuffer[0] = 0;  // 清空接收缓冲
         HAL_UART_Receive_IT(&huart1, (uint8_t *)RxBuffer, 1);  // 重新启动串口中断接收下一个字符
     }
+
+    if (UartHandle->Instance == USART2)
+    {
+        JY901_Process();
+        HAL_UART_Receive_IT(&huart2, JY901_data.RxBuffer, 33);
+    }
     if (UartHandle->Instance == UART8)
     {
         // 处理接收到的数据
@@ -441,76 +455,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
     }
 
+
 }
 
-
-uint16_t data_Integer_calculate(uint8_t data_Integer_len, uint8_t data_Start_Num, uint8_t *Data) {
-    uint16_t data_return = 0;
-    // 计算整数数据
-    if (data_Integer_len != 0) {
-        for (uint8_t i = 0; i < data_Integer_len; i++) {
-            data_return = data_return * 10 + (Data[data_Start_Num + i] - '0'); // 逐位计算
-        }
-    }
-    return data_return;
-}
-
-double data_Decimal_calculate(uint8_t data_Decimal_len, uint8_t data_Point_Num, uint8_t *Data) {
-    double data_return = 0;
-    // 计算小数数据
-    if (data_Decimal_len != 0) {
-        for (uint8_t i = 0; i < data_Decimal_len; i++) {
-            data_return = data_return + (Data[data_Point_Num + i + 1] - '0') * pow(10, -i - 1); // 逐位计算
-        }
-    }
-    return data_return;
-}
-
-void Get_Data_Xbox(uint8_t *Rx_data) {
-    uint8_t up_Start_Num = 0, up_End_Num = 0;
-    uint8_t down_Start_Num = 0, down_End_Num = 0;
-    uint8_t x_Start_Num = 0, x_End_Num = 0;
-    uint8_t y_Start_Num = 0, y_End_Num = 0;
-    uint8_t flag = 0;          // 开始寻找标志位
-
-    // 查找等号、小数点和感叹号的位置
-    for (uint8_t i = 0; i < 200; i++) {
-        if (Rx_data[i] == '\n') {
-            flag = 1;  // 找到换行符，标志接收开始
-        }
-        if (Rx_data[i] == 'u' && flag == 1) {
-            up_Start_Num = i + 1;
-        }
-        if (Rx_data[i] == 'd' && flag == 1) {
-            up_End_Num = i - 1;
-            down_Start_Num = i + 1;
-        }
-        if (Rx_data[i] == 'x' && flag == 1) {
-            down_End_Num = i - 1;
-            x_Start_Num = i + 1;
-        }
-        if (Rx_data[i] == 'y' && flag == 1) {
-            x_End_Num = i - 1;
-            y_Start_Num = i + 1;
-        }
-        if (Rx_data[i] == '!' && flag == 1) {
-            y_End_Num = i - 1;
-            break;
-        }
-    }
-
-    // 计算整数数据的长度
-    uint8_t up_Integer_len = up_End_Num - up_Start_Num + 1;
-    uint8_t down_Integer_len = down_End_Num - down_Start_Num + 1;
-    uint8_t x_Integer_len = x_End_Num - x_Start_Num + 1;
-    uint8_t y_Integer_len = y_End_Num - y_Start_Num + 1;
-
-    // 计算返回值
-    XboxData[0] = data_Integer_calculate(up_Integer_len, up_Start_Num, Rx_data);
-    XboxData[1] = data_Integer_calculate(down_Integer_len, down_Start_Num, Rx_data);
-    XboxData[2] = data_Integer_calculate(x_Integer_len, x_Start_Num, Rx_data);
-    XboxData[3] = data_Integer_calculate(y_Integer_len, y_Start_Num, Rx_data);
-}
 // 解析从指令缓存中提取数据
 float Get_Data(void)
 {

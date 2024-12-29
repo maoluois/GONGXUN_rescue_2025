@@ -25,6 +25,7 @@
 #include "stdio.h"
 #include "usart.h"
 #include "retarget.h"
+#include "JY901s.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,6 +48,7 @@
 extern uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
 extern volatile uint8_t Rx_len8;  //接收一帧数据的长度
 extern volatile uint8_t Rx_flag; //一帧数据接收完成标志
+extern User_USART JY901_data;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,7 +65,9 @@ extern volatile uint8_t Rx_flag; //一帧数据接收完成标志
 extern TIM_HandleTypeDef htim17;
 extern DMA_HandleTypeDef hdma_uart8_rx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
+extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -246,6 +250,67 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART2 global interrupt.
+  */
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+  uint32_t temp_flag = 0;
+  uint32_t temp = 0;
+
+  // 检查是否是IDLE中断
+  temp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE);
+  if (temp_flag != RESET)
+  {
+    __HAL_UART_CLEAR_IDLEFLAG(&huart2); // 清除IDLE标志位
+
+    // 清理SR和DR，避免误触发
+    temp = huart2.Instance->ISR;
+    temp = huart2.Instance->RDR;
+
+    // 获取DMA剩余数据长度
+    temp = __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
+    JY901_data.Rx_len = RXBUFFER_LEN - temp;
+
+    // 调用用户数据处理函数
+    JY901_Process();
+    JY901_data.Rx_flag = 1;
+
+    // 如果需要循环模式，确保DMA继续运行
+    HAL_UART_Receive_DMA(&huart2, JY901_data.RxBuffer, RXBUFFER_LEN);
+  }
+
+
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+  /* USER CODE END USART2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles UART8 global interrupt.
+  */
+void UART8_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART8_IRQn 0 */
+  uint32_t tmp_flag = 0, temp;
+  tmp_flag = __HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE); // 获取 IDLE 标志
+  if ((tmp_flag != RESET)) // 如果 IDLE 标志被置位
+  {
+    __HAL_UART_CLEAR_IDLEFLAG(&huart8); // 清除标志位
+    temp = __HAL_DMA_GET_COUNTER(&hdma_uart8_rx); // 获得剩余数据量
+    Rx_len8 = BUFFER_SIZE - temp; // 计算接收到的数据长度
+    Rx_flag = 1; // 标志位，通知上层接收完成
+  }
+  /* USER CODE END UART8_IRQn 0 */
+  HAL_UART_IRQHandler(&huart8);
+  /* USER CODE BEGIN UART8_IRQn 1 */
+
+  /* USER CODE END UART8_IRQn 1 */
 }
 
 /**
