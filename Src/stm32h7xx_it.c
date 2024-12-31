@@ -64,7 +64,6 @@ extern User_USART JY901_data;
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim17;
 extern DMA_HandleTypeDef hdma_uart8_rx;
-extern DMA_HandleTypeDef hdma_usart2_rx;
 extern UART_HandleTypeDef huart8;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
@@ -225,20 +224,6 @@ void DMA1_Stream0_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles DMA1 stream1 global interrupt.
-  */
-void DMA1_Stream1_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart2_rx);
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream1_IRQn 1 */
-}
-
-/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -258,30 +243,30 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-  uint32_t temp_flag = 0;
-  uint32_t temp = 0;
-
-  // 检查是否是IDLE中断
-  temp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE);
-  if (temp_flag != RESET)
-  {
-    __HAL_UART_CLEAR_IDLEFLAG(&huart2); // 清除IDLE标志位
-
-    // 清理SR和DR，避免误触发
-    temp = huart2.Instance->ISR;
-    temp = huart2.Instance->RDR;
-
-    // 获取DMA剩余数据长度
-    temp = __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
-    JY901_data.Rx_len = RXBUFFER_LEN - temp;
-
-    // 调用用户数据处理函数
-    JY901_Process();
-    JY901_data.Rx_flag = 1;
-
-    // 如果需要循环模式，确保DMA继续运行
-    HAL_UART_Receive_DMA(&huart2, JY901_data.RxBuffer, RXBUFFER_LEN);
-  }
+  // uint32_t temp_flag = 0;
+  // uint32_t temp = 0;
+  //
+  // // 检查是否是IDLE中断
+  // temp_flag = __HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE);
+  // if (temp_flag != RESET)
+  // {
+  //   __HAL_UART_CLEAR_IDLEFLAG(&huart2); // 清除IDLE标志位
+  //
+  //   // 清理SR和DR，避免误触发
+  //   temp = huart2.Instance->ISR;
+  //   temp = huart2.Instance->RDR;
+  //
+  //   // 获取DMA剩余数据长度
+  //   temp = __HAL_DMA_GET_COUNTER(&hdma_usart2_rx);
+  //   JY901_data.Rx_len = RXBUFFER_LEN - temp;
+  //
+  //   // 调用用户数据处理函数
+  //   JY901_Process();
+  //   JY901_data.Rx_flag = 1;
+  //
+  //   // 如果需要循环模式，确保DMA继续运行
+  //   HAL_UART_Receive_DMA(&huart2, JY901_data.RxBuffer, RXBUFFER_LEN);
+  // }wa
 
 
   /* USER CODE END USART2_IRQn 0 */

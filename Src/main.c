@@ -248,12 +248,12 @@ int main(void)
           }
           Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
       }
-      HAL_Delay(10);
 
       yaw = JY901_data.angle.angle[2];
       // printf("%f", yaw);
       // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SpeedY, yaw);
       printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+      // HAL_Delay(2);
       // 获取角度
 
 
@@ -453,6 +453,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         Get_Data_Xbox(Rx_data8);
         // 重新启动 DMA 传输
         HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
+
     }
 
 
