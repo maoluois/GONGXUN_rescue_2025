@@ -106,7 +106,7 @@ void Error_Handler(void);
 #define motor1 0
 #define motor2 1
 #define motor3 2
-#define BUFFER_SIZE  36  //XBOX 数组容量大小
+// #define BUFFER_SIZE  36  //XBOX 数组容量大小
 #define V_F_MAX 127     // 遥控速度范围
 #define V_F_MIN -127
 #define W_MAX 20

@@ -47,6 +47,21 @@ void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+typedef struct
+{
+  uint16_t ReceiveNum;  // 接收字节数，在中断回调中自动赋值，只要字节数>0即为接受到新的一帧数据
+  uint8_t ReceiveData[50];  // 接收到的数据
+  uint8_t BuffTemp[50];  // 临时缓存
+} xUART_TypeDef;
+
+extern xUART_TypeDef xUSART1;
+extern xUART_TypeDef xUSART2;
+extern xUART_TypeDef xUSART3;
+extern xUART_TypeDef xUART4;
+extern xUART_TypeDef xUART5;
+extern xUART_TypeDef xUSART6;
+extern xUART_TypeDef xUART7;
+extern xUART_TypeDef xUART8;
 
 /* USER CODE END Prototypes */
 

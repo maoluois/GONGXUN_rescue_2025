@@ -82,10 +82,15 @@ float SpeedY = 0;         // 目标速度（单位：cm/s）
 float angular_speed = 0;      // 角速度
 
 // usart PV
-uint8_t RxBuffer[10];          // 串口接收缓冲
-uint16_t RxLine = 0;          // 指令长度
-uint8_t DataBuff[200];        // 指令内容
-uint8_t DataBuff8[200];        // 指令内容
+xUART_TypeDef xUSART1 = {0};  // 串口1;
+xUART_TypeDef xUSART2 = {0};  // 串口2;
+xUART_TypeDef xUSART3 = {0};  // 串口3;
+xUART_TypeDef xUART4 = {0};  // 串口4;
+xUART_TypeDef xUART5 = {0};  // 串口5;
+xUART_TypeDef xUSART6 = {0};  // 串口6;
+xUART_TypeDef xUART7 = {0};  // 串口7;
+xUART_TypeDef xUART8 = {0};  // 串口8;
+
 float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
 float SetSpeed2 = 0;
 float SetSpeed6 = 0;
@@ -102,9 +107,9 @@ int buff_index2 = 0;
 extern  uint16_t XboxData[4];
 
 // DMA PV
-extern uint8_t Rx_data8[BUFFER_SIZE];    // 接收数组
-extern uint8_t Rx_len8;    // 接收长度
-extern volatile uint8_t Rx_flag; // 接收标志
+// extern uint8_t Rx_data8[BUFFER_SIZE];    // 接收数组
+// extern uint8_t Rx_len8;    // 接收长度
+// extern volatile uint8_t Rx_flag; // 接收标志
 
 // Imu JY901s PV
 extern User_USART JY901_data;
@@ -128,24 +133,6 @@ float pidOutputYaw = 0;
 void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
-
-// number calculate function
-// DMA串口调试函数
-void DMA_Uart8_Send(uint8_t *buf,uint8_t len)   //dma发送
-{
-    if (HAL_UART_Transmit_DMA(&huart8,buf,len)!=HAL_OK)
-    {
-        Error_Handler();
-    }
-}
-void DMA_Uart8_Read(uint8_t *buf,uint8_t len) //dma接收
-{
-    HAL_UART_Receive_DMA(&huart8, buf, len);
-}
-void DMA_USART2_Read(uint8_t *buf,uint8_t len) //dma接收
-{
-    HAL_UART_Receive_DMA(&huart2, buf, len);
-}
 // vofa串口调试函数
 void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
 float Get_Data(void);
@@ -203,6 +190,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   RetargetInit(&huart1);
+  JY_USART_Init(&JY901_data);  // 初始化JY901串口
   PID_Init(&motor1PID, 8.8, 0.066, 39.9, 0);
   PID_Init(&motor2PID, 8.1, 0.066, 38.8, 0);
   HAL_TIM_Base_Init(&htim3);
@@ -211,10 +199,12 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   HAL_TIM_Base_Start_IT(&htim17);
-  HAL_UART_Receive_IT(&huart1, RxBuffer, 1);
-  DMA_Uart8_Read(Rx_data8, 36);
-  DMA_USART2_Read(JY901_data.RxBuffer, 33);
-  JY_USART_Init(&JY901_data);  // 初始化JY901串口
+  HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
+  // DMA_Uart8_Read(Rx_data8, 36);
+  // DMA_USART2_Read(JY901_data.xUSART1.BuffTemp, 33);
+  printf("Init OK!\n");
+
 
 
 
@@ -234,7 +224,7 @@ int main(void)
       // Set_pulse2(-10);
 
       // 遥控模式
-      if (XboxData[0] != 0 || XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是65488
+      if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是65488
       {
           motor1PID.setpoint = 0;
           motor2PID.setpoint = 0;
@@ -249,17 +239,29 @@ int main(void)
           Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
       }
 
-      yaw = JY901_data.angle.angle[2];
+      // yaw = JY901_data.angle.angle[2];
       // printf("%f", yaw);
       // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SpeedY, yaw);
-      printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+
       // HAL_Delay(2);
       // 获取角度
-
+      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+      if (xUART8.ReceiveNum)                                                  // 判断字节数
+      {
+          Get_Data_Xbox(xUART8.ReceiveData);                                  // 解析Xbox数据
+          // printf("\r<<<<< USART8 接收到一帧数据 \r");                  // 提示
+          // printf("字节数：%d \r", xUART8.ReceiveNum);             // 显示字节数
+          // printf("ASCII : %s\r", (char *)xUART8.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+          // printf("16进制: ");                                                              // 显示数据，以16进制方式，显示每一个字节的值
+          // for (uint16_t i = 0; i < xUART8.ReceiveNum; i++)          // 逐个字节输出
+          //     printf("0x%X ", xUART8.ReceiveData[i]);                   // 以16进制显示
+          // printf("\r\r");                                                                       // 显示换行
+          xUART8.ReceiveNum = 0;                                             // 清0接收标记
+      }
   }
   /* USER CODE END 3 */
 }
@@ -418,44 +420,65 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 }
 
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    // 可改写
+    // if (huart == &huart1)  // 判断是否是串口1产生的中断
+    // {
+    //     __HAL_UNLOCK(huart);
+    //     xUSART1.ReceiveNum ++;                        // 每接收到一个数据，接收长度加1
+    //     xUSART1.ReceiveData[xUSART1.ReceiveNum - 1] = xUSART1.BuffTemp[0];  // 将接收到的数据存入缓存数组
+    //
+    //     if (xUSART1.BuffTemp[0] == '!')         // 判断是否接收到结束标志（这里以0x21为例，可以根据实际情况修改）
+    //     {
+    //         // printf("RXLen=%d\r\n", xUSART1.ReceiveNum);  // 输出接收到的指令长度
+    //         // for (int i = 0; i < xUSART1.ReceiveNum; i++)
+    //         //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
+    //
+    //         USART_PID_Adjust(1, &motor1PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+    //         USART_PID_Adjust(2, &motor2PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+    //         USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+    //         memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
+    //         xUSART1.ReceiveNum = 0;  // 重置接收长度计数
+    //     }
+    //     xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
+    //     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, xUSART1.BuffTemp, sizeof(xUSART1.BuffTemp));
+    // }
+
+    if (huart == &huart8)                                                                    // 判断串口
+    {
+        __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
+
+        xUART8.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
+        memset(xUART8.ReceiveData, 0, sizeof(xUART8.ReceiveData));                         // 清0前一帧的接收数据
+        memcpy(xUART8.ReceiveData, xUART8.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
+// 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
+    }
+}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 {
     if (UartHandle->Instance == USART1)  // 判断是否是串口1产生的中断
     {
-        RxLine++;                        // 每接收到一个数据，接收长度加1
-        DataBuff[RxLine - 1] = RxBuffer[0];  // 将接收到的数据存入缓存数组
+        xUSART1.ReceiveNum ++;                        // 每接收到一个数据，接收长度加1
+        xUSART1.ReceiveData[xUSART1.ReceiveNum - 1] = xUSART1.BuffTemp[0];  // 将接收到的数据存入缓存数组
 
-        if (RxBuffer[0] == '!')         // 判断是否接收到结束标志（这里以0x21为例，可以根据实际情况修改）
+        if (xUSART1.BuffTemp[0] == '!')         // 判断是否接收到结束标志（这里以0x21为例，可以根据实际情况修改）
         {
-            // printf("RXLen=%d\r\n", RxLine);  // 输出接收到的指令长度
-            // for (int i = 0; i < RxLine; i++)
-            //    printf("UART DataBuff[%d] = %c\r\n", i, DataBuff[i]);  // 输出接收到的完整指令
+            // printf("RXLen=%d\r\n", xUSART1.ReceiveNum);  // 输出接收到的指令长度
+            // for (int i = 0; i < xUSART1.ReceiveNum; i++)
+            //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
 
             USART_PID_Adjust(1, &motor1PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             USART_PID_Adjust(2, &motor2PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            memset(DataBuff, 0, sizeof(DataBuff));  // 清空接收缓存
-            RxLine = 0;  // 重置接收长度计数
+            memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
+            xUSART1.ReceiveNum = 0;  // 重置接收长度计数
         }
-        RxBuffer[0] = 0;  // 清空接收缓冲
-        HAL_UART_Receive_IT(&huart1, (uint8_t *)RxBuffer, 1);  // 重新启动串口中断接收下一个字符
+        xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
+        HAL_UART_Receive_IT(&huart1, (uint8_t *)xUSART1.BuffTemp, 1);  // 重新启动串口中断接收下一个字符
     }
-
-    if (UartHandle->Instance == USART2)
-    {
-        JY901_Process();
-        HAL_UART_Receive_IT(&huart2, JY901_data.RxBuffer, 33);
-    }
-    if (UartHandle->Instance == UART8)
-    {
-        // 处理接收到的数据
-        Get_Data_Xbox(Rx_data8);
-        // 重新启动 DMA 传输
-        HAL_UART_Receive_DMA(&huart8, Rx_data8, 36);
-
-    }
-
 
 }
 
@@ -474,11 +497,11 @@ float Get_Data(void)
     // 查找等号、小数点和感叹号的位置
     for (uint8_t i = 0; i < 200; i++)
     {
-        if (DataBuff[i] == '=')
+        if (xUSART1.ReceiveData[i] == '=')
             data_Start_Num = i + 1;  // 找到等号后面的位置作为数据起始位
-        if (DataBuff[i] == '.')
+        if (xUSART1.ReceiveData[i] == '.')
             data_Point_Num = i;
-        if (DataBuff[i] == '!')
+        if (xUSART1.ReceiveData[i] == '!')
         {
             data_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
             break;
@@ -486,7 +509,7 @@ float Get_Data(void)
     }
 
     // 判断数据是否为负数
-    if (DataBuff[data_Start_Num] == '-')
+    if (xUSART1.ReceiveData[data_Start_Num] == '-')
     {
         data_Start_Num += 1;  // 如果是负数，数据起始位后移一位
         minus_Flag = 1;       // 设置负数标志
@@ -497,10 +520,10 @@ float Get_Data(void)
     data_Decimal_len = data_End_Num - data_Point_Num;
 
     // 计算整数数据
-    Integer = data_Integer_calculate(data_Integer_len, data_Start_Num, DataBuff);
+    Integer = data_Integer_calculate(data_Integer_len, data_Start_Num, xUSART1.ReceiveData);
 
     // 计算小数数据
-    Decimal = data_Decimal_calculate(data_Decimal_len, data_Point_Num, DataBuff);
+    Decimal = data_Decimal_calculate(data_Decimal_len, data_Point_Num, xUSART1.ReceiveData);
 
     data_return = Integer + Decimal;
     if (minus_Flag == 1)
@@ -519,37 +542,37 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
     if (Motor_n == 1)  // 电机1
     {
 
-        if (DataBuff[0] == 'P' && DataBuff[1] == '1')
+        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '1')
             pid->Kp = data_Get;     // 速度环P参数
-        else if (DataBuff[0] == 'I' && DataBuff[1] == '1')
+        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '1')
             pid->Ki = data_Get;     // 速度环I参数
-        else if (DataBuff[0] == 'D' && DataBuff[1] == '1')
+        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '1')
             pid->Kd = data_Get;     // 速度环D参数
-        else if ((DataBuff[0] == 'S' && DataBuff[1] == 'p') && DataBuff[2] == 'e')
+        else if ((xUSART1.ReceiveData[0] == 'S' && xUSART1.ReceiveData[1] == 'p') && xUSART1.ReceiveData[2] == 'e')
             pid->setpoint = data_Get;     // 目标速度
             SetSpeed1 = pid->setpoint;
     }
 
     if (Motor_n == 2)  // 电机2
     {
-        if (DataBuff[0] == 'P' && DataBuff[1] == '2')
+        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '2')
             pid->Kp = data_Get;     // 速度环P参数
-        else if (DataBuff[0] == 'I' && DataBuff[1] == '2')
+        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '2')
             pid->Ki = data_Get;     // 速度环I参数
-        else if (DataBuff[0] == 'D' && DataBuff[1] == '2')
+        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '2')
             pid->Kd = data_Get;     // 速度环D参数
-        else if ((DataBuff[0] == 'S' && DataBuff[1] == 'p') && DataBuff[2] == 'e')
+        else if ((xUSART1.ReceiveData[0] == 'S' && xUSART1.ReceiveData[1] == 'p') && xUSART1.ReceiveData[2] == 'e')
             pid->setpoint = data_Get;     // 目标速度
             SetSpeed2 = pid->setpoint;
     }
 
     if (Motor_n == 6)  // IMU
     {
-        if (DataBuff[0] == 'P' && DataBuff[1] == '6')
+        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '6')
             pid->Kp = data_Get;     // 速度环P参数
-        else if (DataBuff[0] == 'D' && DataBuff[1] == '6')
+        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '6')
             pid->Kd = data_Get;     // 速度环D参数
-        else if ((DataBuff[0] == 'S' && DataBuff[1] == 'p') && DataBuff[2] == 'e')
+        else if ((xUSART1.ReceiveData[0] == 'S' && xUSART1.ReceiveData[1] == 'p') && xUSART1.ReceiveData[2] == 'e')
             pid->setpoint = data_Get;  // 目标速度
             SetSpeed6 = pid->setpoint;
     }

@@ -21,9 +21,9 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
-volatile uint8_t Rx_len8;  //接收一帧数据的长度
-volatile uint8_t Rx_flag; //一帧数据接收完成标志
+// uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
+// volatile uint8_t Rx_len8;  //接收一帧数据的长度
+// volatile uint8_t Rx_flag; //一帧数据接收完成标志
 
 
 /* USER CODE END 0 */
@@ -32,6 +32,7 @@ UART_HandleTypeDef huart8;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_uart8_rx;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* UART8 init function */
 void MX_UART8_Init(void)
@@ -45,7 +46,7 @@ void MX_UART8_Init(void)
 
   /* USER CODE END UART8_Init 1 */
   huart8.Instance = UART8;
-  huart8.Init.BaudRate = 115200;
+  huart8.Init.BaudRate = 9600;
   huart8.Init.WordLength = UART_WORDLENGTH_8B;
   huart8.Init.StopBits = UART_STOPBITS_1;
   huart8.Init.Parity = UART_PARITY_NONE;
@@ -72,10 +73,10 @@ void MX_UART8_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN UART8_Init 2 */
-  //在uart初始化函数中添加的代码
-  __HAL_UART_ENABLE_IT(&huart8, UART_IT_IDLE); //使能IDLE中断
-  //DMA接收函数，此句一定要加，不加接收不到第一次传进来的实数据，是空的，且此时接收到的数据长度为缓存器的数据长度
-  HAL_UART_Receive_DMA(&huart8, Rx_data8,BUFFER_SIZE);
+  // //在uart初始化函数中添加的代码
+  // __HAL_UART_ENABLE_IT(&huart8, UART_IT_IDLE); //使能IDLE中断
+  // //DMA接收函数，此句一定要加，不加接收不到第一次传进来的实数据，是空的，且此时接收到的数据长度为缓存器的数据长度
+  // HAL_UART_Receive_DMA(&huart8, Rx_data8,BUFFER_SIZE);
 
   /* USER CODE END UART8_Init 2 */
 
@@ -197,12 +198,19 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     PE0     ------> UART8_RX
     PE1     ------> UART8_TX
     */
-    GPIO_InitStruct.Pin = XBOX_RX_Pin|XBOX_TX_Pin;
+    GPIO_InitStruct.Pin = XBOX_RX_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF8_UART8;
+    HAL_GPIO_Init(XBOX_RX_GPIO_Port, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = XBOX_TX_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF8_UART8;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+    HAL_GPIO_Init(XBOX_TX_GPIO_Port, &GPIO_InitStruct);
 
     /* UART8 DMA Init */
     /* UART8_RX Init */
@@ -213,7 +221,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_uart8_rx.Init.MemInc = DMA_MINC_ENABLE;
     hdma_uart8_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
     hdma_uart8_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    hdma_uart8_rx.Init.Mode = DMA_CIRCULAR;
+    hdma_uart8_rx.Init.Mode = DMA_NORMAL;
     hdma_uart8_rx.Init.Priority = DMA_PRIORITY_LOW;
     hdma_uart8_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_uart8_rx) != HAL_OK)
@@ -223,9 +231,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart8_rx);
 
-    /* UART8 interrupt Init */
-    HAL_NVIC_SetPriority(UART8_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(UART8_IRQn);
   /* USER CODE BEGIN UART8_MspInit 1 */
 
   /* USER CODE END UART8_MspInit 1 */
@@ -260,8 +265,27 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     GPIO_InitStruct.Alternate = GPIO_AF4_USART1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* USART1 DMA Init */
+    /* USART1_RX Init */
+    hdma_usart1_rx.Instance = DMA1_Stream1;
+    hdma_usart1_rx.Init.Request = DMA_REQUEST_USART1_RX;
+    hdma_usart1_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_usart1_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_usart1_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_usart1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_usart1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_usart1_rx.Init.Mode = DMA_NORMAL;
+    hdma_usart1_rx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_usart1_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_usart1_rx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(uartHandle,hdmarx,hdma_usart1_rx);
+
     /* USART1 interrupt Init */
-    HAL_NVIC_SetPriority(USART1_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(USART1_IRQn, 6, 0);
     HAL_NVIC_EnableIRQ(USART1_IRQn);
   /* USER CODE BEGIN USART1_MspInit 1 */
 
@@ -325,9 +349,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
     /* UART8 DMA DeInit */
     HAL_DMA_DeInit(uartHandle->hdmarx);
-
-    /* UART8 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(UART8_IRQn);
   /* USER CODE BEGIN UART8_MspDeInit 1 */
 
   /* USER CODE END UART8_MspDeInit 1 */
@@ -345,6 +366,9 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
     PB15     ------> USART1_RX
     */
     HAL_GPIO_DeInit(GPIOB, Daplink_TX_Pin|Daplink_RX_Pin);
+
+    /* USART1 DMA DeInit */
+    HAL_DMA_DeInit(uartHandle->hdmarx);
 
     /* USART1 interrupt Deinit */
     HAL_NVIC_DisableIRQ(USART1_IRQn);

@@ -26,6 +26,7 @@
 #include "usart.h"
 #include "retarget.h"
 #include "JY901s.h"
+#include "Xbox.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,10 +46,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
-extern volatile uint8_t Rx_len8;  //接收一帧数据的长度
-extern volatile uint8_t Rx_flag; //一帧数据接收完成标志
-extern User_USART JY901_data;
+// extern uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
+// extern volatile uint8_t Rx_len8;  //接收一帧数据的长度
+// extern volatile uint8_t Rx_flag; //一帧数据接收完成标志
+// extern User_USART JY901_data;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,7 +65,7 @@ extern User_USART JY901_data;
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim17;
 extern DMA_HandleTypeDef hdma_uart8_rx;
-extern UART_HandleTypeDef huart8;
+extern DMA_HandleTypeDef hdma_usart1_rx;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 /* USER CODE BEGIN EV */
@@ -224,6 +225,20 @@ void DMA1_Stream0_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 stream1 global interrupt.
+  */
+void DMA1_Stream1_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream1_IRQn 1 */
+}
+
+/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -274,28 +289,6 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 1 */
 
   /* USER CODE END USART2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles UART8 global interrupt.
-  */
-void UART8_IRQHandler(void)
-{
-  /* USER CODE BEGIN UART8_IRQn 0 */
-  uint32_t tmp_flag = 0, temp;
-  tmp_flag = __HAL_UART_GET_FLAG(&huart8, UART_FLAG_IDLE); // 获取 IDLE 标志
-  if ((tmp_flag != RESET)) // 如果 IDLE 标志被置位
-  {
-    __HAL_UART_CLEAR_IDLEFLAG(&huart8); // 清除标志位
-    temp = __HAL_DMA_GET_COUNTER(&hdma_uart8_rx); // 获得剩余数据量
-    Rx_len8 = BUFFER_SIZE - temp; // 计算接收到的数据长度
-    Rx_flag = 1; // 标志位，通知上层接收完成
-  }
-  /* USER CODE END UART8_IRQn 0 */
-  HAL_UART_IRQHandler(&huart8);
-  /* USER CODE BEGIN UART8_IRQn 1 */
-
-  /* USER CODE END UART8_IRQn 1 */
 }
 
 /**

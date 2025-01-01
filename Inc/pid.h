@@ -20,6 +20,11 @@ typedef struct{
 
 }PID_ControllerTypeDef;
 
+extern PID_ControllerTypeDef motor1PID;
+extern PID_ControllerTypeDef motor2PID;
+extern PID_ControllerTypeDef ImuPID;
+
+
 void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float setpoint);
 float PID_Clamp(float value, float min, float max);
 float PID_Incremental(PID_ControllerTypeDef *pid, float currentSpeed);
