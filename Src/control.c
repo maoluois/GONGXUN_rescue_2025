@@ -45,11 +45,7 @@ void Set_pulse2(float speed)
 
 }
 
-void Set_YSpeed(float *V1, float *V2, float Vx)
-{
-   *V1 = -Vx;
-   *V2 = -Vx;
-}
+
 
 
 

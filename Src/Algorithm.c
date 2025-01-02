@@ -21,13 +21,10 @@ float map(float value, float in_min, float in_max, float out_min, float out_max)
 
 // 解算函数
 void calculate_target_speeds(uint16_t x, uint16_t y, float* v_f, float* w) {
-
-    // 计算方向角度并归一化到角速度
-    float angle = atan2(x, y); // 角度范围为[-π, π]
-
     // 将速度和角度映射到目标范围
     *v_f = (int8_t)map(y, 0, 65535, V_F_MIN, V_F_MAX); // 假设归一化输入速度范围为[0, 1]
-    *w = (int8_t)map(angle, -M_PI, M_PI, W_MIN, W_MAX);
+    *w = (int8_t)map(x, 0, 65535, W_MIN, W_MAX);
+
 }
 
 double data_Decimal_calculate(uint8_t data_Decimal_len, uint8_t data_Point_Num, uint8_t *Data) {

@@ -50,10 +50,11 @@ void MX_USART2_UART_Init(void);
 typedef struct
 {
   uint16_t ReceiveNum;  // 接收字节数，在中断回调中自动赋值，只要字节数>0即为接受到新的一帧数据
-  uint8_t ReceiveData[50];  // 接收到的数据
-  uint8_t BuffTemp[50];  // 临时缓存
+  uint8_t ReceiveData[XBOX_BUFFER_SIZE];  // 接收到的数据
+  uint8_t BuffTemp[XBOX_BUFFER_SIZE];  // 临时缓存
 } xUART_TypeDef;
 
+  // 声明外部变量
 extern xUART_TypeDef xUSART1;
 extern xUART_TypeDef xUSART2;
 extern xUART_TypeDef xUSART3;

@@ -33,10 +33,9 @@
 #include "pid.h"
 #include <stdio.h>
 #include <string.h>
-#include "JY901s.h"
+#include "jy901s.h"
 #include "Xbox.h"
 
-#include "dma.h"
 
 /* USER CODE END Includes */
 
@@ -71,6 +70,9 @@ float last_wheel1_speed = 0;  // 上一次的轮子速度
 float last_wheel2_speed = 0;
 float wheel1_speedF = 0;      // 滤波后的轮子速度
 float wheel2_speedF = 0;
+float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
+float SetSpeed2 = 0;
+float SetSpeed6 = 0;
 
 // car centre PV
 float CurrentPositionX = 0;    // 当前位置
@@ -90,10 +92,11 @@ xUART_TypeDef xUART5 = {0};  // 串口5;
 xUART_TypeDef xUSART6 = {0};  // 串口6;
 xUART_TypeDef xUART7 = {0};  // 串口7;
 xUART_TypeDef xUART8 = {0};  // 串口8;
-
-float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
-float SetSpeed2 = 0;
-float SetSpeed6 = 0;
+    // Imu JY901s PV
+    JY_USART JY901s = {0};   // 本例中具有JY901s使用串口2
+    float yawF = 0;
+    // Xbox PV
+    extern  uint16_t XboxData[4];
 
 
 // fliter PV
@@ -103,19 +106,10 @@ float mean_buff3[fliter_buffer_size];
 int buff_index1 = 0;                // 滤波缓冲区索引
 int buff_index2 = 0;
 
-// Xbox PV
-extern  uint16_t XboxData[4];
-
 // DMA PV
 // extern uint8_t Rx_data8[BUFFER_SIZE];    // 接收数组
 // extern uint8_t Rx_len8;    // 接收长度
 // extern volatile uint8_t Rx_flag; // 接收标志
-
-// Imu JY901s PV
-extern User_USART JY901_data;
-float fAcc[3], fGyro[3], fAngle[3];
-float pitch = 0, roll = 0, yaw = 0;
-float yawF = 0; // 滤波后的yaw
 
 // struct PID
 PID_ControllerTypeDef motor1PID;
@@ -190,7 +184,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   RetargetInit(&huart1);
-  JY_USART_Init(&JY901_data);  // 初始化JY901串口
+  JY901s_Init(&JY901s);  // 初始化JY901串口
   PID_Init(&motor1PID, 8.8, 0.066, 39.9, 0);
   PID_Init(&motor2PID, 8.1, 0.066, 38.8, 0);
   HAL_TIM_Base_Init(&htim3);
@@ -201,6 +195,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim17);
   HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
   // DMA_Uart8_Read(Rx_data8, 36);
   // DMA_USART2_Read(JY901_data.xUSART1.BuffTemp, 33);
   printf("Init OK!\n");
@@ -228,6 +223,7 @@ int main(void)
       {
           motor1PID.setpoint = 0;
           motor2PID.setpoint = 0;
+          printf("xbox not connected\n");
       }
       else
       {
@@ -235,8 +231,14 @@ int main(void)
           if (SpeedY < 6 && SpeedY > -4)   // 死区防止静止时抖动
           {
               SpeedY = 0;
+              // printf("%f\n", SpeedY);
           }
-          Set_YSpeed(&motor1PID.setpoint, &motor2PID.setpoint, SpeedY);
+          if (angular_speed < 2 && angular_speed > -2)
+          {
+              angular_speed = 0;
+              // printf("%f\n", angular_speed);
+          }
+          InverseKinematics_differential(SpeedY, angular_speed, WheelDistance, &motor1PID.setpoint, &motor2PID.setpoint);
       }
 
       // yaw = JY901_data.angle.angle[2];
@@ -250,12 +252,22 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+      // if (JY901s.ReceiveNum)
+      // {
+      //     JY901s_Process();
+      //     printf("ASCII : %f", JY901s.angle.angle[2]);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+      //     JY901s.ReceiveNum = 0;
+      // }
+
+      // 有一帧数据就解析Xbox数据
       if (xUART8.ReceiveNum)                                                  // 判断字节数
       {
-          Get_Data_Xbox(xUART8.ReceiveData);                                  // 解析Xbox数据
+          Get_Data_Xbox(xUART8.ReceiveData);// 解析Xbox数据
+          // HAL_Delay(5);
           // printf("\r<<<<< USART8 接收到一帧数据 \r");                  // 提示
           // printf("字节数：%d \r", xUART8.ReceiveNum);             // 显示字节数
-          // printf("ASCII : %s\r", (char *)xUART8.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+          // printf("%s\n", (char *)xUART8.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+          // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
           // printf("16进制: ");                                                              // 显示数据，以16进制方式，显示每一个字节的值
           // for (uint16_t i = 0; i < xUART8.ReceiveNum; i++)          // 逐个字节输出
           //     printf("0x%X ", xUART8.ReceiveData[i]);                   // 以16进制显示
@@ -353,7 +365,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         mean_buff1[buff_index1] = wheel1_speed;
         mean_buff2[buff_index1] = wheel2_speed;
         buff_index1 ++;
-        mean_buff3[buff_index2++] = fAngle[2];
+        mean_buff3[buff_index2++] = JY901s.angle.angle[2];
         wheel1_speedF = mean_fliter(mean_buff1, buff_index1);
         wheel2_speedF = mean_fliter(mean_buff2, buff_index1);
         yawF = mean_fliter(mean_buff3, buff_index2);
@@ -444,11 +456,22 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     //     xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
     //     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, xUSART1.BuffTemp, sizeof(xUSART1.BuffTemp));
     // }
+    if (huart == &huart2)
+    {
+        printf("enter\r\n");
+       __HAL_UNLOCK(huart);
+        JY901s.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体
+        memset(JY901s.angle.angle, 0, sizeof(JY901s.angle.angle));                       // 清0前一帧的接收数据
+        memset(JY901s.w.w, 0, sizeof(JY901s.w.w));
+        memset(JY901s.acc.a, 0, sizeof(JY901s.acc.a));
+        JY901s_Process();
+        printf("ASCII : %f", JY901s.angle.angle[2]);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
+    }
 
     if (huart == &huart8)                                                                    // 判断串口
     {
         __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
-
         xUART8.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
         memset(xUART8.ReceiveData, 0, sizeof(xUART8.ReceiveData));                         // 清0前一帧的接收数据
         memcpy(xUART8.ReceiveData, xUART8.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
