@@ -418,8 +418,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             Set_motor1(pidOutputV1);
             Set_motor2(pidOutputV2);
         }
-        // 位置PID
-        // pid_end = PID_Position(&motor1PID_V, currentPosition);
 
        // 速度PID
         pidOutputV1 = PID_Velocity(&motor1PID_V, wheel1_speedF);
