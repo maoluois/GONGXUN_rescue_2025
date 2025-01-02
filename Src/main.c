@@ -57,6 +57,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+// controller PV
+int mode = 0;                 // 控制模式
 
 // encoder PV
 int32_t totalAngle1 = 0;      // 总的角度
@@ -78,7 +80,8 @@ float SetSpeed6 = 0;
 float CurrentPositionX = 0;    // 当前位置
 float CurrentPositionY = 0;
 float CurrentDistance = 0;
-float lastPosition = 0;       // 上一次的位置
+float lastPositionX = 0;       // 上一次的位置
+float lastPositionY = 0;       // 上一次的位置
 float linear_speed = 0;       // 线速度
 float SpeedY = 0;         // 目标速度（单位：cm/s）
 float angular_speed = 0;      // 角速度
@@ -112,12 +115,14 @@ int buff_index2 = 0;
 // extern volatile uint8_t Rx_flag; // 接收标志
 
 // struct PID
-PID_ControllerTypeDef motor1PID;
-PID_ControllerTypeDef motor2PID;
+PID_ControllerTypeDef motor1PID_V;
+PID_ControllerTypeDef motor2PID_V;
 PID_ControllerTypeDef ImuPID;
+PID_ControllerTypeDef CarPID_P;
 float pidOutputV1 = 0;
 float pidOutputV2 = 0;
 float pidOutputYaw = 0;
+float pid_out_position = 0;
 // float pidOutputBc = 0;
 // float pid_end = 0;
 
@@ -185,9 +190,11 @@ int main(void)
 
   RetargetInit(&huart1);
   JY901s_Init(&JY901s);  // 初始化JY901串口
-  PID_Init(&motor1PID, 8.8, 0.066, 39.9, 0);
-  PID_Init(&motor2PID, 8.1, 0.066, 38.8, 0);
+  PID_Init(&motor1PID_V, 8.8, 0.066, 39.9, 0);
+  PID_Init(&motor2PID_V, 8.1, 0.066, 38.8, 0);
   HAL_TIM_Base_Init(&htim3);
+  HAL_TIM_Base_Init(&htim4);
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
@@ -207,25 +214,40 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+      // 调试使用
+      // Set_servo1(160);
+      // HAL_Delay(1000);
+      // Set_servo1(205);
+      // HAL_Delay(1000);
+      // yaw = JY901_data.angle.angle[2];
+      // printf("%f", yaw);
+      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, motor2PID_V.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, SetSpeed2);
 
+      // HAL_Delay(2);
+      // 获取角度
+      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+      // ********************************************************************************************
+      
       // 遥控模式
       if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是9,9,0,0
       {
-          motor1PID.setpoint = 0;
-          motor2PID.setpoint = 0;
+          motor1PID_V.setpoint = 0;
+          motor2PID_V.setpoint = 0;
           printf("xbox not connected\n");
+          mode = 1;  // 自动模式
+          HAL_Delay(10);  // ?? 
       }
       else
       {
           calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
-          // if (XboxData[0] == 1)
-          // {
-               // Set_servo1(0);
-          // }
-          // if (XboxData[1] == 1)
-          // {
-               // Set_servo1(0);
-          // }
+          if (XboxData[0] == 1)
+          {
+               Set_servo1(160);
+          }
+          if (XboxData[1] == 1)
+          {
+               Set_servo1(205);
+          }
           if (SpeedY < 6 && SpeedY > -4)   // 死区防止静止时抖动
           {
               SpeedY = 0;
@@ -236,16 +258,10 @@ int main(void)
               angular_speed = 0;
               // printf("%f\n", angular_speed);
           }
-          InverseKinematics_differential(SpeedY, angular_speed, WheelDistance, &motor1PID.setpoint, &motor2PID.setpoint);
+          InverseKinematics_differential(SpeedY, angular_speed, WheelDistance, &motor1PID_V.setpoint, &motor2PID_V.setpoint);
       }
 
-      // yaw = JY901_data.angle.angle[2];
-      // printf("%f", yaw);
-      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, SetSpeed2);
-
-      // HAL_Delay(2);
-      // 获取角度
-      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+      
 
     /* USER CODE END WHILE */
 
@@ -356,7 +372,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // printf("%f,%f,%f,%f\n", wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2);
 
         // 计算位置
-
+        CurrentPositionY = (float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam * WheelCircumference;  // 单位：厘米        
+        lastPositionY += CurrentPositionY;
 
         // 均值滤波
         mean_buff1[buff_index1] = wheel1_speed;
@@ -389,12 +406,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //      printf("%f, %f\n", (float)(totalAngle - lastAngle), speed);               // 调试使用
 //      lastAngle = totalAngle;
 
+        if (mode == 1)
+        {
+            // 位置PID
+            pid_out_position = PID_Position(&CarPID_P, CurrentPositionY);
+
+            // 速度PID
+            pidOutputV1 = PID_Velocity(&motor1PID_V, pid_out_position);
+            pidOutputV2 = PID_Velocity(&motor2PID_V, pid_out_position);
+
+            Set_motor1(pidOutputV1);
+            Set_motor2(pidOutputV2);
+        }
         // 位置PID
-        // pid_end = PID_Position(&motor1PID, currentPosition);
+        // pid_end = PID_Position(&motor1PID_V, currentPosition);
 
        // 速度PID
-        pidOutputV1 = PID_Velocity(&motor1PID, wheel1_speedF);
-        pidOutputV2 = PID_Velocity(&motor2PID, wheel2_speedF);
+        pidOutputV1 = PID_Velocity(&motor1PID_V, wheel1_speedF);
+        pidOutputV2 = PID_Velocity(&motor2PID_V, wheel2_speedF);
 
         // 输出PWM（用于调试速度PID)
         Set_motor1(pidOutputV1);
@@ -418,13 +447,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         //     Set_pulse2(pidOutputYaw);
         // }
 
-        // printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2, pitch, SetSpeed6, COUNTERNUM1, COUNTERNUM2);
+        // printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2, pitch, SetSpeed6, COUNTERNUM1, COUNTERNUM2);
 
         // 重置计数器 （重置到重装值的中间值，也可以重置到0，不过反转得到的数需要取补码）
         __HAL_TIM_SetCounter(&htim1, RELOADVALUE / 2);
         __HAL_TIM_SetCounter(&htim2, RELOADVALUE / 2);
 
-    //  printf("%f, %f, %f, %f, %f, %f\n", motor1PID.Kp, motor1PID.Ki, motor1PID.Kd, speed, SetSpeed, (float)(totalAngle - RELOADVALUE / 2.0)); // 调试使用
+    //  printf("%f, %f, %f, %f, %f, %f\n", motor1PID_V.Kp, motor1PID_V.Ki, motor1PID_V.Kd, speed, SetSpeed, (float)(totalAngle - RELOADVALUE / 2.0)); // 调试使用
     }
 
 }
@@ -444,8 +473,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     //         // for (int i = 0; i < xUSART1.ReceiveNum; i++)
     //         //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
     //
-    //         USART_PID_Adjust(1, &motor1PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-    //         USART_PID_Adjust(2, &motor2PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+    //         USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+    //         USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
     //         USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
     //         memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
     //         xUSART1.ReceiveNum = 0;  // 重置接收长度计数
@@ -490,9 +519,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
             // for (int i = 0; i < xUSART1.ReceiveNum; i++)
             //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
 
-            USART_PID_Adjust(1, &motor1PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            USART_PID_Adjust(2, &motor2PID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            USART_PID_Adjust(8, &CarPID_P);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
             xUSART1.ReceiveNum = 0;  // 重置接收长度计数
         }
@@ -595,6 +625,18 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
         else if ((xUSART1.ReceiveData[0] == 'S' && xUSART1.ReceiveData[1] == 'p') && xUSART1.ReceiveData[2] == 'e')
             pid->setpoint = data_Get;  // 目标速度
             SetSpeed6 = pid->setpoint;
+    }
+
+    if (Motor_n == 8)  // 位置环
+    {
+        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '8')
+            pid->Kp = data_Get;     // 位置环P参数
+        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '8')
+            pid->Ki = data_Get;     // 位置环I参数
+        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '8')
+            pid->Kd = data_Get;     // 位置环D参数)
+        else if ((xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == 'o') && xUSART1.ReceiveData[2] == 's')
+            pid->setpoint = data_Get;  // 目标速度)
     }
 }
 
