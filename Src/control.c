@@ -6,7 +6,7 @@
 #include <math.h>
 #include <stdint.h>
 
-void Set_pulse1(float speed)
+void Set_motor1(float speed)
 {
     if (speed > 0)
     {
@@ -25,7 +25,7 @@ void Set_pulse1(float speed)
     }
 
 }
-void Set_pulse2(float speed)
+void Set_motor2(float speed)
 {
     if (speed > 0)
     {
@@ -42,9 +42,12 @@ void Set_pulse2(float speed)
         HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_SET);
 
     }
-
 }
 
+void Set_servo1(float angle)
+{
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, angle);
+}
 
 
 

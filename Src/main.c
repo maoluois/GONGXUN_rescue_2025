@@ -196,8 +196,6 @@ int main(void)
   HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
-  // DMA_Uart8_Read(Rx_data8, 36);
-  // DMA_USART2_Read(JY901_data.xUSART1.BuffTemp, 33);
   printf("Init OK!\n");
 
 
@@ -209,17 +207,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      // Set_pulse1(100);
-      // Set_pulse2(100);
-      // HAL_Delay(500);
-      // Set_pulse1(10);
-      // Set_pulse2( 10);
-      // HAL_Delay(500);
-      // Set_pulse1(-10);
-      // Set_pulse2(-10);
 
       // 遥控模式
-      if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是65488
+      if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是9,9,0,0
       {
           motor1PID.setpoint = 0;
           motor2PID.setpoint = 0;
@@ -228,6 +218,14 @@ int main(void)
       else
       {
           calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
+          // if (XboxData[0] == 1)
+          // {
+               // Set_servo1(0);
+          // }
+          // if (XboxData[1] == 1)
+          // {
+               // Set_servo1(0);
+          // }
           if (SpeedY < 6 && SpeedY > -4)   // 死区防止静止时抖动
           {
               SpeedY = 0;
@@ -243,7 +241,7 @@ int main(void)
 
       // yaw = JY901_data.angle.angle[2];
       // printf("%f", yaw);
-      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SpeedY, yaw);
+      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID.Kp, motor2PID.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, SetSpeed2);
 
       // HAL_Delay(2);
       // 获取角度
@@ -260,6 +258,7 @@ int main(void)
       // }
 
       // 有一帧数据就解析Xbox数据
+
       if (xUART8.ReceiveNum)                                                  // 判断字节数
       {
           Get_Data_Xbox(xUART8.ReceiveData);// 解析Xbox数据
@@ -273,6 +272,7 @@ int main(void)
           //     printf("0x%X ", xUART8.ReceiveData[i]);                   // 以16进制显示
           // printf("\r\r");                                                                       // 显示换行
           xUART8.ReceiveNum = 0;                                             // 清0接收标记
+
       }
   }
   /* USER CODE END 3 */
@@ -339,7 +339,7 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    // 定时10ms(115000000 / 1150 / 500 = 200)
+    // 定时10ms(240000000 / 2400 / 500 = 200)
     if (htim->Instance == htim17.Instance)
     {
 
@@ -350,16 +350,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         totalAngle1 = pluse1;
         totalAngle2 = pluse2;
 
-
         // 计算速度
         wheel1_speed = -((float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒 （AB相反）
         wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒
         // printf("%f,%f,%f,%f\n", wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2);
 
-        // 解算车身线速度和角速度
-        // Kinematics_differential(wheel1_speed, wheel2_speed, WheelDistance, &linear_speed, &angular_speed);
-        // angular_speed = fGyro[2];
-        // CurrentPositionX += linear_speed * 0.01 * cos(yaw);
+        // 计算位置
+
 
         // 均值滤波
         mean_buff1[buff_index1] = wheel1_speed;
@@ -400,8 +397,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         pidOutputV2 = PID_Velocity(&motor2PID, wheel2_speedF);
 
         // 输出PWM（用于调试速度PID)
-        Set_pulse1(pidOutputV1);
-        Set_pulse2(pidOutputV2);
+        Set_motor1(pidOutputV1);
+        Set_motor2(pidOutputV2);
         // printf("%f,%f,%f\n", pidOutputV1, pidOutputV2, SetSpeed1);
 
 

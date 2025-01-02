@@ -4,7 +4,7 @@
 
 #ifndef CONTROL_H
 #define CONTROL_H
-void Set_pulse1(float speed);
-void Set_pulse2(float speed);
-void Set_YSpeed(float *V1, float *V2, float Vx);
+void Set_motor1(float speed);
+void Set_motor2(float speed);
+void Set_servo1(float angle);
 #endif //CONTROL_H
