@@ -519,8 +519,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
             // for (int i = 0; i < xUSART1.ReceiveNum; i++)
             //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
 
-            USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            // USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            // USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             USART_PID_Adjust(8, &CarPID_P);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
