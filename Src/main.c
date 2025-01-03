@@ -68,6 +68,10 @@ int32_t lastAngle = 0;        // 上一次的角度
 // int16_t loopNum2 = 0;
 float wheel1_speed = 0;       // 轮子速度 （单位：cm/s）
 float wheel2_speed = 0;
+float wheel1_position = 0;    // 轮子位置
+float wheel2_position = 0;
+float wheel1_total_position = 0;       // 轮子总位移
+float wheel2_total_position = 0;       // 轮子总位移
 float last_wheel1_speed = 0;  // 上一次的轮子速度
 float last_wheel2_speed = 0;
 float wheel1_speedF = 0;      // 滤波后的轮子速度
@@ -77,11 +81,9 @@ float SetSpeed2 = 0;
 float SetSpeed6 = 0;
 
 // car centre PV
-float CurrentPositionX = 0;    // 当前位置
-float CurrentPositionY = 0;
 float CurrentDistance = 0;
-float lastPositionX = 0;       // 上一次的位置
-float lastPositionY = 0;       // 上一次的位置
+float CurrentPositionX = 0;       // 上一次的位置
+float CurrentPositionY = 0;       // 上一次的位置
 float linear_speed = 0;       // 线速度
 float SpeedY = 0;         // 目标速度（单位：cm/s）
 float angular_speed = 0;      // 角速度
@@ -115,14 +117,16 @@ int buff_index2 = 0;
 // extern volatile uint8_t Rx_flag; // 接收标志
 
 // struct PID
-PID_ControllerTypeDef motor1PID_V;
-PID_ControllerTypeDef motor2PID_V;
-PID_ControllerTypeDef ImuPID;
-PID_ControllerTypeDef CarPID_P;
+PID_ControllerTypeDef motor1PID_V = {0};
+PID_ControllerTypeDef motor2PID_V = {0};
+PID_ControllerTypeDef motor1PID_P = {0};
+PID_ControllerTypeDef motor2PID_P = {0};
+PID_ControllerTypeDef ImuPID = {0};
 float pidOutputV1 = 0;
 float pidOutputV2 = 0;
 float pidOutputYaw = 0;
-float pid_out_position = 0;
+float pid_out_position1 = 0;
+float pid_out_position2 = 0;
 // float pidOutputBc = 0;
 // float pid_end = 0;
 
@@ -192,6 +196,8 @@ int main(void)
   JY901s_Init(&JY901s);  // 初始化JY901串口
   PID_Init(&motor1PID_V, 8.8, 0.066, 39.9, 0);
   PID_Init(&motor2PID_V, 8.1, 0.066, 38.8, 0);
+  PID_Init(&motor1PID_P, 0.60, 0, 0, 0);
+  PID_Init(&motor2PID_P, 0.66, 0, 0, 0);
   HAL_TIM_Base_Init(&htim3);
   HAL_TIM_Base_Init(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
@@ -203,9 +209,12 @@ int main(void)
   HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
+  HAL_Delay(500); // 初始化的编码器有误差 需要延时，等编码器稳定后，将位置归0
+  wheel1_total_position = 0;
+  wheel2_total_position = 0;
   printf("Init OK!\n");
 
-
+    // while(1);
 
 
   /* USER CODE END 2 */
@@ -215,30 +224,42 @@ int main(void)
   while (1)
   {
       // 调试使用
+      // Set_motor1(100);
       // Set_servo1(160);
       // HAL_Delay(1000);
       // Set_servo1(205);
       // HAL_Delay(1000);
       // yaw = JY901_data.angle.angle[2];
       // printf("%f", yaw);
-      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, motor2PID_V.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, SetSpeed1, SetSpeed2);
+
+      // 速度环使用
+      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, motor2PID_V.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, motor1PID_V.setpoint, motor2PID_V.setpoint);
+
+      // 位置环使用
+      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_P.Kp, motor2PID_P.Kp, wheel1_total_position, wheel2_total_position, motor1PID_P.setpoint, motor2PID_P.setpoint, wheel1_speedF, wheel2_speedF);
 
       // HAL_Delay(2);
       // 获取角度
       // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
+
       // ********************************************************************************************
-      
-      // 遥控模式
+      // 任务代码
+      Set_postionY(84);
+
+      // ********************************************************************************************
+
       if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是9,9,0,0
       {
           motor1PID_V.setpoint = 0;
           motor2PID_V.setpoint = 0;
           printf("xbox not connected\n");
           mode = 1;  // 自动模式
-          HAL_Delay(10);  // ?? 
+          HAL_Delay(10);
+
       }
       else
       {
+          mode = 0;  // 遥控模式
           calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
           if (XboxData[0] == 1)
           {
@@ -246,14 +267,14 @@ int main(void)
           }
           if (XboxData[1] == 1)
           {
-               Set_servo1(205);
+               Set_servo1(207);
           }
-          if (SpeedY < 6 && SpeedY > -4)   // 死区防止静止时抖动
+          if (SpeedY < 3.99 && SpeedY > -3.99)   // 死区防止静止时抖动
           {
               SpeedY = 0;
               // printf("%f\n", SpeedY);
           }
-          if (angular_speed < 2 && angular_speed > -2)
+          if (angular_speed < 0.05 && angular_speed > -0.05)
           {
               angular_speed = 0;
               // printf("%f\n", angular_speed);
@@ -261,7 +282,7 @@ int main(void)
           InverseKinematics_differential(SpeedY, angular_speed, WheelDistance, &motor1PID_V.setpoint, &motor2PID_V.setpoint);
       }
 
-      
+
 
     /* USER CODE END WHILE */
 
@@ -372,8 +393,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // printf("%f,%f,%f,%f\n", wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2);
 
         // 计算位置
-        CurrentPositionY = (float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam * WheelCircumference;  // 单位：厘米        
-        lastPositionY += CurrentPositionY;
+        wheel1_position = (float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam * WheelCircumference;  // 单位：厘米
+        wheel1_total_position += wheel1_position;
+        wheel2_position = -(float)(totalAngle2 - RELOADVALUE / 2.0) / ConvertParam * WheelCircumference;  // 单位：厘米
+        wheel2_total_position += wheel2_position;
 
         // 均值滤波
         mean_buff1[buff_index1] = wheel1_speed;
@@ -405,27 +428,38 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //      printf("%d, %d\n", totalAngle, lastAngle);                                // 调试使用
 //      printf("%f, %f\n", (float)(totalAngle - lastAngle), speed);               // 调试使用
 //      lastAngle = totalAngle;
+        //
+        // // 速度PID
+        // pidOutputV1 = PID_Velocity(&motor1PID_V, wheel1_speedF);
+        // pidOutputV2 = PID_Velocity(&motor2PID_V, wheel2_speedF);
+        //
+        // // 输出PWM（用于调试速度PID)
+        // Set_motor1(pidOutputV1);
+        // Set_motor2(pidOutputV2);
 
         if (mode == 1)
         {
             // 位置PID
-            pid_out_position = PID_Position(&CarPID_P, CurrentPositionY);
+            pid_out_position1 = PID_Position(&motor1PID_P, wheel1_total_position);
+            pid_out_position2 = PID_Position(&motor2PID_P, wheel2_total_position);
 
             // 速度PID
-            pidOutputV1 = PID_Velocity(&motor1PID_V, pid_out_position);
-            pidOutputV2 = PID_Velocity(&motor2PID_V, pid_out_position);
+            pidOutputV1 = PID_Velocity(&motor1PID_V, pid_out_position1);
+            pidOutputV2 = PID_Velocity(&motor2PID_V, pid_out_position2);
 
             Set_motor1(pidOutputV1);
             Set_motor2(pidOutputV2);
         }
+        else
+        {
+            // 速度PID
+            pidOutputV1 = PID_Velocity(&motor1PID_V, wheel1_speedF);
+            pidOutputV2 = PID_Velocity(&motor2PID_V, wheel2_speedF);
 
-       // 速度PID
-        pidOutputV1 = PID_Velocity(&motor1PID_V, wheel1_speedF);
-        pidOutputV2 = PID_Velocity(&motor2PID_V, wheel2_speedF);
-
-        // 输出PWM（用于调试速度PID)
-        Set_motor1(pidOutputV1);
-        Set_motor2(pidOutputV2);
+            // 输出PWM（用于调试速度PID)
+            Set_motor1(pidOutputV1);
+            Set_motor2(pidOutputV2);
+        }
         // printf("%f,%f,%f\n", pidOutputV1, pidOutputV2, SetSpeed1);
 
 
@@ -520,7 +554,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
             // USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             // USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            USART_PID_Adjust(8, &CarPID_P);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            USART_PID_Adjust(8, &motor1PID_P);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
+            USART_PID_Adjust(9, &motor2PID_P);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
             memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
             xUSART1.ReceiveNum = 0;  // 重置接收长度计数
         }
@@ -625,13 +660,25 @@ void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
             SetSpeed6 = pid->setpoint;
     }
 
-    if (Motor_n == 8)  // 位置环
+    if (Motor_n == 8)  // 电机1位置环
     {
         if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '8')
             pid->Kp = data_Get;     // 位置环P参数
         else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '8')
             pid->Ki = data_Get;     // 位置环I参数
         else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '8')
+            pid->Kd = data_Get;     // 位置环D参数)
+        else if ((xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == 'o') && xUSART1.ReceiveData[2] == 's')
+            pid->setpoint = data_Get;  // 目标速度)
+    }
+
+    if (Motor_n == 9)  // 电机2位置环
+    {
+        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '9')
+            pid->Kp = data_Get;     // 位置环P参数
+        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '9')
+            pid->Ki = data_Get;     // 位置环I参数
+        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '9')
             pid->Kd = data_Get;     // 位置环D参数)
         else if ((xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == 'o') && xUSART1.ReceiveData[2] == 's')
             pid->setpoint = data_Get;  // 目标速度)

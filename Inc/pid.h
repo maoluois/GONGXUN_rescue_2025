@@ -20,8 +20,10 @@ typedef struct{
 
 }PID_ControllerTypeDef;
 
-extern PID_ControllerTypeDef motor1PID;
-extern PID_ControllerTypeDef motor2PID;
+extern PID_ControllerTypeDef motor1PID_V;
+extern PID_ControllerTypeDef motor2PID_V;
+extern PID_ControllerTypeDef motor1PID_P;
+extern PID_ControllerTypeDef motor2PID_P;
 extern PID_ControllerTypeDef ImuPID;
 
 

@@ -23,14 +23,15 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Add xy controller.">
-      <change afterPath="$PROJECT_DIR$/Inc/jy901s.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Src/jy901s.c" afterDir="false" />
+    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Update annotation.">
+      <change afterPath="$PROJECT_DIR$/new tab.tab.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pid.balance_car.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Inc/control.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/control.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/main.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/main.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/pid.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/control.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/control.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Src/tim.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/tim.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/cmakeFiles-v1-bbb55c3cd1a9a91f4b0c.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-cf3eb514d4d3ae735f09.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2024-12-21T03-30-26-0473.json" beforeDir="false" />
@@ -59,7 +60,6 @@
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.bin" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.hex" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.hex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.map" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.map" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gx.ioc" beforeDir="false" afterPath="$PROJECT_DIR$/gx.ioc" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -184,11 +184,6 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="gx.elf" type="com.jetbrains.cidr.embedded.openocd.conf.type" factoryName="com.jetbrains.cidr.embedded.openocd.conf.factory" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="gx" TARGET_NAME="gx.elf" CONFIG_NAME="Debug" version="1" RUN_TARGET_PROJECT_NAME="gx" RUN_TARGET_NAME="gx.elf">
       <openocd version="1" gdb-port="3333" telnet-port="4444" board-config="C:\Users\Administrator\Desktop\project\gx\daplinkh7.cfg" reset-type="INIT" download-type="UPDATED_ONLY">
         <debugger toolchainName="MinGW-stm32" />
@@ -239,7 +234,9 @@
       <workItem from="1735725116602" duration="451000" />
       <workItem from="1735725578415" duration="12400000" />
       <workItem from="1735740067645" duration="8674000" />
-      <workItem from="1735790371816" duration="4683000" />
+      <workItem from="1735790371816" duration="9230000" />
+      <workItem from="1735814698337" duration="139000" />
+      <workItem from="1735903610382" duration="7520000" />
     </task>
     <task id="LOCAL-00001" summary="Init controller.">
       <option name="closed" value="true" />
@@ -425,7 +422,39 @@
       <option name="project" value="LOCAL" />
       <updated>1735785299873</updated>
     </task>
-    <option name="localTasksCounter" value="24" />
+    <task id="LOCAL-00024" summary="Try jy901s.">
+      <option name="closed" value="true" />
+      <created>1735800407629</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1735800407629</updated>
+    </task>
+    <task id="LOCAL-00025" summary="Finish PID_Pos Code">
+      <option name="closed" value="true" />
+      <created>1735803905418</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1735803905418</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Finish PID_Pos Code.">
+      <option name="closed" value="true" />
+      <created>1735804055566</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1735804055566</updated>
+    </task>
+    <task id="LOCAL-00027" summary="Update annotation.">
+      <option name="closed" value="true" />
+      <created>1735814821038</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1735814821038</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -479,7 +508,11 @@
     <MESSAGE value="With random dma NVIC problem." />
     <MESSAGE value="Fix Xbox Dma problem with HAL_UARTEx_ReceiveToIdle_DMA." />
     <MESSAGE value="Add xy controller." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add xy controller." />
+    <MESSAGE value="Try jy901s." />
+    <MESSAGE value="Finish PID_Pos Code." />
+    <MESSAGE value="Finish PID_Pos Code." />
+    <MESSAGE value="Update annotation." />
+    <option name="LAST_COMMIT_MESSAGE" value="Update annotation." />
   </component>
   <component name="XDebuggerManager">
     <watches-manager>

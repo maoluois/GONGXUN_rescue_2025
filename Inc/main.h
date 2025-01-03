@@ -106,11 +106,11 @@ void Error_Handler(void);
 #define motor1 0
 #define motor2 1
 #define motor3 2
-#define XBOX_BUFFER_SIZE  36 //XBOX 数组容量大小
-#define V_F_MAX -127     // 遥控速度范围
-#define V_F_MIN 127
-#define W_MAX -10
-#define W_MIN 10
+#define XBOX_BUFFER_SIZE  88 //XBOX 数组容量大小
+#define V_F_MAX -80    // 遥控速度范围 // 极限值为+-127
+#define V_F_MIN 80
+#define W_MAX -5   // 极限值为+-10
+#define W_MIN 5
 #define IMU_RXBUFFER_LEN 33	 //imu 接收3类数据，一共33位
 // JY901s cfg
 #define ACC_UPDATE		0x01

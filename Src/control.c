@@ -5,6 +5,7 @@
 #include "control.h"
 #include <math.h>
 #include <stdint.h>
+#include "pid.h"
 
 void Set_motor1(float speed)
 {
@@ -49,6 +50,10 @@ void Set_servo1(float angle)
     __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, angle);
 }
 
-
+void Set_postionY(float target_position)
+{
+    motor1PID_P.setpoint = -target_position;
+    motor2PID_P.setpoint = -target_position;
+}
 
 
