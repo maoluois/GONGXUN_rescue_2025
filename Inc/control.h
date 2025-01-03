@@ -8,4 +8,5 @@ void Set_motor1(float speed);
 void Set_motor2(float speed);
 void Set_servo1(float angle);
 void Set_postionY(float target_position);
+void Try_right_turn90(float distance);
 #endif //CONTROL_H
