@@ -61,10 +61,6 @@ void Error_Handler(void);
 #define E2A_GPIO_Port GPIOA
 #define E2B_Pin GPIO_PIN_1
 #define E2B_GPIO_Port GPIOA
-#define IMU_TX_Pin GPIO_PIN_2
-#define IMU_TX_GPIO_Port GPIOA
-#define IMU_RX_Pin GPIO_PIN_3
-#define IMU_RX_GPIO_Port GPIOA
 #define Motor1_Pin GPIO_PIN_0
 #define Motor1_GPIO_Port GPIOB
 #define Motor2_Pin GPIO_PIN_1
@@ -87,6 +83,10 @@ void Error_Handler(void);
 #define AIN1_GPIO_Port GPIOD
 #define Servo1_Pin GPIO_PIN_13
 #define Servo1_GPIO_Port GPIOD
+#define IMU_TX_Pin GPIO_PIN_5
+#define IMU_TX_GPIO_Port GPIOD
+#define IMU_RX_Pin GPIO_PIN_6
+#define IMU_RX_GPIO_Port GPIOD
 #define XBOX_RX_Pin GPIO_PIN_0
 #define XBOX_RX_GPIO_Port GPIOE
 #define XBOX_TX_Pin GPIO_PIN_1

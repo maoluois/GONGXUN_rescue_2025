@@ -82,8 +82,6 @@ float SetSpeed6 = 0;
 
 // car centre PV
 float CurrentDistance = 0;
-float CurrentPositionX = 0;       // 上一次的位置
-float CurrentPositionY = 0;       // 上一次的位置
 float linear_speed = 0;       // 线速度
 float SpeedY = 0;         // 目标速度（单位：cm/s）
 float angular_speed = 0;      // 角速度
@@ -99,6 +97,39 @@ xUART_TypeDef xUART7 = {0};  // 串口7;
 xUART_TypeDef xUART8 = {0};  // 串口8;
     // Imu JY901s PV
     JY_USART JY901s = {0};   // 本例中具有JY901s使用串口2
+    #define Receiveing 1
+    #define Free 0
+    uint8_t recieve_flag = 0 ;
+
+    uint8_t buf ;
+    uint8_t str_data[100];
+    uint8_t str_index = 0;
+
+    float accelerate_x ;
+    float accelerate_y ;
+    float accelerate_z ;
+
+    float angel_velocity_x ;
+    float angel_velocity_y ;
+    float angel_velocity_z ;
+
+    float angle_x ;
+    float angle_y ;
+    float angle_z ;
+
+    uint8_t data_ok = 0;
+
+    uint8_t Test_data( uint8_t* str , uint8_t lenth )
+    {
+        uint8_t result = 0 ;
+        for( uint8_t i = 0 ; i < lenth ; i++ )
+        {
+            result = result + str[i];
+
+        }
+        return result;
+    }
+    float yaw = 0;
     float yawF = 0;
     // Xbox PV
     extern  uint16_t XboxData[4];
@@ -127,6 +158,9 @@ float pidOutputV2 = 0;
 float pidOutputYaw = 0;
 float pid_out_position1 = 0;
 float pid_out_position2 = 0;
+float Position_out_Y = 0;
+float Position_pid_outer1 = 0;
+float Position_pid_outer2 = 0;
 // float pidOutputBc = 0;
 // float pid_end = 0;
 
@@ -193,7 +227,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   RetargetInit(&huart1);
-  JY901s_Init(&JY901s);  // 初始化JY901串口
+  //JY901s_Init(&JY901s);  // 初始化JY901串口
   PID_Init(&motor1PID_V, 8.8, 0.066, 39.9, 0);
   PID_Init(&motor2PID_V, 8.1, 0.066, 38.8, 0);
   PID_Init(&motor1PID_P, 0.60, 0, 0, 0);
@@ -207,15 +241,15 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
   HAL_TIM_Base_Start_IT(&htim17);
   HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
+  HAL_UART_Receive_IT( &huart2 , (uint8_t *)&buf ,1);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
+  //HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
   HAL_Delay(500); // 初始化的编码器有误差 需要延时，等编码器稳定后，将位置归0
   wheel1_total_position = 0;
   wheel2_total_position = 0;
   printf("Init OK!\n");
 
     // while(1);
-
 
   /* USER CODE END 2 */
 
@@ -229,14 +263,16 @@ int main(void)
       // HAL_Delay(1000);
       // Set_servo1(205);
       // HAL_Delay(1000);
-      // yaw = JY901_data.angle.angle[2];
-      // printf("%f", yaw);
+      // yaw = JY901s.angle.angle[2];
+
+      // 角度调参
+      printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
 
       // 速度环使用
       // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, motor2PID_V.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, motor1PID_V.setpoint, motor2PID_V.setpoint);
 
       // 位置环使用
-      printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_P.Kp, motor2PID_P.Kp, wheel1_total_position, wheel2_total_position, motor1PID_P.setpoint, motor2PID_P.setpoint, wheel1_speedF, wheel2_speedF);
+      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_P.Kp, motor2PID_P.Kp, wheel1_total_position, wheel2_total_position, motor1PID_P.setpoint, motor2PID_P.setpoint, wheel1_speedF, wheel2_speedF);
 
       // HAL_Delay(2);
       // 获取角度
@@ -254,7 +290,7 @@ int main(void)
       {
           motor1PID_V.setpoint = 0;
           motor2PID_V.setpoint = 0;
-          printf("xbox not connected\n");
+          // printf("xbox not connected\n");
           mode = 1;  // 自动模式
           HAL_Delay(10);
 
@@ -445,9 +481,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             pid_out_position1 = PID_Position(&motor1PID_P, wheel1_total_position);
             pid_out_position2 = PID_Position(&motor2PID_P, wheel2_total_position);
 
+            Position_out_Y = (pid_out_position1 + pid_out_position2) / 2.0;
+
+            // 角度PID
+            pidOutputYaw = PID_Turn(&ImuPID, angle_z, angel_velocity_z);
+
+            InverseKinematics_differential(Position_out_Y, pidOutputYaw, WheelDistance, &Position_pid_outer1, &Position_pid_outer2);
+
             // 速度PID
-            pidOutputV1 = PID_Velocity(&motor1PID_V, pid_out_position1);
-            pidOutputV2 = PID_Velocity(&motor2PID_V, pid_out_position2);
+            pidOutputV1 = PID_Velocity(&motor1PID_V, Position_pid_outer1);
+            pidOutputV2 = PID_Velocity(&motor2PID_V, Position_pid_outer2);
 
             Set_motor1(pidOutputV1);
             Set_motor2(pidOutputV2);
@@ -494,7 +537,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-    // 可改写
+    // printf("enter\r\n");
+    // 未调试
     // if (huart == &huart1)  // 判断是否是串口1产生的中断
     // {
     //     __HAL_UNLOCK(huart);
@@ -516,18 +560,18 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     //     xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
     //     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, xUSART1.BuffTemp, sizeof(xUSART1.BuffTemp));
     // }
-    if (huart == &huart2)
-    {
-        printf("enter\r\n");
-       __HAL_UNLOCK(huart);
-        JY901s.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体
-        memset(JY901s.angle.angle, 0, sizeof(JY901s.angle.angle));                       // 清0前一帧的接收数据
-        memset(JY901s.w.w, 0, sizeof(JY901s.w.w));
-        memset(JY901s.acc.a, 0, sizeof(JY901s.acc.a));
-        JY901s_Process();
-        printf("ASCII : %f", JY901s.angle.angle[2]);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
-        HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
-    }
+    // 未调试
+    // if (huart == &huart2)
+    // {
+    //    __HAL_UNLOCK(huart);
+    //     JY901s.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体
+    //     memset(JY901s.angle.angle, 0, sizeof(JY901s.angle.angle));                       // 清0前一帧的接收数据
+    //     memset(JY901s.w.w, 0, sizeof(JY901s.w.w));
+    //     memset(JY901s.acc.a, 0, sizeof(JY901s.acc.a));
+    //     JY901s_Process();
+    //     printf("ASCII : %f", JY901s.angle.angle[2]);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+    //     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
+    // }
 
     if (huart == &huart8)                                                                    // 判断串口
     {
@@ -564,6 +608,69 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
         HAL_UART_Receive_IT(&huart1, (uint8_t *)xUSART1.BuffTemp, 1);  // 重新启动串口中断接收下一个字符
     }
+
+    if(UartHandle->Instance == USART2)
+    {
+
+        if( buf == 0x55 && recieve_flag == Free )
+        {
+            str_data[str_index] = buf ;
+            str_index++;
+            recieve_flag = Receiveing ;
+        }
+        else if( recieve_flag == Receiveing )
+        {
+            str_data[str_index] = buf ;
+            str_index++;
+            if( str_index > 70 )
+            {
+                str_index = 0 ;
+            }
+            if( str_index == 11 )
+            {
+                uint8_t item = Test_data( str_data , 10 ) ;
+                if( item == str_data[10] )
+                {
+                    data_ok = 1 ;
+                    switch ( str_data[1])
+                    {
+                    case 0x51:
+
+                        accelerate_x = (float)((((short)str_data[3]<<8)|str_data[2])*1.0/32768*156.8);
+                        accelerate_y = (float)((((short)str_data[5]<<8)|str_data[4])*1.0/32768*156.8);
+                        accelerate_z = (float)((((short)str_data[7]<<8)|str_data[6])*1.0/32768*156.8);
+                        break;
+
+                    case 0x52:
+                        angel_velocity_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*2000 );
+                        angel_velocity_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*2000 );
+                        angel_velocity_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*2000 );
+                        break;
+
+                    case 0x53:
+                        angle_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*180 );
+                        angle_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*180 );
+                        angle_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*180 );
+                        if ((angle_z > 358 && angle_z < 360) || (angle_z < 2 && angle_z > 0))
+                        {
+                            angle_z = 0;
+                        }
+                        break;
+
+                    default:
+                        break;
+                    }
+                    recieve_flag = Free ;
+
+                }
+                str_index = 0 ;
+                recieve_flag = Free ;
+            }
+        }
+
+        HAL_UART_Receive_IT(&huart2 , (uint8_t *)&buf ,1);
+    }
+
 
 }
 

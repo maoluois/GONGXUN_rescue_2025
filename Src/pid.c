@@ -126,9 +126,12 @@ float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro)
 {
     float Angle_bias, Gyro_bias;
     Angle_bias = pid->setpoint - Angle;
-    Gyro_bias = 0 - Gyro;
+    Gyro_bias = 0 - Angle_bias;
     pid->output= -pid->Kp * Angle_bias - Gyro_bias * pid->Kd;
     pid->lastError = Angle;
+    if (Angle_bias < 1 && Angle_bias > -1) {
+        pid->output = 0;
+    }
     return pid->output;
 }
 
