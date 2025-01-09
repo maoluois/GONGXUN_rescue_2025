@@ -1,0 +1,25 @@
+<annotation>
+	<folder>my-project-name</folder>
+	<filename>train_256.jpg</filename>
+	<path>/my-project-name/train_256.jpg</path>
+	<source>
+		<database>Unspecified</database>
+	</source>
+	<size>
+		<width>448</width>
+		<height>448</height>
+		<depth>3</depth>
+	</size>
+	<object>
+		<name>red_base</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>181</xmin>
+			<ymin>92</ymin>
+			<xmax>448</xmax>
+			<ymax>181</ymax>
+		</bndbox>
+	</object>
+</annotation>

@@ -1,0 +1,25 @@
+<annotation>
+	<folder>my-project-name</folder>
+	<filename>train_200.jpg</filename>
+	<path>/my-project-name/train_200.jpg</path>
+	<source>
+		<database>Unspecified</database>
+	</source>
+	<size>
+		<width>448</width>
+		<height>448</height>
+		<depth>3</depth>
+	</size>
+	<object>
+		<name>red_aim</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>2</xmin>
+			<ymin>124</ymin>
+			<xmax>421</xmax>
+			<ymax>448</ymax>
+		</bndbox>
+	</object>
+</annotation>

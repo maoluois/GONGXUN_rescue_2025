@@ -1,0 +1,25 @@
+<annotation>
+	<folder>my-project-name</folder>
+	<filename>tain_orgin_324.jpg</filename>
+	<path>/my-project-name/tain_orgin_324.jpg</path>
+	<source>
+		<database>Unspecified</database>
+	</source>
+	<size>
+		<width>448</width>
+		<height>448</height>
+		<depth>3</depth>
+	</size>
+	<object>
+		<name>blue</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>52</xmin>
+			<ymin>69</ymin>
+			<xmax>179</xmax>
+			<ymax>202</ymax>
+		</bndbox>
+	</object>
+</annotation>
