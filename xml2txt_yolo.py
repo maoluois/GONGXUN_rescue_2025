@@ -24,8 +24,8 @@ def convert(size, box):
  
  
 def convert_annotation(image_id):
-    in_file = open('yolov5/gx_data/Annotations/%s.xml' % (image_id), encoding='UTF-8')
-    out_file = open('yolov5/gx_data/labels/%s.txt' % (image_id), 'w')
+    in_file = open('gx_data/Annotations/%s.xml' % (image_id), encoding='UTF-8')
+    out_file = open('gx_data/labels/%s.txt' % (image_id), 'w')
     tree = ET.parse(in_file)
     root = tree.getroot()
     size = root.find('size')
@@ -54,15 +54,15 @@ def convert_annotation(image_id):
  
 wd = getcwd()
 for image_set in sets:
-    if not os.path.exists('yolov5/gx_data/labels/'):
-        os.makedirs('yolov5/gx_data/labels/')
-    image_ids = open('yolov5/gx_data/ImageSets/Main/%s.txt' % (image_set)).read().strip().split()
+    if not os.path.exists('gx_data/labels/'):
+        os.makedirs('gx_data/labels/')
+    image_ids = open('gx_data/ImageSets/Main/%s.txt' % (image_set)).read().strip().split()
  
-    if not os.path.exists('yolov5/gx_data/dataSet_path/'):
-        os.makedirs('yolov5/gx_data/dataSet_path/')
+    if not os.path.exists('gx_data/dataSet_path/'):
+        os.makedirs('gx_data/dataSet_path/')
  
-    list_file = open('yolov5/gx_data/dataSet_path/%s.txt' % (image_set), 'w')
+    list_file = open('gx_data/dataSet_path/%s.txt' % (image_set), 'w')
     for image_id in image_ids:
-        list_file.write('yolov5/gx_data/images/%s.JPG\n' % (image_id))
+        list_file.write('gx_data/images/%s.jpg\n' % (image_id))
         convert_annotation(image_id)
     list_file.close() 

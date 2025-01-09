@@ -1,9 +1,13 @@
-train: yolov5/gx_data/dataSet_path/train.txt
-val: yolov5/gx_data/dataSet_path/val.txtoljson/gx_data/dataSet_path/val.txt
+train: gx_data/dataSet_path/train.txt
+val: gx_data/dataSet_path/val.txt
 
-
-# number of classes
-nc = 8
-
-# class names
-names: ["blue","red","black","yellow","blue_base","blue_aim","red_base","red_aim"]
+nc: 8  # number of classes
+names: 
+  - blue
+  - red
+  - black
+  - yellow
+  - blue_base
+  - blue_aim
+  - red_base
+  - red_aim

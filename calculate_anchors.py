@@ -6,11 +6,11 @@ import numpy as np
 import xml.etree.cElementTree as et
 from kmeans import kmeans, avg_iou
  
-FILE_ROOT = "yolov5/gx_data/"  # 根路径
+FILE_ROOT = "gx_data/"  # 根路径
 ANNOTATION_ROOT = "Annotations"  # 数据集标签文件夹路径
 ANNOTATION_PATH = FILE_ROOT + ANNOTATION_ROOT
  
-ANCHORS_TXT_PATH = "yolov5/gx_data/anchors.txt"  # anchors文件保存位置
+ANCHORS_TXT_PATH = "gx_data/anchors.txt"  # anchors文件保存位置
  
 CLUSTERS = 8
 CLASS_NAMES = ["blue","red","black","yellow","blue_base","blue_aim","red_base","red_aim"]  # 类别名称
