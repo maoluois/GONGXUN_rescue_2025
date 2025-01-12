@@ -75,6 +75,10 @@ void Error_Handler(void);
 #define BIN1_GPIO_Port GPIOE
 #define BIN2_Pin GPIO_PIN_14
 #define BIN2_GPIO_Port GPIOE
+#define CV_RX_Pin GPIO_PIN_12
+#define CV_RX_GPIO_Port GPIOB
+#define CV_TX_Pin GPIO_PIN_13
+#define CV_TX_GPIO_Port GPIOB
 #define Daplink_TX_Pin GPIO_PIN_14
 #define Daplink_TX_GPIO_Port GPIOB
 #define Daplink_RX_Pin GPIO_PIN_15
@@ -97,16 +101,24 @@ void Error_Handler(void);
 #define WheelDistance 23.156f // 单位：cm
 #define WheelRadius 3.25f // 单位：cm
 #define WheelCircumference 20.42f // 单位：cm
+// tim
 #define COUNTERNUM1 ((float)__HAL_TIM_GET_COUNTER(&htim1))
 #define COUNTERNUM2 ((float)__HAL_TIM_GET_COUNTER(&htim2))
 #define RELOADVALUE 60000
+// fliter
 #define fliter_mean_sample1 16
 #define fliter_buffer_size 1000
 #define low_pase_a 0.1f
+// Motor code
 #define motor1 0
 #define motor2 1
 #define motor3 2
+// Servo parameters
+#define open 114
+#define close 97
 #define XBOX_BUFFER_SIZE  88 //XBOX 数组容量大小
+#define Oran_BUFFER_SIZE  30 //Oran 数组容量大小
+// Xbox parameters
 #define V_F_MAX -80    // 遥控速度范围 // 极限值为+-127
 #define V_F_MIN 80
 #define W_MAX -5   // 极限值为+-10

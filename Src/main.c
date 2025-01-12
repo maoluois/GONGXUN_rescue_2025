@@ -59,6 +59,7 @@
 /* USER CODE BEGIN PV */
 // controller PV
 int mode = 0;                 // 控制模式
+int task = 0;                 // 任务
 
 // encoder PV
 int32_t totalAngle1 = 0;      // 总的角度
@@ -91,12 +92,13 @@ xUART_TypeDef xUSART1 = {0};  // 串口1;
 xUART_TypeDef xUSART2 = {0};  // 串口2;
 xUART_TypeDef xUSART3 = {0};  // 串口3;
 xUART_TypeDef xUART4 = {0};  // 串口4;
-xUART_TypeDef xUART5 = {0};  // 串口5;
+OranUART_TypeDef xUART5 = {0};  // 串口5;
 xUART_TypeDef xUSART6 = {0};  // 串口6;
 xUART_TypeDef xUART7 = {0};  // 串口7;
 xUART_TypeDef xUART8 = {0};  // 串口8;
     // Imu JY901s PV
     JY_USART JY901s = {0};   // 本例中具有JY901s使用串口2
+    // ########################################################################
     #define Receiveing 1
     #define Free 0
     uint8_t recieve_flag = 0 ;
@@ -129,10 +131,25 @@ xUART_TypeDef xUART8 = {0};  // 串口8;
         }
         return result;
     }
+    // ###############################################################################
     float yaw = 0;
     float yawF = 0;
+
     // Xbox PV
-    extern  uint16_t XboxData[4];
+    uint16_t XboxData[4];
+
+    // camera PV
+    class_Ogpi red_ball = {0};
+    class_Ogpi blue_ball = {0};
+    class_Ogpi yellow_ball = {0};
+    class_Ogpi black_ball = {0};
+    class_Ogpi blue_aim = {0};
+    class_Ogpi red_aim = {0};
+    class_Ogpi blue_base = {0};
+    class_Ogpi red_base = {0};
+    uint8_t class = 0;
+    float distance[1000];
+
 
 
 // fliter PV
@@ -224,6 +241,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM4_Init();
   MX_UART8_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
 
   RetargetInit(&huart1);
@@ -243,6 +261,7 @@ int main(void)
   HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
   HAL_UART_Receive_IT( &huart2 , (uint8_t *)&buf ,1);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart5, xUART5.BuffTemp, sizeof(xUART5.BuffTemp));
   //HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
   HAL_Delay(500); // 初始化的编码器有误差 需要延时，等编码器稳定后，将位置归0
   wheel1_total_position = 0;
@@ -266,7 +285,7 @@ int main(void)
       // yaw = JY901s.angle.angle[2];
 
       // 角度调参
-      printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
+      // printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
 
       // 速度环使用
       // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, motor2PID_V.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, motor1PID_V.setpoint, motor2PID_V.setpoint);
@@ -293,7 +312,6 @@ int main(void)
           // printf("xbox not connected\n");
           mode = 1;  // 自动模式
           HAL_Delay(10);
-
       }
       else
       {
@@ -301,11 +319,11 @@ int main(void)
           calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
           if (XboxData[0] == 1)
           {
-               Set_servo1(160);
+               Set_servo1(close);
           }
           if (XboxData[1] == 1)
           {
-               Set_servo1(207);
+               Set_servo1(open);
           }
           if (SpeedY < 3.99 && SpeedY > -3.99)   // 死区防止静止时抖动
           {
@@ -319,6 +337,7 @@ int main(void)
           }
           InverseKinematics_differential(SpeedY, angular_speed, WheelDistance, &motor1PID_V.setpoint, &motor2PID_V.setpoint);
       }
+
 
 
 
@@ -337,16 +356,18 @@ int main(void)
       if (xUART8.ReceiveNum)                                                  // 判断字节数
       {
           Get_Data_Xbox(xUART8.ReceiveData);// 解析Xbox数据
-          // HAL_Delay(5);
-          // printf("\r<<<<< USART8 接收到一帧数据 \r");                  // 提示
-          // printf("字节数：%d \r", xUART8.ReceiveNum);             // 显示字节数
           // printf("%s\n", (char *)xUART8.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
-          // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
-          // printf("16进制: ");                                                              // 显示数据，以16进制方式，显示每一个字节的值
-          // for (uint16_t i = 0; i < xUART8.ReceiveNum; i++)          // 逐个字节输出
-          //     printf("0x%X ", xUART8.ReceiveData[i]);                   // 以16进制显示
-          // printf("\r\r");                                                                       // 显示换行
+          // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);// 显示换行
           xUART8.ReceiveNum = 0;                                             // 清0接收标记
+
+      }
+
+      if (xUART5.ReceiveNum)                                                  // 判断字节数
+      {
+          Get_Data_Ogpi(xUART5.ReceiveData);                                 // 解析Ogpi数据
+          printf("%s\n", (char *)xUART5.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+          printf("%d,%f,%f,%f\n", blue_ball.class, blue_ball.x, blue_ball.y, blue_ball.area);// 显示换行
+          xUART5.ReceiveNum = 0;                                             // 清0接收标记
 
       }
   }
@@ -477,7 +498,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
         if (mode == 1)
         {
-            // 位置PID
+            // 位置PID ??? 有问题
             pid_out_position1 = PID_Position(&motor1PID_P, wheel1_total_position);
             pid_out_position2 = PID_Position(&motor2PID_P, wheel2_total_position);
 
@@ -506,8 +527,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             Set_motor2(pidOutputV2);
         }
         // printf("%f,%f,%f\n", pidOutputV1, pidOutputV2, SetSpeed1);
-
-
 
         // // 计算角度PID
         // pidOutputYaw = PID_Turn(&ImuPID, yaw, fGyro[2]);
@@ -572,6 +591,16 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     //     printf("ASCII : %f", JY901s.angle.angle[2]);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
     //     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
     // }
+
+    if (huart == &huart5)                                                                    // 判断串口
+    {
+        __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
+        xUART5.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
+        memset(xUART5.ReceiveData, 0, sizeof(xUART5.ReceiveData));                         // 清0前一帧的接收数据
+        memcpy(xUART5.ReceiveData, xUART5.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart5, xUART5.BuffTemp, sizeof(xUART5.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
+        // 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
+    }
 
     if (huart == &huart8)                                                                    // 判断串口
     {
