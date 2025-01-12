@@ -257,7 +257,7 @@ if (cap.isOpened() == False):
     print("Error opening video stream or file")
 
 # Initialize serial port
-ser = serial.Serial('COM0', 9600, timeout=1)
+ser = serial.Serial('COM0', 115200, timeout=1)
 
 # Read until video is completed
 while(cap.isOpened()):
