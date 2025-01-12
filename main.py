@@ -225,7 +225,12 @@ def letterbox(im, new_shape=(640, 640), color=(0, 0, 0)):
 # ==================================
 # 如下为改动部分，主要就是去掉了官方 demo 中的模型转换代码，直接加载 rknn 模型，并将 RKNN 类换成了 rknn_toolkit2_lite 中的 RKNNLite 类
 # ==================================
- 
+def is_center_in_box(center, box):
+    x_center, y_center = center
+    x1, y1, x2, y2 = box
+    return x1 <= x_center <= x2 and y1 <= y_center <= y2
+
+
 rknn = RKNNLite()
 
 # load RKNN model
@@ -300,17 +305,59 @@ while(cap.isOpened()):
             (20, 20),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.6, (0, 125, 125), 2)
-    if boxes is not None:
+    
+    # # 绘制 x 和 y 轴的正方向箭头
+    # origin = (50, 50)
+    # x_axis_end = (150, 50)
+    # y_axis_end = (50, 150)
+    # cv2.arrowedLine(img_1, origin, x_axis_end, (0, 0, 255), 2, tipLength=0.05)
+    # cv2.putText(img_1, 'x', x_axis_end, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    # cv2.arrowedLine(img_1, origin, y_axis_end, (0, 255, 0), 2, tipLength=0.05)
+    # cv2.putText(img_1, 'y', y_axis_end, cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+    img_center_x = img_1.shape[1] / 2
+    img_center_y = img_1.shape[0]  # y轴底部
+
+    min_distances = {"blue": float('inf'), "red": float('inf'), "black": float('inf'), "yellow": float('inf')}
+    closest_ball_infos = {"blue": None, "red": None, "black": None, "yellow": None}
+
+    
+
+    # 确保 boxes, classes 和 scores 不是 None
+    if boxes is not None and classes is not None and scores is not None:
         draw(img_1, boxes, scores, classes, fps)
-        if any(score > 0.6 for score in scores):
-            # Calculate and send center points and classes via serial port
-            for box, cls, score in zip(boxes, classes, scores):
-                if score > 0.6:
-                    x_center = (box[0] + box[2]) / 2
-                    y_center = (box[1] + box[3]) / 2
-                    print(f'Class: {cls}, Center: ({x_center}, {y_center})\n')
-                    ser.write(f'C{cls}x{x_center:.2f}y{y_center:.2f}!\n'.encode())
-       
+        for box, cls, score in zip(boxes, classes, scores):
+            if score > 0.7:
+                x_center = (box[0] + box[2]) / 2
+                y_center = (box[1] + box[3]) / 2
+                class_name = CLASSES[cls]
+
+                if class_name in ["blue", "red"]:
+                    in_aim_box = False
+                    for aim_box, aim_cls in zip(boxes, classes):
+                        if (class_name == "blue" and CLASSES[aim_cls] == "blue_aim" and is_center_in_box((x_center, y_center), aim_box)) or \
+                        (class_name == "red" and CLASSES[aim_cls] == "red_aim" and is_center_in_box((x_center, y_center), aim_box)):
+                            in_aim_box = True
+                            break
+                
+                    if not in_aim_box:
+                        distance = ((x_center - img_center_x) ** 2 + (y_center - img_center_y) ** 2) ** 0.5
+                        if distance < min_distances[class_name]:
+                            min_distances[class_name] = distance
+                            closest_ball_infos[class_name] = (cls, x_center, y_center)
+                elif class_name in ["black", "yellow"]:
+                    distance = ((x_center - img_center_x) ** 2 + (y_center - img_center_y) ** 2) ** 0.5
+                    if distance < min_distances[class_name]:
+                        min_distances[class_name] = distance
+                        closest_ball_infos[class_name] = (cls, x_center, y_center)
+
+    for color in ["blue", "red", "black", "yellow"]:
+        if closest_ball_infos[color]:
+            cls, x_center, y_center = closest_ball_infos[color]
+            print(f'Closest {color.capitalize()} Ball - Class: {CLASSES[cls]}, Center: ({x_center}, {y_center})\n')
+            ser.write(f'C{cls}x{x_center:.2f}y{y_center:.2f}!\n'.encode())
+
+
     # show output
     cv2.imshow("post process result", img_1)
 
