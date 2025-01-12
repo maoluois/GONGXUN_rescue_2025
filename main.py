@@ -19,16 +19,8 @@ QUANTIZE_ON = True
 OBJ_THRESH = 0.25
 NMS_THRESH = 0.45
 IMG_SIZE = 640
- 
-'''CLASSES = ("person", "bicycle", "car", "motorbike ", "aeroplane ", "bus ", "train", "truck ", "boat", "traffic light",
-           "fire hydrant", "stop sign ", "parking meter", "bench", "bird", "cat", "dog ", "horse ", "sheep", "cow", "elephant",
-           "bear", "zebra ", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite",
-           "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife ",
-           "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza ", "donut", "cake", "chair", "sofa",
-           "pottedplant", "bed", "diningtable", "toilet ", "tvmonitor", "laptop	", "mouse	", "remote ", "keyboard ", "cell phone", "microwave ",
-           "oven ", "toaster", "sink", "refrigerator ", "book", "clock", "vase", "scissors ", "teddy bear ", "hair drier", "toothbrush ")
-'''
-CLASSES = ("0","1","2","3","4","5","6","7","8","9")
+
+CLASSES = ["blue","red","black","yellow","blue_base","blue_aim","red_base","red_aim"]
  
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -45,17 +37,16 @@ def xywh2xyxy(x):
  
  
 def process(input, mask, anchors):
- 
     anchors = [anchors[i] for i in mask]
     grid_h, grid_w = map(int, input.shape[0:2])
- 
+
     box_confidence = sigmoid(input[..., 4])
     box_confidence = np.expand_dims(box_confidence, axis=-1)
- 
+
     box_class_probs = sigmoid(input[..., 5:])
- 
-    box_xy = sigmoid(input[..., :2])*2 - 0.5
- 
+
+    box_xy = sigmoid(input[..., :2]) * 2 - 0.5
+
     col = np.tile(np.arange(0, grid_w), grid_w).reshape(-1, grid_w)
     row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_h)
     col = col.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
@@ -63,12 +54,12 @@ def process(input, mask, anchors):
     grid = np.concatenate((col, row), axis=-1)
     box_xy += grid
     box_xy *= int(IMG_SIZE/grid_h)
- 
-    box_wh = pow(sigmoid(input[..., 2:4])*2, 2)
+
+    box_wh = pow(sigmoid(input[..., 2:4]) * 2, 2)
     box_wh = box_wh * anchors
- 
+
     box = np.concatenate((box_xy, box_wh), axis=-1)
- 
+
     return box, box_confidence, box_class_probs
  
  
@@ -142,7 +133,9 @@ def nms_boxes(boxes, scores):
  
 def yolov5_post_process(input_data):
     masks = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
-    anchors = [[199, 371], [223, 481], [263, 428], [278, 516], [320, 539], [323, 464], [361, 563], [402, 505], [441, 584]]
+    anchors = [[23,20], [33,32], [51,51],  # P3/8
+                [90,89], [124,129], [180,174],  # P4/16
+                [364,60], [623,356], [373,326]]  # P5/32
  
     boxes, classes, scores = [], [], []
     for input, mask in zip(input_data, masks):
@@ -192,8 +185,8 @@ def draw(image, boxes, scores, classes, fps):
     """
     for box, score, cl in zip(boxes, scores, classes):
         top, left, right, bottom = box
-        print('class: {}, score: {}'.format(CLASSES[cl], score))
-        print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(top, left, right, bottom))
+        # print('class: {}, score: {}'.format(CLASSES[cl], score))
+        # print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(top, left, right, bottom))
         top = int(top)
         left = int(left)
         right = int(right)
@@ -251,13 +244,19 @@ print('done')
 # Create a VideoCapture object and read from input file
 # If the input is the camera, pass 0 instead of the video file name
 cap = cv2.VideoCapture(0)
+# 设置分辨率
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+# 开启自动增益和白平衡
+cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+cap.set(cv2.CAP_PROP_AUTO_WB, 1)
 # Check if camera opened successfully
 if (cap.isOpened() == False):
     print("Error opening video stream or file")
 
 # Initialize serial port
-ser = serial.Serial('COM0', 115200, timeout=1)
+ser = serial.Serial('/dev/ttyS0', 115200, timeout=1)
 
 # Read until video is completed
 while(cap.isOpened()):
@@ -270,8 +269,12 @@ while(cap.isOpened()):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
 
+    # expand dimension
+    img2 = np.expand_dims(img, 0)
+
+
     # Inference
-    outputs = rknn.inference(inputs=[img])
+    outputs = rknn.inference(inputs=[img2])
 
     # post process
     input0_data = outputs[0]
@@ -299,12 +302,15 @@ while(cap.isOpened()):
             0.6, (0, 125, 125), 2)
     if boxes is not None:
         draw(img_1, boxes, scores, classes, fps)
- # Calculate and send center points and classes via serial port
-        for box, cls in zip(boxes, classes):
-            x_center = (box[0] + box[2]) / 2
-            y_center = (box[1] + box[3]) / 2
-            ser.write(f'Class: {cls}, Center: ({x_center}, {y_center})\n'.encode())
-
+        if any(score > 0.6 for score in scores):
+            # Calculate and send center points and classes via serial port
+            for box, cls, score in zip(boxes, classes, scores):
+                if score > 0.6:
+                    x_center = (box[0] + box[2]) / 2
+                    y_center = (box[1] + box[3]) / 2
+                    print(f'Class: {cls}, Center: ({x_center}, {y_center})\n')
+                    ser.write(f'C{cls}x{x_center:.2f}y{y_center:.2f}!\n'.encode())
+       
     # show output
     cv2.imshow("post process result", img_1)
 
