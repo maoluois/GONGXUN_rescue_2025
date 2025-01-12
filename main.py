@@ -7,10 +7,11 @@ import sys
 import numpy as np
 import cv2
 from rknnlite.api import RKNNLite
+import serial
  
  
 #RKNN_MODEL = 'yolov5s-640-640.rknn'
-RKNN_MODEL = 'new/best.rknn'
+RKNN_MODEL = 'gx_data/best.rknn'
 #DATASET = './dataset.txt'
  
 QUANTIZE_ON = True
@@ -233,11 +234,11 @@ def letterbox(im, new_shape=(640, 640), color=(0, 0, 0)):
 # ==================================
  
 rknn = RKNNLite()
- 
+
 # load RKNN model
 print('--> Load RKNN model')
 ret = rknn.load_rknn(RKNN_MODEL)
- 
+
 # Init runtime environment
 print('--> Init runtime environment')
 # use NPU core 0 1 2
@@ -246,15 +247,18 @@ if ret != 0:
     print('Init runtime environment failed!')
     exit(ret)
 print('done')
- 
+
 # Create a VideoCapture object and read from input file
 # If the input is the camera, pass 0 instead of the video file name
 cap = cv2.VideoCapture(0)
- 
+
 # Check if camera opened successfully
-if (cap.isOpened()== False): 
-  print("Error opening video stream or file")
- 
+if (cap.isOpened() == False):
+    print("Error opening video stream or file")
+
+# Initialize serial port
+ser = serial.Serial('COM0', 9600, timeout=1)
+
 # Read until video is completed
 while(cap.isOpened()):
     start = dt.datetime.utcnow()
@@ -262,33 +266,31 @@ while(cap.isOpened()):
     ret, img = cap.read()
     if not ret:
         break
-    
+   
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
- 
+
     # Inference
-    #print('--> Running model')
     outputs = rknn.inference(inputs=[img])
-    #print('done')
- 
+
     # post process
     input0_data = outputs[0]
     input1_data = outputs[1]
     input2_data = outputs[2]
- 
+
     input0_data = input0_data.reshape([3, -1]+list(input0_data.shape[-2:]))
     input1_data = input1_data.reshape([3, -1]+list(input1_data.shape[-2:]))
     input2_data = input2_data.reshape([3, -1]+list(input2_data.shape[-2:]))
- 
+
     input_data = list()
     input_data.append(np.transpose(input0_data, (2, 3, 0, 1)))
     input_data.append(np.transpose(input1_data, (2, 3, 0, 1)))
     input_data.append(np.transpose(input2_data, (2, 3, 0, 1)))
- 
+
     boxes, classes, scores = yolov5_post_process(input_data)
     duration = dt.datetime.utcnow() - start
     fps = round(1000000 / duration.microseconds)
- 
+
     # draw process result and fps
     img_1 = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     cv2.putText(img_1, f'fps: {fps}',
@@ -297,16 +299,23 @@ while(cap.isOpened()):
             0.6, (0, 125, 125), 2)
     if boxes is not None:
         draw(img_1, boxes, scores, classes, fps)
- 
+ # Calculate and send center points and classes via serial port
+        for box, cls in zip(boxes, classes):
+            x_center = (box[0] + box[2]) / 2
+            y_center = (box[1] + box[3]) / 2
+            ser.write(f'Class: {cls}, Center: ({x_center}, {y_center})\n'.encode())
+
     # show output
     cv2.imshow("post process result", img_1)
- 
+
     # Press Q on keyboard to  exit
     if cv2.waitKey(25) & 0xFF == ord('q'):
         break
- 
+
 # When everything done, release the video capture object
 cap.release()
- 
+
 # Closes all the frames
 cv2.destroyAllWindows()
+ser.close()
+
