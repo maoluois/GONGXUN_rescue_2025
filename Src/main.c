@@ -60,6 +60,7 @@
 // controller PV
 int mode = 0;                 // 控制模式
 int task = 0;                 // 任务
+int state = 0;                // 状态
 
 // encoder PV
 int32_t totalAngle1 = 0;      // 总的角度
@@ -136,7 +137,7 @@ xUART_TypeDef xUART8 = {0};  // 串口8;
     float yawF = 0;
 
     // Xbox PV
-    uint16_t XboxData[4];
+    uint16_t XboxData[4]  = {9, 9, 0 ,0};
 
     // camera PV
     class_Ogpi red_ball = {0};
@@ -169,6 +170,8 @@ PID_ControllerTypeDef motor1PID_V = {0};
 PID_ControllerTypeDef motor2PID_V = {0};
 PID_ControllerTypeDef motor1PID_P = {0};
 PID_ControllerTypeDef motor2PID_P = {0};
+PID_ControllerTypeDef distancePID = {0};
+PID_ControllerTypeDef anglePID = {0};
 PID_ControllerTypeDef ImuPID = {0};
 float pidOutputV1 = 0;
 float pidOutputV2 = 0;
@@ -278,7 +281,7 @@ int main(void)
   {
       // 调试使用
       // Set_motor1(100);
-      // Set_servo1(160);
+      // Set_servo1(183);
       // HAL_Delay(1000);
       // Set_servo1(205);
       // HAL_Delay(1000);
@@ -299,8 +302,27 @@ int main(void)
 
       // ********************************************************************************************
       // 任务代码
-      // Set_postionY(84);
-      // Try_right_turn90(40);
+      if (task == 0)
+      {
+          switch (state)
+          {
+          case 0: // 只夹蓝球
+              distancePID.setpoint = Camera_centerY;
+              anglePID.setpoint = Camera_centerX;
+              linear_speed = PID_Compute(&distancePID, blue_ball.area);
+              angular_speed = PID_Compute(&anglePID, blue_ball.x);
+              InverseKinematics_differential(linear_speed, angular_speed, WheelDistance, &motor1PID_V.setpoint, &motor2PID_V.setpoint);
+              while(1);
+              break;
+
+          case 1: // 哪个球近夹哪个，优先夹黄球
+              // 获取黄球的位置信息和面积信息
+              HAL_Delay(1000); // 等待夹取完成
+              Set_servo1(open);
+              state = 0; // 切换回第一个状态
+              break;
+          }
+      }
 
 
       // ********************************************************************************************
@@ -310,12 +332,11 @@ int main(void)
           motor1PID_V.setpoint = 0;
           motor2PID_V.setpoint = 0;
           // printf("xbox not connected\n");
-          mode = 1;  // 自动模式
-          HAL_Delay(10);
+          // mode = 1;  // 位置环模式
       }
       else
       {
-          mode = 0;  // 遥控模式
+          mode = 0;  // 遥控（速度环）模式
           calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
           if (XboxData[0] == 1)
           {
@@ -365,8 +386,8 @@ int main(void)
       if (xUART5.ReceiveNum)                                                  // 判断字节数
       {
           Get_Data_Ogpi(xUART5.ReceiveData);                                 // 解析Ogpi数据
-          printf("%s\n", (char *)xUART5.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
-          printf("%d,%f,%f,%f\n", blue_ball.class, blue_ball.x, blue_ball.y, blue_ball.area);// 显示换行
+          // printf("%s\n", (char *)xUART5.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
+          printf("%d,%f,%f\n", blue_ball.class, blue_ball.x, blue_ball.y);// 显示换行
           xUART5.ReceiveNum = 0;                                             // 清0接收标记
 
       }

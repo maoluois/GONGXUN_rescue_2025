@@ -51,6 +51,7 @@ void Get_Data_Xbox(uint8_t *Rx_data) {
 void Get_Data_Ogpi(uint8_t *Rx_data) {
   uint8_t x_Start_Num = 0, x_End_Num = 0;
   uint8_t y_Start_Num = 0, y_End_Num = 0;
+  uint8_t x_Point_Num = 0, y_Point_Num = 0;
   uint8_t flag = 0;          // 开始寻找标志位
   uint8_t data_class = 0;    // 数据类别
 
@@ -69,19 +70,30 @@ void Get_Data_Ogpi(uint8_t *Rx_data) {
       x_End_Num = i - 1;
       y_Start_Num = i + 1;
     }
+    if (Rx_data[i] == '.' && flag == 1) {
+      if (x_Start_Num > 0 && x_Point_Num == 0) {
+        x_Point_Num = i;
+      } else if (y_Start_Num > 0 && y_Point_Num == 0) {
+        y_Point_Num = i;
+      }
+    }
     if (Rx_data[i] == '!' && flag == 1) {
       y_End_Num = i - 1;
       break;
     }
   }
 
-  // 计算整数数据的长度
-  uint8_t x_Integer_len = x_End_Num - x_Start_Num + 1;
-  uint8_t y_Integer_len = y_End_Num - y_Start_Num + 1;
+  // 计算整数和小数数据的长度
+  uint8_t x_Integer_len = x_Point_Num - x_Start_Num;
+  uint8_t x_Decimal_len = x_End_Num - x_Point_Num;
+  uint8_t y_Integer_len = y_Point_Num - y_Start_Num;
+  uint8_t y_Decimal_len = y_End_Num - y_Point_Num;
 
   // 计算返回值
-  float x_value = data_Decimal_calculate(x_Integer_len, x_Start_Num, Rx_data);
-  float y_value = data_Decimal_calculate(y_Integer_len, y_Start_Num, Rx_data);
+  float x_value = data_Integer_calculate(x_Integer_len, x_Start_Num, Rx_data) +
+                  data_Decimal_calculate(x_Decimal_len, x_Point_Num, Rx_data);
+  float y_value = data_Integer_calculate(y_Integer_len, y_Start_Num, Rx_data) +
+                  data_Decimal_calculate(y_Decimal_len, y_Point_Num, Rx_data);
 
   // 根据数据类别处理数据
   switch (data_class) {
@@ -119,7 +131,7 @@ void Get_Data_Ogpi(uint8_t *Rx_data) {
     break;
   default:
     // 处理未知类别的数据
-      break;
+    break;
   }
 
   class = data_class;

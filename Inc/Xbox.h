@@ -7,12 +7,9 @@
 #include <stdint.h>
 void Get_Data_Xbox(uint8_t *Rx_data);
 void Get_Data_Ogpi(uint8_t *Rx_data);
-
-uint16_t XboxData[4] = {9, 9, 0, 0};
 extern uint16_t XboxData[4];
-
-uint8_t class;
 extern uint8_t class;
+
 typedef struct
 {
   uint8_t class;

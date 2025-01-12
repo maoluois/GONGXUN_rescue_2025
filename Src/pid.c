@@ -19,6 +19,23 @@ void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float set
     pid->output = 0.0f;
 }
 
+float PID_Compute(PID_ControllerTypeDef *pid, float measurement) {
+    float error = pid->setpoint - measurement;
+
+    // Define the dead zone range
+    float dead_zone = 0.1;
+
+    // Apply dead zone
+    if (fabs(error) < dead_zone) {
+        error = 0;
+    }
+
+    pid->integral += error;
+    float derivative = error - pid->lastError;
+    pid->lastError = error;
+    return pid->Kp * error + pid->Ki * pid->integral + pid->Kd * derivative;
+}
+
 // 增量PID控制
 float PID_Incremental(PID_ControllerTypeDef *pid, float currentSpeed) {
     float error = pid->setpoint - currentSpeed;

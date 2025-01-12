@@ -24,6 +24,8 @@ extern PID_ControllerTypeDef motor1PID_V;
 extern PID_ControllerTypeDef motor2PID_V;
 extern PID_ControllerTypeDef motor1PID_P;
 extern PID_ControllerTypeDef motor2PID_P;
+extern PID_ControllerTypeDef distancePID;
+extern PID_ControllerTypeDef anglePID;
 extern PID_ControllerTypeDef ImuPID;
 
 
@@ -35,4 +37,5 @@ float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float cu
 float PID_Position(PID_ControllerTypeDef *pid, float currentPos);
 float PID_Balance(PID_ControllerTypeDef *pid, float Angle);
 float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro);
+float PID_Compute(PID_ControllerTypeDef *pid, float measurement);
 #endif //PID_H

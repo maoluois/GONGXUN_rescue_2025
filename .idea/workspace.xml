@@ -23,17 +23,14 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Add IMU and Imupid.">
+    <list default="true" id="70ee2455-f141-4d7b-8926-c2dc3a991475" name="更改" comment="Add Orangepi uart.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Inc/Xbox.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/Xbox.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Inc/main.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/main.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Inc/stm32h7xx_it.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/stm32h7xx_it.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Inc/usart.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/usart.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Inc/pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/Inc/pid.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/Xbox.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/Xbox.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Src/dma.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/dma.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Src/stm32h7xx_it.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/stm32h7xx_it.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Src/usart.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/usart.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Src/pid.c" beforeDir="false" afterPath="$PROJECT_DIR$/Src/pid.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/cmakeFiles-v1-bbb55c3cd1a9a91f4b0c.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/codemodel-v2-cf3eb514d4d3ae735f09.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/.cmake/api/v1/reply/index-2024-12-21T03-30-26-0473.json" beforeDir="false" />
@@ -62,7 +59,6 @@
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.bin" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.hex" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.hex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/gx.map" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/gx.map" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gx.ioc" beforeDir="false" afterPath="$PROJECT_DIR$/gx.ioc" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -234,7 +230,7 @@
       <workItem from="1735790371816" duration="9230000" />
       <workItem from="1735814698337" duration="139000" />
       <workItem from="1735903610382" duration="24144000" />
-      <workItem from="1736571319814" duration="17131000" />
+      <workItem from="1736571319814" duration="32558000" />
     </task>
     <task id="LOCAL-00001" summary="Init controller.">
       <option name="closed" value="true" />
@@ -484,7 +480,15 @@
       <option name="project" value="LOCAL" />
       <updated>1735958729892</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="Add Orangepi uart.">
+      <option name="closed" value="true" />
+      <created>1736671607021</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1736671607021</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -519,7 +523,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Set CubeMx." />
     <MESSAGE value="Add JY901s example and transplant to gx." />
     <MESSAGE value="Finish PID Part but not Set PID param." />
     <MESSAGE value="Delete Buad rate adjustment." />
@@ -544,7 +547,8 @@
     <MESSAGE value="Add Position PID and Fix Xbox sensitivity and save Vofa table." />
     <MESSAGE value="Try task with no IMU." />
     <MESSAGE value="Add IMU and Imupid." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add IMU and Imupid." />
+    <MESSAGE value="Add Orangepi uart." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add Orangepi uart." />
   </component>
   <component name="XDebuggerManager">
     <watches-manager>

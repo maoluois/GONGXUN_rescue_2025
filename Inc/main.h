@@ -114,10 +114,10 @@ void Error_Handler(void);
 #define motor2 1
 #define motor3 2
 // Servo parameters
-#define open 114
-#define close 97
+#define open 205
+#define close 183
 #define XBOX_BUFFER_SIZE  88 //XBOX 数组容量大小
-#define Oran_BUFFER_SIZE  30 //Oran 数组容量大小
+#define Oran_BUFFER_SIZE  80 //Oran 数组容量大小
 // Xbox parameters
 #define V_F_MAX -80    // 遥控速度范围 // 极限值为+-127
 #define V_F_MIN 80
@@ -131,6 +131,8 @@ void Error_Handler(void);
 #define MAG_UPDATE		0x08
 #define READ_UPDATE		0x80
 
+#define Camera_centerX 240
+#define Camera_centerY 640
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
