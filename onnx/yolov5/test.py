@@ -8,10 +8,10 @@ import cv2
 from rknn.api import RKNN
 
 # Model from https://github.com/airockchip/rknn_model_zoo
-ONNX_MODEL = 'best.onnx'
-RKNN_MODEL = 'best.rknn'
-IMG_PATH = './yellow.jpg'
-DATASET = './dataset.txt'
+ONNX_MODEL = 'gx_data/best.onnx'
+RKNN_MODEL = 'gx_data/best.rknn'
+IMG_PATH = 'gx_data/onnx/yolov5/yellow.jpg'
+DATASET = 'gx_data/onnx/yolov5/dataset.txt'
 
 QUANTIZE_ON = True
 
@@ -21,7 +21,8 @@ IMG_SIZE = 640
 
 CLASSES = ["blue","red","black","yellow","blue_base","blue_aim","red_base","red_aim"] 
 
-
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x)) 
 
 def xywh2xyxy(x):
     # Convert [x, y, w, h] to [x1, y1, x2, y2]
@@ -33,45 +34,18 @@ def xywh2xyxy(x):
     return y
 
 
-# def process(input, mask, anchors):
-
-#     anchors = [anchors[i] for i in mask]
-#     grid_h, grid_w = map(int, input.shape[0:2])
-
-#     box_confidence = input[..., 4]
-#     box_confidence = np.expand_dims(box_confidence, axis=-1)
-
-#     box_class_probs = input[..., 5:]
-
-#     box_xy = input[..., :2]*2 - 0.5
-
-#     col = np.tile(np.arange(0, grid_w), grid_w).reshape(-1, grid_w)
-#     row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_h)
-#     col = col.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
-#     row = row.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
-#     grid = np.concatenate((col, row), axis=-1)
-#     box_xy += grid
-#     box_xy *= int(IMG_SIZE/grid_h)
-
-#     box_wh = pow(input[..., 2:4]*2, 2)
-#     box_wh = box_wh * anchors
-
-#     box = np.concatenate((box_xy, box_wh), axis=-1)
-
-#     return box, box_confidence, box_class_probs
-
 def process(input, mask, anchors):
- 
+
     anchors = [anchors[i] for i in mask]
     grid_h, grid_w = map(int, input.shape[0:2])
- 
-    box_confidence = input[..., 4]
+
+    box_confidence = sigmoid(input[..., 4])
     box_confidence = np.expand_dims(box_confidence, axis=-1)
- 
-    box_class_probs = input[..., 5:]
- 
-    box_xy = input[..., :2]*2 - 0.5
- 
+
+    box_class_probs = sigmoid(input[..., 5:])
+
+    box_xy = sigmoid(input[..., :2]) * 2 - 0.5
+
     col = np.tile(np.arange(0, grid_w), grid_w).reshape(-1, grid_w)
     row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_h)
     col = col.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
@@ -79,13 +53,40 @@ def process(input, mask, anchors):
     grid = np.concatenate((col, row), axis=-1)
     box_xy += grid
     box_xy *= int(IMG_SIZE/grid_h)
- 
-    box_wh = pow(input[..., 2:4]*2, 2)
+
+    box_wh = pow(sigmoid(input[..., 2:4]) * 2, 2)
     box_wh = box_wh * anchors
- 
+
     box = np.concatenate((box_xy, box_wh), axis=-1)
- 
+
     return box, box_confidence, box_class_probs
+
+# def process(input, mask, anchors):
+ 
+#     anchors = [anchors[i] for i in mask]
+#     grid_h, grid_w = map(int, input.shape[0:2])
+ 
+#     box_confidence = input[..., 4]
+#     box_confidence = np.expand_dims(box_confidence, axis=-1)
+ 
+#     box_class_probs = input[..., 5:]
+ 
+#     box_xy = input[..., :2]*2 - 0.5
+ 
+#     col = np.tile(np.arange(0, grid_w), grid_w).reshape(-1, grid_w)
+#     row = np.tile(np.arange(0, grid_h).reshape(-1, 1), grid_h)
+#     col = col.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
+#     row = row.reshape(grid_h, grid_w, 1, 1).repeat(3, axis=-2)
+#     grid = np.concatenate((col, row), axis=-1)
+#     box_xy += grid
+#     box_xy *= int(IMG_SIZE/grid_h)
+ 
+#     box_wh = pow(input[..., 2:4]*2, 2)
+#     box_wh = box_wh * anchors
+ 
+#     box = np.concatenate((box_xy, box_wh), axis=-1)
+ 
+#     return box, box_confidence, box_class_probs
 
 def filter_boxes(boxes, box_confidences, box_class_probs):
     """Filter boxes with box threshold. It's a bit different with origin yolov5 post process!
@@ -161,9 +162,9 @@ def nms_boxes(boxes, scores):
 
 def yolov5_post_process(input_data):
     masks = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
-    anchors =  [[23,20, 33,32, 51,51],  # P3/8
-                [90,89, 124,129, 180,174],  # P4/16
-                [364,60, 623,356, 373,326]]  # P5/32
+    anchors =  [[23,20], [33,32], [51,51],  # P3/8
+                [90,89], [124,129], [180,174],  # P4/16
+                [364,60], [623,356], [373,326]]  # P5/32
 
     boxes, classes, scores = [], [], []
     for input, mask in zip(input_data, masks):
