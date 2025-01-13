@@ -11,7 +11,7 @@ import serial
  
  
 #RKNN_MODEL = 'yolov5s-640-640.rknn'
-RKNN_MODEL = 'gx_data/best.rknn'
+RKNN_MODEL = '/home/orangepi/Desktop/GONGXUN2025/gx_data/best.rknn'
 #DATASET = './dataset.txt'
  
 QUANTIZE_ON = True
@@ -254,8 +254,8 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # 开启自动增益和白平衡
-cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-cap.set(cv2.CAP_PROP_AUTO_WB, 1)
+cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+cap.set(cv2.CAP_PROP_AUTO_WB, 0)
 # Check if camera opened successfully
 if (cap.isOpened() == False):
     print("Error opening video stream or file")
@@ -320,17 +320,20 @@ while(cap.isOpened()):
 
     min_distances = {"blue": float('inf'), "red": float('inf'), "black": float('inf'), "yellow": float('inf')}
     closest_ball_infos = {"blue": None, "red": None, "black": None, "yellow": None}
-
+    other_infos = {"blue_base": None, "blue_aim": None, "red_base": None, "red_aim": None}
     
 
     # 确保 boxes, classes 和 scores 不是 None
     if boxes is not None and classes is not None and scores is not None:
         draw(img_1, boxes, scores, classes, fps)
         for box, cls, score in zip(boxes, classes, scores):
-            if score > 0.7:
+            if score > 0.75:
                 x_center = (box[0] + box[2]) / 2
                 y_center = (box[1] + box[3]) / 2
                 class_name = CLASSES[cls]
+                if class_name in ["blue_base", "blue_aim", "red_base", "red_aim"]:
+                    print(f'{class_name.capitalize()} - Class: {CLASSES[cls]}, Center: ({x_center}, {y_center})\n')
+                    ser.write(f'C{cls}x{x_center:.2f}y{y_center:.2f}!\n'.encode())
 
                 if class_name in ["blue", "red"]:
                     in_aim_box = False
@@ -345,11 +348,15 @@ while(cap.isOpened()):
                         if distance < min_distances[class_name]:
                             min_distances[class_name] = distance
                             closest_ball_infos[class_name] = (cls, x_center, y_center)
+
                 elif class_name in ["black", "yellow"]:
                     distance = ((x_center - img_center_x) ** 2 + (y_center - img_center_y) ** 2) ** 0.5
                     if distance < min_distances[class_name]:
                         min_distances[class_name] = distance
                         closest_ball_infos[class_name] = (cls, x_center, y_center)
+
+                elif class_name in ["blue_base", "blue_aim", "red_base", "red_aim"]:
+                     other_infos[class_name] = (cls, x_center, y_center)        
 
     for color in ["blue", "red", "black", "yellow"]:
         if closest_ball_infos[color]:
@@ -357,7 +364,11 @@ while(cap.isOpened()):
             print(f'Closest {color.capitalize()} Ball - Class: {CLASSES[cls]}, Center: ({x_center}, {y_center})\n')
             ser.write(f'C{cls}x{x_center:.2f}y{y_center:.2f}!\n'.encode())
 
-
+    for class_name in ["blue_base", "blue_aim", "red_base", "red_aim"]:
+        if other_infos[class_name]:
+            cls, x_center, y_center = other_infos[class_name]
+            print(f'{class_name.capitalize()} - Class: {CLASSES[cls]}, Center: ({x_center}, {y_center})\n')
+            ser.write(f'C{cls}x{x_center:.2f}y{y_center:.2f}!\n'.encode())
     # show output
     cv2.imshow("post process result", img_1)
 
