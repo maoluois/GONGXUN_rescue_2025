@@ -56,8 +56,14 @@ void Set_postionY(float target_position)
     motor2PID_P.setpoint = -target_position;
 }
 
-void Try_right_turn90(float distance)
+void turn_around(void)
 {
-    motor1PID_P.setpoint = -distance;
+    motor1PID_P.setpoint = 30;
+    motor2PID_P.setpoint = -30;
 }
 
+void back_forward(void)
+{
+    Set_motor1(10);
+    Set_motor2(10);
+}

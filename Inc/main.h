@@ -114,15 +114,15 @@ void Error_Handler(void);
 #define motor2 1
 #define motor3 2
 // Servo parameters
-#define open 205
+#define open 203
 #define close 183
 #define XBOX_BUFFER_SIZE  88 //XBOX 数组容量大小
 #define Oran_BUFFER_SIZE  80 //Oran 数组容量大小
 // Xbox parameters
-#define V_F_MAX -80    // 遥控速度范围 // 极限值为+-127
-#define V_F_MIN 80
-#define W_MAX -5   // 极限值为+-10
-#define W_MIN 5
+#define V_F_MAX 50    // 遥控速度范围 // 极限值为+-127
+#define V_F_MIN -50
+#define W_MAX -3   // 极限值为+-10
+#define W_MIN 3
 #define IMU_RXBUFFER_LEN 33	 //imu 接收3类数据，一共33位
 // JY901s cfg
 #define ACC_UPDATE		0x01
@@ -131,8 +131,18 @@ void Error_Handler(void);
 #define MAG_UPDATE		0x08
 #define READ_UPDATE		0x80
 
-#define Camera_centerX 240
+#define Camera_centerX 300
 #define Camera_centerY 640
+
+#define BLUE_BALL 0
+#define RED_BALL 1
+#define BLACK_BALL 2
+#define YELLOW_BALL 3
+#define BLUE_BASE 4
+#define BLUE_AIM 5
+#define RED_BASE 6
+#define RED_AIM 7
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

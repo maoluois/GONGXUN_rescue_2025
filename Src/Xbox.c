@@ -136,3 +136,10 @@ void Get_Data_Ogpi(uint8_t *Rx_data) {
 
   class = data_class;
 }
+
+void InitializeOgpi(volatile class_Ogpi *obj, int category)
+{
+  obj -> x = 0;
+  obj -> y = Camera_centerY;
+  obj -> class = category;
+}
