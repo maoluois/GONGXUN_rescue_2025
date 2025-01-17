@@ -255,7 +255,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # 开启自动增益和白平衡
 cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-cap.set(cv2.CAP_PROP_AUTO_WB, 0)
+cap.set(cv2.CAP_PROP_AUTO_WB, 1)
 # Check if camera opened successfully
 if (cap.isOpened() == False):
     print("Error opening video stream or file")
@@ -327,7 +327,7 @@ while(cap.isOpened()):
     if boxes is not None and classes is not None and scores is not None:
         draw(img_1, boxes, scores, classes, fps)
         for box, cls, score in zip(boxes, classes, scores):
-            if score > 0.75:
+            if score > 0.68:
                 x_center = (box[0] + box[2]) / 2
                 y_center = (box[1] + box[3]) / 2
                 class_name = CLASSES[cls]
