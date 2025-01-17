@@ -60,7 +60,7 @@ void Get_Data_Ogpi(uint8_t *Rx_data) {
     if (Rx_data[i] == '\n') {
       flag = 1;  // 找到换行符，标志接收开始
     }
-    if (Rx_data[i] == 'c' && flag == 1) {
+    if (Rx_data[i] == 'C' && flag == 1) {   // 是大写C
       data_class = Rx_data[i + 1] - '0';  // 获取数据类别
     }
     if (Rx_data[i] == 'x' && flag == 1) {
@@ -139,7 +139,7 @@ void Get_Data_Ogpi(uint8_t *Rx_data) {
 
 void InitializeOgpi(volatile class_Ogpi *obj, int category)
 {
-  obj -> x = 0;
+  obj -> x = Camera_centerX;
   obj -> y = Camera_centerY;
   obj -> class = category;
 }

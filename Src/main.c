@@ -124,16 +124,16 @@ xUART_TypeDef xUART8 = {0};  // 串口8;
 
     uint8_t data_ok = 0;
 
-    uint8_t Test_data(uint8_t* str , uint8_t lenth)
-    {
-        uint8_t result = 0 ;
-        for( uint8_t i = 0 ; i < lenth ; i++ )
-        {
-            result = result + str[i];
-
-        }
-        return result;
-    }
+    // uint8_t Test_data(uint8_t* str , uint8_t lenth)
+    // {
+    //     uint8_t result = 0 ;
+    //     for( uint8_t i = 0 ; i < lenth ; i++ )
+    //     {
+    //         result = result + str[i];
+    //
+    //     }
+    //     return result;
+    // }
     // ###############################################################################
     float yaw = 0;
     float yawF = 0;
@@ -266,8 +266,8 @@ int main(void)
   PID_Init(&motor2PID_V, 8.1f, 0.066f, 38.8f, 0);
   PID_Init(&motor1PID_P, 0.60f, 0, 0, 0);
   PID_Init(&motor2PID_P, 0.66f, 0, 0, 0);
-  PID_Init(&distancePID, -0.048f, 0, 0, 0);
-  PID_Init(&anglePID, 0.0018f, 0, 0, 0);
+  PID_Init(&distancePID, -0.050f, 0, 0, 0);
+  PID_Init(&anglePID, 0.0023f, 0, 0, 0);
   HAL_TIM_Base_Init(&htim3);
   HAL_TIM_Base_Init(&htim4);
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
@@ -305,7 +305,11 @@ int main(void)
       // Set_servo1(205);
       // HAL_Delay(1000);
       // yaw = JY901s.angle.angle[2];
-
+      // back_forward();
+      // delay_ms(1000);
+      // stop();
+      // delay_ms(1000);
+        printf("%d\n", state);
       // 角度调参
       // printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
 
@@ -318,252 +322,286 @@ int main(void)
       // HAL_Delay(2);
       // 获取角度
       // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
-      printf("%d\n", state);
+      // printf("%d\n", state);
       // // ********************************************************************************************
-      // 任务代码
-    if (task == 0)
+    //  任务代码
+      if (task == 0)
     {
         switch (state)
         {
-        case 0: // 只夹蓝球
-            if (class == BLUE_BALL)
+        case 0: // 旋转直到找到蓝球
+            if (blue_ball.x == Camera_centerX && blue_ball.y == Camera_centerY)
             {
-                CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-                if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-                {
-                    Set_servo1(close);
-                    delay_ms(500); // 等待夹取完成
-                    state = 1;
-                }
-                else
-                {
-                    state = 0;
-                }
-            }
-            break;
-        case 1:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                delay_ms(1000); // 等待夹取完成
-                state = 2;
+                turn_around();
+                state = 0;
+                break;
             }
             else
             {
                 state = 1;
+                break;
             }
-            break;
 
-        case 2:
-            CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+        case 1: // 只夹蓝球
+            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+            printf("%f,%f\n", biasX, biasY);
+            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
             {
                 Set_servo1(close);
                 delay_ms(500); // 等待夹取完成
                 InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 3;
+                state = 2;
+                break;
             }
             else
             {
-                back_forward();
-                delay_ms(10000);
-                state = 2;
+                state = 1;
+                break;
             }
-            break;
+
+        case 2: // 旋转直到找到蓝安全区
+            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
+            {
+                turn_around();
+                state = 2;
+                break;
+            }
+            else
+            {
+                state = 3;
+                break;
+            }
 
         case 3:
             CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+            if (biasX < 20 && biasX > -20 && biasY < 270 && biasY > 0)
             {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
+                Set_servo1(open);  // 放球
+                delay_ms(500);
                 state = 4;
+                break;
             }
             else
             {
                 state = 3;
+                break;
             }
+
+        case 4: // 后退
+            back_forward();
+            delay_ms(1800);
+            stop();
+            delay_ms(300);
+            state = 5;
+            InitializeOgpi(&blue_ball, BLUE_BALL);
             break;
 
-        case 4:
-            CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+        case 5: // 旋转直到找到第二个蓝球
+            if (blue_ball.x == Camera_centerX && blue_ball.y == Camera_centerY)
             {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
                 state = 5;
+                turn_around();
+                break;
             }
             else
             {
-                state = 4;
-            }
-            break;
-
-        case 5:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
                 state = 6;
+                break;
             }
-            else
-            {
-                state = 5;
-            }
-            break;
 
-        case 6:
-            CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+        case 6: // 只夹第二个蓝球
+            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+            // printf("%f,%f\n", biasX, biasY);
+            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
             {
                 Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
+                delay_ms(500); // 等待夹取完成
                 state = 7;
+                InitializeOgpi(&blue_aim, BLUE_AIM);
+                break;
             }
             else
             {
                 state = 6;
+                break;
             }
-            break;
 
-        case 7:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+        case 7: // 旋转直到找到蓝安全区
+            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
             {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
+                turn_around();
+                state = 7;
+                break;
+            }
+            else
+            {
                 state = 8;
+                break;
             }
-            else
-            {
-                state = 7;
-            }
-            break;
 
         case 8:
-            CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+            if (biasX < 20 && biasX > -20 && biasY < 270 && biasY > 0)
             {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
+                Set_servo1(open);  // 放球
+                delay_ms(500);
                 state = 9;
+                break;
             }
             else
             {
                 state = 8;
+                break;
             }
+
+        case 9: // 后退
+            back_forward();
+            delay_ms(1800);
+            stop();
+            delay_ms(300);
+            state = 10;
+            InitializeOgpi(&black_ball, BLACK_BALL);
             break;
 
-        case 9:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+        case 10: // 旋转直到找到黑球
+            if (black_ball.x == Camera_centerX && black_ball.y == Camera_centerY)
             {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
                 state = 10;
+                turn_around();
+                break;
             }
             else
             {
-                state = 9;
+                state = 11;
+                break;
             }
-            break;
 
-        case 10:
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+        case 11: // 只夹黑球
+            CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+            // printf("%f,%f\n", biasX, biasY);
+            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
             {
                 Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 11;
-            }
-            else
-            {
-                state = 10;
-            }
-            break;
-
-        case 11:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
+                delay_ms(500); // 等待夹取完成
                 state = 12;
+                InitializeOgpi(&blue_aim, BLUE_AIM);
+                break;
             }
             else
             {
                 state = 11;
+                break;
             }
-            break;
 
-        case 12:
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+        case 12: // 旋转直到找到蓝安全区
+            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
             {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
+                turn_around();
+                state = 12;
+                break;
+            }
+            else
+            {
                 state = 13;
+                break;
             }
-            else
-            {
-                state = 12;
-            }
-            break;
 
         case 13:
             CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+            if (biasX < 20 && biasX > -20 && biasY < 250 && biasY > 0)
             {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
+                Set_servo1(open);  // 放球
+                delay_ms(500);
                 state = 14;
+                break;
             }
             else
             {
                 state = 13;
+                break;
             }
+
+        case 14: // 后退
+            back_forward();
+            delay_ms(1800);
+            stop();
+            delay_ms(300);
+            state = 15;
+            InitializeOgpi(&yellow_ball, YELLOW_BALL);
             break;
 
-        case 14:
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+        case 15: // 旋转直到找到黄球
+            if (yellow_ball.x == Camera_centerX && yellow_ball.y == Camera_centerY)
+            {
+                state = 15;
+                turn_around();
+                break;
+            }
+            else
+            {
+                state = 16;
+                break;
+            }
+
+        case 16: // 只夹黄球
+            CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+            // printf("%f,%f\n", biasX, biasY);
+            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
             {
                 Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
+                delay_ms(500); // 等待夹取完成
+                state = 17;
                 InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 15;
+                break;
             }
             else
             {
-                state = 14;
-            }
-            break;
 
-        case 15:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
                 state = 16;
+                break;
+            }
+
+        case 17: // 旋转直到找到蓝安全区
+            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
+            {
+                turn_around();
+                state = 17;
+                break;
             }
             else
             {
-                state = 15;
+                state = 18;
+                break;
             }
+
+        case 18:
+            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+            if (biasX < 20 && biasX > -20 && biasY < 250 && biasY > 0)
+            {
+                Set_servo1(open);  // 放球
+                delay_ms(500);
+                state = 19;
+                break;
+            }
+            else
+            {
+                state = 18;
+                break;
+            }
+
+        case 19: // 后退
+            back_forward();
+            delay_ms(1800);
+            stop();
+            delay_ms(300);
+            state = 20;
             break;
 
         default:
             break;
         }
     }
+      // stop();
 
       // ********************************************************************************************
 
@@ -631,7 +669,8 @@ int main(void)
           Get_Data_Ogpi(xUART5.ReceiveData);                                 // 解析Ogpi数据
           // printf("%s\n", (char *)xUART5.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
           // printf("%f,%f,%f,%f\n", linear_speed, angular_speed, motor1PID_V.setpoint, motor2PID_V.setpoint);// 显示换行
-          printf("%d,%f,%f,%f,%f\n", blue_aim.class, blue_aim.x, blue_aim.y, motor1PID_V.setpoint, motor2PID_V.setpoint);// 显示换行
+          // printf("%d,%f,%f,%f,%f\n", blue_aim.class, blue_aim.x, blue_aim.y, motor1PID_V.setpoint, motor2PID_V.setpoint);// 显示换行
+          // printf("%d,%f,%f,%f,%f\n", blue_ball.class, blue_ball.x, blue_ball.y, motor1PID_V.setpoint, motor2PID_V.setpoint);// 显示换行
           xUART5.ReceiveNum = 0;                                             // 清0接收标记
 
       }
@@ -699,10 +738,11 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 void CalculateWheelSpeeds(class_Ogpi ball, float* motor1_speed, float* motor2_speed, float* biasX, float* biasY) {
-    distancePID.setpoint = Camera_centerY;
+    distancePID.setpoint = 640 - Camera_centerY;  // 640是摄像头的高度
     anglePID.setpoint = Camera_centerX;
     *biasX = Camera_centerX - ball.x;
-    *biasY = ball.y - Camera_centerY;
+    *biasY = (640 - Camera_centerY) - ball.y;
+    // printf("%f,%f,%f,%f\n", *biasX, *biasY, ball.x, ball.y);
     float linear_speed = PID_Compute(&distancePID, ball.y);
     float angular_speed = PID_Compute(&anglePID, ball.x);
     InverseKinematics_differential(linear_speed, angular_speed, WheelDistance, motor1_speed, motor2_speed);
@@ -912,69 +952,69 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
         HAL_UART_Receive_IT(&huart1, (uint8_t *)xUSART1.BuffTemp, 1);  // 重新启动串口中断接收下一个字符
     }
 
-    if(UartHandle->Instance == USART2)
-    {
-
-        if( buf == 0x55 && recieve_flag == Free )
-        {
-            str_data[str_index] = buf ;
-            str_index++;
-            recieve_flag = Receiveing ;
-        }
-        else if( recieve_flag == Receiveing )
-        {
-            str_data[str_index] = buf ;
-            str_index++;
-            if( str_index > 70 )
-            {
-                str_index = 0 ;
-            }
-            if( str_index == 11 )
-            {
-                uint8_t item = Test_data( str_data , 10 ) ;
-                if( item == str_data[10] )
-                {
-                    data_ok = 1 ;
-                    switch ( str_data[1])
-                    {
-                    case 0x51:
-
-                        accelerate_x = (float)((((short)str_data[3]<<8)|str_data[2])*1.0/32768*156.8);
-                        accelerate_y = (float)((((short)str_data[5]<<8)|str_data[4])*1.0/32768*156.8);
-                        accelerate_z = (float)((((short)str_data[7]<<8)|str_data[6])*1.0/32768*156.8);
-                        break;
-
-                    case 0x52:
-                        angel_velocity_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*2000 );
-                        angel_velocity_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*2000 );
-                        angel_velocity_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*2000 );
-                        break;
-
-                    case 0x53:
-                        angle_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*180 );
-                        angle_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*180 );
-                        angle_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*180 );
-                        if ((angle_z > 358 && angle_z < 360) || (angle_z < 2 && angle_z > 0))
-                        {
-                            angle_z = 0;
-                        }
-                        break;
-
-                    default:
-                        break;
-                    }
-                    recieve_flag = Free ;
-
-                }
-                str_index = 0 ;
-                recieve_flag = Free ;
-            }
-        }
-
-        HAL_UART_Receive_IT(&huart2 , (uint8_t *)&buf ,1);
-    }
-
-
+//     if(UartHandle->Instance == USART2)
+//     {
+//
+//         if( buf == 0x55 && recieve_flag == Free )
+//         {
+//             str_data[str_index] = buf ;
+//             str_index++;
+//             recieve_flag = Receiveing ;
+//         }
+//         else if( recieve_flag == Receiveing )
+//         {
+//             str_data[str_index] = buf ;
+//             str_index++;
+//             if( str_index > 70 )
+//             {
+//                 str_index = 0 ;
+//             }
+//             if( str_index == 11 )
+//             {
+//                 uint8_t item = Test_data( str_data , 10 ) ;
+//                 if( item == str_data[10] )
+//                 {
+//                     data_ok = 1 ;
+//                     switch ( str_data[1])
+//                     {
+//                     case 0x51:
+//
+//                         accelerate_x = (float)((((short)str_data[3]<<8)|str_data[2])*1.0/32768*156.8);
+//                         accelerate_y = (float)((((short)str_data[5]<<8)|str_data[4])*1.0/32768*156.8);
+//                         accelerate_z = (float)((((short)str_data[7]<<8)|str_data[6])*1.0/32768*156.8);
+//                         break;
+//
+//                     case 0x52:
+//                         angel_velocity_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*2000 );
+//                         angel_velocity_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*2000 );
+//                         angel_velocity_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*2000 );
+//                         break;
+//
+//                     case 0x53:
+//                         angle_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*180 );
+//                         angle_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*180 );
+//                         angle_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*180 );
+//                         if ((angle_z > 358 && angle_z < 360) || (angle_z < 2 && angle_z > 0))
+//                         {
+//                             angle_z = 0;
+//                         }
+//                         break;
+//
+//                     default:
+//                         break;
+//                     }
+//                     recieve_flag = Free ;
+//
+//                 }
+//                 str_index = 0 ;
+//                 recieve_flag = Free ;
+//             }
+//         }
+//
+//         HAL_UART_Receive_IT(&huart2 , (uint8_t *)&buf ,1);
+//     }
+//
+//
 }
 
 // 解析从指令缓存中提取数据
