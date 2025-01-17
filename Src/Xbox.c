@@ -137,6 +137,7 @@ void Get_Data_Ogpi(uint8_t *Rx_data) {
   class = data_class;
 }
 
+// 初始化香橙派数据接收对象
 void InitializeOgpi(volatile class_Ogpi *obj, int category)
 {
   obj -> x = 0;

@@ -84,6 +84,9 @@ float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
 float SetSpeed2 = 0;
 float SetSpeed6 = 0;
 
+// delay
+uint8_t delay_ticks = 1000;
+
 // car centre PV
 float CurrentDistance = 0;
 float linear_speed = 0;       // 线速度
@@ -257,6 +260,7 @@ int main(void)
   MX_TIM4_Init();
   MX_UART8_Init();
   MX_UART5_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
 
   RetargetInit(&huart1);
@@ -275,21 +279,22 @@ int main(void)
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
   HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-  HAL_TIM_Base_Start_IT(&htim17);
+  HAL_TIM_Base_Start_IT(&htim17); // 启动定时器中断
+  // HAL_TIM_Base_Start_IT(&htim16);
   HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
   HAL_UART_Receive_IT( &huart2 , (uint8_t *)&buf ,1);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
   HAL_UARTEx_ReceiveToIdle_DMA(&huart5, xUART5.BuffTemp, sizeof(xUART5.BuffTemp));
   //HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
   InitializeAll();
-  HAL_Delay(500); // 初始化的编码器有误差 需要延时，等编码器稳定后，将位置归0
+  delay_ms(500); // 初始化的编码器有误差 需要延时，等编码器稳定后，将位置归0
   wheel1_total_position = 0;
   wheel2_total_position = 0;
   Set_servo1(open);
-  HAL_Delay(1000);
+  delay_ms(1000);
   printf("Init OK!\n");
 
-  while (xUART5.ReceiveNum == 0);
+  // while (xUART5.ReceiveNum == 0);
 
 
   /* USER CODE END 2 */
@@ -305,6 +310,11 @@ int main(void)
       // Set_servo1(205);
       // HAL_Delay(1000);
       // yaw = JY901s.angle.angle[2];
+      back_forward();
+      delay_ms(1000);
+      stop();
+      delay_ms(1000);
+
 
       // 角度调参
       // printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
@@ -321,249 +331,250 @@ int main(void)
       printf("%d\n", state);
       // // ********************************************************************************************
       // 任务代码
-    if (task == 0)
-    {
-        switch (state)
-        {
-        case 0: // 只夹蓝球
-            if (class == BLUE_BALL)
-            {
-                CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-                if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-                {
-                    Set_servo1(close);
-                    delay_ms(500); // 等待夹取完成
-                    state = 1;
-                }
-                else
-                {
-                    state = 0;
-                }
-            }
-            break;
-        case 1:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                delay_ms(1000); // 等待夹取完成
-                state = 2;
-            }
-            else
-            {
-                state = 1;
-            }
-            break;
-
-        case 2:
-            CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-            {
-                Set_servo1(close);
-                delay_ms(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 3;
-            }
-            else
-            {
-                back_forward();
-                delay_ms(10000);
-                state = 2;
-            }
-            break;
-
-        case 3:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
-                state = 4;
-            }
-            else
-            {
-                state = 3;
-            }
-            break;
-
-        case 4:
-            CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-            {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 5;
-            }
-            else
-            {
-                state = 4;
-            }
-            break;
-
-        case 5:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
-                state = 6;
-            }
-            else
-            {
-                state = 5;
-            }
-            break;
-
-        case 6:
-            CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-            {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 7;
-            }
-            else
-            {
-                state = 6;
-            }
-            break;
-
-        case 7:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
-                state = 8;
-            }
-            else
-            {
-                state = 7;
-            }
-            break;
-
-        case 8:
-            CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-            {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 9;
-            }
-            else
-            {
-                state = 8;
-            }
-            break;
-
-        case 9:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
-                state = 10;
-            }
-            else
-            {
-                state = 9;
-            }
-            break;
-
-        case 10:
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-            {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 11;
-            }
-            else
-            {
-                state = 10;
-            }
-            break;
-
-        case 11:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
-                state = 12;
-            }
-            else
-            {
-                state = 11;
-            }
-            break;
-
-        case 12:
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-            {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 13;
-            }
-            else
-            {
-                state = 12;
-            }
-            break;
-
-        case 13:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
-                state = 14;
-            }
-            else
-            {
-                state = 13;
-            }
-            break;
-
-        case 14:
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
-            {
-                Set_servo1(close);
-                HAL_Delay(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 15;
-            }
-            else
-            {
-                state = 14;
-            }
-            break;
-
-        case 15:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
-            {
-                Set_servo1(open);
-                HAL_Delay(1000); // 等待夹取完成
-                state = 16;
-            }
-            else
-            {
-                state = 15;
-            }
-            break;
-
-        default:
-            break;
-        }
-    }
+    // if (task == 0)
+    // {
+    //     switch (state)
+    //     {
+    //     case 0: // 只夹蓝球
+    //         if (class == BLUE_BALL)
+    //         {
+    //             CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //             if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //             {
+    //                 Set_servo1(close);
+    //                 delay_ms(500); // 等待夹取完成
+    //                 state = 1;
+    //             }
+    //             else
+    //             {
+    //                 state = 0;
+    //             }
+    //         }
+    //         break;
+    //
+    //     case 1:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             delay_ms(1000); // 等待夹取完成
+    //             state = 2;
+    //         }
+    //         else
+    //         {
+    //             state = 1;
+    //         }
+    //         break;
+    //
+    //     case 2:
+    //         CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //         {
+    //             Set_servo1(close);
+    //             delay_ms(500); // 等待夹取完成
+    //             InitializeOgpi(&blue_aim, BLUE_AIM);
+    //             state = 3;
+    //         }
+    //         else
+    //         {
+    //             back_forward();
+    //             delay_ms(10000);
+    //             state = 2;
+    //         }
+    //         break;
+    //
+    //     case 3:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             HAL_Delay(1000); // 等待夹取完成
+    //             state = 4;
+    //         }
+    //         else
+    //         {
+    //             state = 3;
+    //         }
+    //         break;
+    //
+    //     case 4:
+    //         CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //         {
+    //             Set_servo1(close);
+    //             HAL_Delay(500); // 等待夹取完成
+    //             InitializeOgpi(&blue_aim, BLUE_AIM);
+    //             state = 5;
+    //         }
+    //         else
+    //         {
+    //             state = 4;
+    //         }
+    //         break;
+    //
+    //     case 5:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             HAL_Delay(1000); // 等待夹取完成
+    //             state = 6;
+    //         }
+    //         else
+    //         {
+    //             state = 5;
+    //         }
+    //         break;
+    //
+    //     case 6:
+    //         CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //         {
+    //             Set_servo1(close);
+    //             HAL_Delay(500); // 等待夹取完成
+    //             InitializeOgpi(&blue_aim, BLUE_AIM);
+    //             state = 7;
+    //         }
+    //         else
+    //         {
+    //             state = 6;
+    //         }
+    //         break;
+    //
+    //     case 7:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             HAL_Delay(1000); // 等待夹取完成
+    //             state = 8;
+    //         }
+    //         else
+    //         {
+    //             state = 7;
+    //         }
+    //         break;
+    //
+    //     case 8:
+    //         CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //         {
+    //             Set_servo1(close);
+    //             HAL_Delay(500); // 等待夹取完成
+    //             InitializeOgpi(&blue_aim, BLUE_AIM);
+    //             state = 9;
+    //         }
+    //         else
+    //         {
+    //             state = 8;
+    //         }
+    //         break;
+    //
+    //     case 9:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             HAL_Delay(1000); // 等待夹取完成
+    //             state = 10;
+    //         }
+    //         else
+    //         {
+    //             state = 9;
+    //         }
+    //         break;
+    //
+    //     case 10:
+    //         CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //         {
+    //             Set_servo1(close);
+    //             HAL_Delay(500); // 等待夹取完成
+    //             InitializeOgpi(&blue_aim, BLUE_AIM);
+    //             state = 11;
+    //         }
+    //         else
+    //         {
+    //             state = 10;
+    //         }
+    //         break;
+    //
+    //     case 11:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             HAL_Delay(1000); // 等待夹取完成
+    //             state = 12;
+    //         }
+    //         else
+    //         {
+    //             state = 11;
+    //         }
+    //         break;
+    //
+    //     case 12:
+    //         CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //         {
+    //             Set_servo1(close);
+    //             HAL_Delay(500); // 等待夹取完成
+    //             InitializeOgpi(&blue_aim, BLUE_AIM);
+    //             state = 13;
+    //         }
+    //         else
+    //         {
+    //             state = 12;
+    //         }
+    //         break;
+    //
+    //     case 13:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             HAL_Delay(1000); // 等待夹取完成
+    //             state = 14;
+    //         }
+    //         else
+    //         {
+    //             state = 13;
+    //         }
+    //         break;
+    //
+    //     case 14:
+    //         CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 100 && biasX > -100 && biasY > -100 && biasY < 100)
+    //         {
+    //             Set_servo1(close);
+    //             HAL_Delay(500); // 等待夹取完成
+    //             InitializeOgpi(&blue_aim, BLUE_AIM);
+    //             state = 15;
+    //         }
+    //         else
+    //         {
+    //             state = 14;
+    //         }
+    //         break;
+    //
+    //     case 15:
+    //         CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
+    //         if (biasX < 300 && biasX > -300 && biasY > -300 && biasY < 300)
+    //         {
+    //             Set_servo1(open);
+    //             HAL_Delay(1000); // 等待夹取完成
+    //             state = 16;
+    //         }
+    //         else
+    //         {
+    //             state = 15;
+    //         }
+    //         break;
+    //
+    //     default:
+    //         break;
+    //     }
+    // }
 
       // ********************************************************************************************
 
@@ -824,6 +835,15 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         __HAL_TIM_SetCounter(&htim2, RELOADVALUE / 2);
 
     //  printf("%f, %f, %f, %f, %f, %f\n", motor1PID_V.Kp, motor1PID_V.Ki, motor1PID_V.Kd, speed, SetSpeed, (float)(totalAngle - RELOADVALUE / 2.0)); // 调试使用
+    }
+
+    if (htim->Instance == htim16.Instance)
+    {
+        delay_ticks --;
+        if (delay_ticks == 0) {
+            // 达到延时目标，执行任务
+            HAL_TIM_Base_Stop_IT(&htim16);  // 停止定时器
+        }
     }
 
 }

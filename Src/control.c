@@ -58,12 +58,18 @@ void Set_postionY(float target_position)
 
 void turn_around(void)
 {
-    motor1PID_P.setpoint = 30;
-    motor2PID_P.setpoint = -30;
+    motor1PID_V.setpoint = 30;
+    motor2PID_V.setpoint = -30;
 }
 
 void back_forward(void)
 {
-    Set_motor1(10);
-    Set_motor2(10);
+    motor1PID_V.setpoint = -30;
+    motor2PID_V.setpoint = -30;
+}
+
+void stop(void)
+{
+    motor1PID_V.setpoint = 0;
+    motor2PID_V.setpoint = 0;
 }
