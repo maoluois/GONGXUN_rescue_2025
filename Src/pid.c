@@ -68,9 +68,6 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     // 计算PID控制量
     float integral;
     float error = pid->setpoint - currentSpeed;
-    // 如果达到目标速度，清零积分项
-    // if (error < 0.1 && error > -0.1) integral = pid->integral;
-    // else  integral = pid->integral + pid->Ki * error;
     integral = pid->integral + pid->Ki * error;
     float proportional = pid->Kp * error;
 
@@ -81,11 +78,10 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     // 限制PID输出在合理范围内
     pid->output = PID_Clamp(pid->output, -100, 100);
 
-    if (pid->setpoint < 0.1 && pid->setpoint > -0.1) integral = pid->integral;
-
     // 更新积分项和记录上一次误差
     pid->integral = integral;
     pid->lastError = error;
+
     // 死区控制
     if (pid->setpoint < 0.1 && pid->setpoint > -0.1) pid->integral = 0;
 
@@ -139,16 +135,24 @@ float PID_Position(PID_ControllerTypeDef *pid, float currentPosition) {
 }
 
 // 转向环
-float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro)
-{
-    float Angle_bias, Gyro_bias;
-    Angle_bias = pid->setpoint - Angle;
-    Gyro_bias = 0 - Angle_bias;
-    pid->output= -pid->Kp * Angle_bias - Gyro_bias * pid->Kd;
-    pid->lastError = Angle;
-    if (Angle_bias < 1 && Angle_bias > -1) {
-        pid->output = 0;
+float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro) {
+    // 1. 计算角度误差，处理角度环绕问题
+    float Angle_bias = pid->setpoint - Angle;
+    if (Angle_bias > 180.0f) {
+        Angle_bias -= 360.0f;
+    } else if (Angle_bias < -180.0f) {
+        Angle_bias += 360.0f;
     }
+
+    // 2. 计算角速度误差
+    float Gyro_bias = 0 - Gyro; // 假设目标角速度为0（稳定状态）
+
+    // 3. 计算PID输出
+    pid->output = pid->Kp * Angle_bias + pid->Kd * Gyro_bias;
+
+    // 4. 更新上一次的角度误差
+    pid->lastError = Angle_bias;
+
     return pid->output;
 }
 

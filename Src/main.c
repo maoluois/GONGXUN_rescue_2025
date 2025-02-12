@@ -309,6 +309,7 @@ int main(void)
       // delay_ms(1000);
       // stop();
       // delay_ms(1000);
+
         printf("%d\n", state);
       // 角度调参
       // printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
@@ -603,7 +604,6 @@ int main(void)
     }
       // stop();
 
-      // ********************************************************************************************
 
       if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是9,9,0,0
       {
@@ -640,8 +640,7 @@ int main(void)
           InverseKinematics_differential(SpeedY, angular_speed, WheelDistance, &motor1PID_V.setpoint, &motor2PID_V.setpoint);
       }
 
-
-
+      // ********************************************************************************************
 
     /* USER CODE END WHILE */
 
