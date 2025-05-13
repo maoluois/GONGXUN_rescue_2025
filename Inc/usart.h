@@ -38,8 +38,6 @@ extern UART_HandleTypeDef huart8;
 
 extern UART_HandleTypeDef huart1;
 
-extern UART_HandleTypeDef huart2;
-
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -47,7 +45,6 @@ extern UART_HandleTypeDef huart2;
 void MX_UART5_Init(void);
 void MX_UART8_Init(void);
 void MX_USART1_UART_Init(void);
-void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 typedef struct

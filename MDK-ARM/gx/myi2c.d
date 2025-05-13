@@ -1,4 +1,6 @@
 gx\myi2c.o: ..\Hardware\MyI2C.c
+gx\myi2c.o: ..\Hardware\MyI2C.h
+gx\myi2c.o: ../Inc/gpio.h
 gx\myi2c.o: ../Inc/main.h
 gx\myi2c.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h
 gx\myi2c.o: ../Inc/stm32h7xx_hal_conf.h

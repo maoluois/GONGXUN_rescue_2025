@@ -30,6 +30,7 @@
 "gx\timers.o"
 "gx\port.o"
 "gx\heap_4.o"
+"gx\delay.o"
 "gx\main.o"
 "gx\gpio.o"
 "gx\dma.o"
@@ -39,6 +40,10 @@
 "gx\stm32h7xx_it.o"
 "gx\stm32h7xx_hal_msp.o"
 "gx\stm32h7xx_hal_timebase_tim.o"
+"gx\control.o"
+"gx\encoder.o"
+"gx\myi2c.o"
+"gx\jy901s.o"
 "gx\rescue_car.o"
 --strict --scatter "gx\gx.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
