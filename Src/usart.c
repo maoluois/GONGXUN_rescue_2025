@@ -20,7 +20,35 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 
+
 /* USER CODE BEGIN 0 */
+
+//printf重定向
+struct __FILE
+{
+  int handle;
+  /* Whatever you require here. If the only file you are using is */
+  /* standard output using printf() for debugging, no file handling */
+  /* is required. */
+};
+/* FILE is typedef’d in stdio.h. */
+FILE __stdout;
+int fputc(int ch, FILE *f) 
+{
+  /* Your implementation of fputc(). */
+    HAL_UART_Transmit(&huart1, (uint8_t*)&ch, 1, 0xffff);
+    return ch;
+}
+int ferror(FILE *f)
+{
+  /* Your implementation of ferror(). */
+  return 0;
+}
+
+
+
+
+
 // uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
 // volatile uint8_t Rx_len8;  //接收一帧数据的长度
 // volatile uint8_t Rx_flag; //一帧数据接收完成标志
@@ -454,7 +482,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_usart2_rx);
 
     /* USART2 interrupt Init */
-    HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(USART2_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
   /* USER CODE BEGIN USART2_MspInit 1 */
 

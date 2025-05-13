@@ -1,0 +1,12 @@
+gx\rescue_car.o: ..\App\Rescue_Car.c
+gx\rescue_car.o: ../Middle/FreeRTOS/include/FreeRTOS.h
+gx\rescue_car.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\rescue_car.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\rescue_car.o: ../Inc/FreeRTOSConfig.h
+gx\rescue_car.o: ../Middle/FreeRTOS/include/projdefs.h
+gx\rescue_car.o: ../Middle/FreeRTOS/include/portable.h
+gx\rescue_car.o: ../Middle/FreeRTOS/include/deprecated_definitions.h
+gx\rescue_car.o: ../Middle/FreeRTOS/portable/portmacro.h
+gx\rescue_car.o: ../Middle/FreeRTOS/include/mpu_wrappers.h
+gx\rescue_car.o: ../Middle/FreeRTOS/include/task.h
+gx\rescue_car.o: ../Middle/FreeRTOS/include/list.h

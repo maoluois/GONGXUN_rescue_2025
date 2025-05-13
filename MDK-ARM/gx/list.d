@@ -1,0 +1,12 @@
+gx\list.o: ..\Middle\FreeRTOS\source\list.c
+gx\list.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\list.o: ../Middle/FreeRTOS/include/FreeRTOS.h
+gx\list.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\list.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\list.o: ../Inc/FreeRTOSConfig.h
+gx\list.o: ../Middle/FreeRTOS/include/projdefs.h
+gx\list.o: ../Middle/FreeRTOS/include/portable.h
+gx\list.o: ../Middle/FreeRTOS/include/deprecated_definitions.h
+gx\list.o: ../Middle/FreeRTOS/portable/portmacro.h
+gx\list.o: ../Middle/FreeRTOS/include/mpu_wrappers.h
+gx\list.o: ../Middle/FreeRTOS/include/list.h

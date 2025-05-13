@@ -1,0 +1,15 @@
+gx\timers.o: ..\Middle\FreeRTOS\source\timers.c
+gx\timers.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\timers.o: ../Middle/FreeRTOS/include/FreeRTOS.h
+gx\timers.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\timers.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\timers.o: ../Inc/FreeRTOSConfig.h
+gx\timers.o: ../Middle/FreeRTOS/include/projdefs.h
+gx\timers.o: ../Middle/FreeRTOS/include/portable.h
+gx\timers.o: ../Middle/FreeRTOS/include/deprecated_definitions.h
+gx\timers.o: ../Middle/FreeRTOS/portable/portmacro.h
+gx\timers.o: ../Middle/FreeRTOS/include/mpu_wrappers.h
+gx\timers.o: ../Middle/FreeRTOS/include/task.h
+gx\timers.o: ../Middle/FreeRTOS/include/list.h
+gx\timers.o: ../Middle/FreeRTOS/include/queue.h
+gx\timers.o: ../Middle/FreeRTOS/include/timers.h
