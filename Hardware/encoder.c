@@ -7,11 +7,11 @@
   */
 
   //正负测一下
-void Get_Encoder(float* COUNTERNUM1, float* COUNTERNUM2)
+void Get_Encoder(float* countennum1, float* countennum2)
 {
-    COUNTERNUM1  = __HAL_TIM_GET_COUNTER(&htim1);
+    *countennum1  = __HAL_TIM_GET_COUNTER(&htim1);
     __HAL_TIM_SetCounter(&htim1, 0);
-    COUNTERNUM2  = __HAL_TIM_GET_COUNTER(&htim2);
+    *countennum2  = __HAL_TIM_GET_COUNTER(&htim2);
     __HAL_TIM_SetCounter(&htim2, 0);
 }
  

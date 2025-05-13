@@ -43,3 +43,4 @@ gx\main.o: ../Inc/usart.h
 gx\main.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdio.h
 gx\main.o: ../Inc/gpio.h
 gx\main.o: ..\App\Rescue_Car.h
+gx\main.o: ..\Hardware\control.h

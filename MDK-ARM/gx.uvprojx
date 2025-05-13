@@ -700,6 +700,26 @@
               <FileType>5</FileType>
               <FilePath>..\Hardware\encoder.h</FilePath>
             </File>
+            <File>
+              <FileName>MyI2C.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\MyI2C.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyI2C.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Hardware\MyI2C.h</FilePath>
+            </File>
+            <File>
+              <FileName>jy901s.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\temple\jy901s.c</FilePath>
+            </File>
+            <File>
+              <FileName>jy901s.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\temple\jy901s.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -27,11 +27,35 @@ Project File Date:  05/13/2025
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\keil5\ARM\ARMCC\Bin'
 Build target 'gx'
-compiling main.c...
-linking...
-Program Size: Code=32430 RO-data=762 RW-data=132 ZI-data=20844  
-FromELF: creating hex file...
-"gx\gx.axf" - 0 Error(s), 0 Warning(s).
+compiling jy901s.c...
+..\temple\jy901s.c(1): error:  #5: cannot open source input file "jy901s.h": No such file or directory
+  #include <jy901s.h>
+..\temple\jy901s.c: 0 warnings, 1 error
+compiling MyI2C.c...
+..\Hardware\MyI2C.c(6): error:  #20: identifier "SCL_GPIO_Port" is undefined
+  	HAL_GPIO_WritePin(SCL_GPIO_Port, SCL_Pin, (GPIO_PinState)BitValue);
+..\Hardware\MyI2C.c(6): error:  #20: identifier "SCL_Pin" is undefined
+  	HAL_GPIO_WritePin(SCL_GPIO_Port, SCL_Pin, (GPIO_PinState)BitValue);
+..\Hardware\MyI2C.c(7): warning:  #223-D: function "Delay_us" declared implicitly
+  	Delay_us(10);
+..\Hardware\MyI2C.c(12): error:  #20: identifier "SDA_GPIO_Port" is undefined
+  	HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, (GPIO_PinState)BitValue);
+..\Hardware\MyI2C.c(12): error:  #20: identifier "SDA_Pin" is undefined
+  	HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, (GPIO_PinState)BitValue);
+..\Hardware\MyI2C.c(13): warning:  #223-D: function "Delay_us" declared implicitly
+  	Delay_us(10);
+..\Hardware\MyI2C.c(19): error:  #20: identifier "SDA_GPIO_Port" is undefined
+  	BitValue = HAL_GPIO_ReadPin(SDA_GPIO_Port, SDA_Pin);
+..\Hardware\MyI2C.c(19): error:  #20: identifier "SDA_Pin" is undefined
+  	BitValue = HAL_GPIO_ReadPin(SDA_GPIO_Port, SDA_Pin);
+..\Hardware\MyI2C.c(20): warning:  #223-D: function "Delay_us" declared implicitly
+  	Delay_us(10);
+..\Hardware\MyI2C.c: 3 warnings, 6 errors
+compiling encoder.c...
+..\Hardware\encoder.c(17): warning:  #1-D: last line of file ends without a newline
+   
+..\Hardware\encoder.c: 1 warning, 0 errors
+"gx\gx.axf" - 7 Error(s), 4 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -45,7 +69,8 @@ Package Vendor: Keil
   D:\keil5\ARM\PACK\Keil\STM32H7xx_DFP\2.2.0\Drivers\CMSIS\Device\ST\STM32H7xx\Include
 
 <h2>Collection of Component Files used:</h2>
-Build Time Elapsed:  00:00:07
+Target not created.
+Build Time Elapsed:  00:00:06
 </pre>
 </body>
 </html>
