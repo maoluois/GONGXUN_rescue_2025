@@ -102,8 +102,6 @@ void Error_Handler(void);
 #define WheelRadius 3.25f // 单位：cm
 #define WheelCircumference 20.42f // 单位：cm
 // tim
-#define COUNTERNUM1 ((float)__HAL_TIM_GET_COUNTER(&htim1))
-#define COUNTERNUM2 ((float)__HAL_TIM_GET_COUNTER(&htim2))
 #define RELOADVALUE 60000
 
 // fliter

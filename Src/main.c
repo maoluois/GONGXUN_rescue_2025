@@ -27,8 +27,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "Rescue_Car.h"
+#include "control.h"
 //#include "retarget.h"
-//#include "control.h"
 //#include "filter.h"
 //#include "Algorithm.h"
 //#include "pid.h"
@@ -262,6 +262,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
   
     Rescue_Car_Init();
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+    HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
 //  RetargetInit(&huart1);
 //  delay_init(480);
 //  //JY901s_Init(&JY901s);  // 初始化JY901串口
@@ -271,13 +275,10 @@ int main(void)
 //  PID_Init(&motor2PID_P, 0.66f, 0, 0, 0);
 //  PID_Init(&distancePID, -0.050f, 0, 0, 0);
 //  PID_Init(&anglePID, 0.0023f, 0, 0, 0);
-//  HAL_TIM_Base_Init(&htim3);
 //  HAL_TIM_Base_Init(&htim4);
 //  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-//  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-//  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-//  HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-//  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+
+  
 //  HAL_TIM_Base_Start_IT(&htim17);
 //  HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
 //  HAL_UART_Receive_IT( &huart2 , (uint8_t *)&buf ,1);

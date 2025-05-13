@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_PWR_LDO_SUPPLY,USE_HAL_DRIVER,STM32H750xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Middle/FreeRTOS/include;../Middle/FreeRTOS/portable;..\App</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Middle/FreeRTOS/include;../Middle/FreeRTOS/portable;..\App;..\Hardware</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -540,6 +540,11 @@
               <FileType>1</FileType>
               <FilePath>..\Middle\FreeRTOS\source\timers.c</FilePath>
             </File>
+            <File>
+              <FileName>Delay.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Inc\Delay.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -561,14 +566,9 @@
           <GroupName>Application/User</GroupName>
           <Files>
             <File>
-              <FileName>FreeRTOSConfig.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Inc\FreeRTOSConfig.h</FilePath>
-            </File>
-            <File>
-              <FileName>main.c</FileName>
+              <FileName>Delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Src/main.c</FilePath>
+              <FilePath>..\Src\Delay.c</FilePath>
             </File>
             <File>
               <FileName>gpio.c</FileName>
@@ -594,6 +594,11 @@
               <FileName>usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Src/usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Src/main.c</FilePath>
             </File>
             <File>
               <FileName>stm32h7xx_it.c</FileName>
@@ -660,10 +665,42 @@
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>FreeRTOSConfig.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Inc\FreeRTOSConfig.h</FilePath>
+            </File>
+            <File>
+              <FileName>Delay.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Inc\Delay.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Hardware</GroupName>
+          <Files>
+            <File>
+              <FileName>control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\control.c</FilePath>
+            </File>
+            <File>
+              <FileName>control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Hardware\control.h</FilePath>
+            </File>
+            <File>
+              <FileName>encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Hardware\encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>encoder.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Hardware\encoder.h</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>App</GroupName>
