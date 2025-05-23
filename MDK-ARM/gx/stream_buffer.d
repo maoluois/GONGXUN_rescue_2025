@@ -1,8 +1,8 @@
 gx\stream_buffer.o: ..\Middle\FreeRTOS\source\stream_buffer.c
-gx\stream_buffer.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
-gx\stream_buffer.o: D:\keil5\ARM\ARMCC\Bin\..\include\string.h
+gx\stream_buffer.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\stream_buffer.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\stream_buffer.o: ../Middle/FreeRTOS/include/FreeRTOS.h
-gx\stream_buffer.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\stream_buffer.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stddef.h
 gx\stream_buffer.o: ../Inc/FreeRTOSConfig.h
 gx\stream_buffer.o: ../Middle/FreeRTOS/include/projdefs.h
 gx\stream_buffer.o: ../Middle/FreeRTOS/include/portable.h

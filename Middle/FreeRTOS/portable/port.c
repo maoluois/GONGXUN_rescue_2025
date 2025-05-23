@@ -27,26 +27,26 @@
  */
 
 /*-----------------------------------------------------------
-* Implementation of functions defined in portable.h for the ARM CM3 port.
+* Implementation of functions defined in portable.h for the ARM CM7 port.
 *----------------------------------------------------------*/
 
 /* Scheduler includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 
-#ifndef configKERNEL_INTERRUPT_PRIORITY
-    #define configKERNEL_INTERRUPT_PRIORITY    255
+#ifndef __TARGET_FPU_VFP
+    #error This port can only be used when the project options are configured to enable hardware floating point support.
 #endif
 
 #if configMAX_SYSCALL_INTERRUPT_PRIORITY == 0
     #error configMAX_SYSCALL_INTERRUPT_PRIORITY must not be set to 0.  See http: /*www.FreeRTOS.org/RTOS-Cortex-M3-M4.html */
 #endif
 
-/* Legacy macro for backward compatibility only.  This macro used to be used to
- * replace the function that configures the clock used to generate the tick
- * interrupt (prvSetupTimerInterrupt()), but now the function is declared weak so
- * the application writer can override it by simply defining a function of the
- * same name (vApplicationSetupTickInterrupt()). */
+/* The __weak attribute does not work as you might expect with the Keil tools
+ * so the configOVERRIDE_DEFAULT_TICK_CONFIGURATION constant must be set to 1 if
+ * the application writer wants to provide their own implementation of
+ * vPortSetupTimerInterrupt().  Ensure configOVERRIDE_DEFAULT_TICK_CONFIGURATION
+ * is defined. */
 #ifndef configOVERRIDE_DEFAULT_TICK_CONFIGURATION
     #define configOVERRIDE_DEFAULT_TICK_CONFIGURATION    0
 #endif
@@ -81,8 +81,13 @@
 /* Masks off all bits but the VECTACTIVE bits in the ICSR register. */
 #define portVECTACTIVE_MASK                   ( 0xFFUL )
 
+/* Constants required to manipulate the VFP. */
+#define portFPCCR                             ( ( volatile uint32_t * ) 0xe000ef34 ) /* Floating point context control register. */
+#define portASPEN_AND_LSPEN_BITS              ( 0x3UL << 30UL )
+
 /* Constants required to set up the initial stack. */
 #define portINITIAL_XPSR                      ( 0x01000000 )
+#define portINITIAL_EXC_RETURN                ( 0xfffffffd )
 
 /* The systick is a 24-bit counter. */
 #define portMAX_24_BIT_NUMBER                 ( 0xffffffUL )
@@ -126,6 +131,11 @@ void vPortSVCHandler( void );
  * Start first task is a separate function so it can be tested in isolation.
  */
 static void prvStartFirstTask( void );
+
+/*
+ * Functions defined in portasm.s to enable the VFP.
+ */
+static void prvEnableVFP( void );
 
 /*
  * Used to catch tasks that attempt to return from their implementing function.
@@ -183,16 +193,27 @@ StackType_t * pxPortInitialiseStack( StackType_t * pxTopOfStack,
 {
     /* Simulate the stack frame as it would be created by a context switch
      * interrupt. */
-    pxTopOfStack--;                                                      /* Offset added to account for the way the MCU uses the stack on entry/exit of interrupts. */
+
+    /* Offset added to account for the way the MCU uses the stack on entry/exit
+     * of interrupts, and to ensure alignment. */
+    pxTopOfStack--;
+
     *pxTopOfStack = portINITIAL_XPSR;                                    /* xPSR */
     pxTopOfStack--;
     *pxTopOfStack = ( ( StackType_t ) pxCode ) & portSTART_ADDRESS_MASK; /* PC */
     pxTopOfStack--;
     *pxTopOfStack = ( StackType_t ) prvTaskExitError;                    /* LR */
 
-    pxTopOfStack -= 5;                                                   /* R12, R3, R2 and R1. */
-    *pxTopOfStack = ( StackType_t ) pvParameters;                        /* R0 */
-    pxTopOfStack -= 8;                                                   /* R11, R10, R9, R8, R7, R6, R5 and R4. */
+    /* Save code space by skipping register initialisation. */
+    pxTopOfStack -= 5;                            /* R12, R3, R2 and R1. */
+    *pxTopOfStack = ( StackType_t ) pvParameters; /* R0 */
+
+    /* A save method is being used that requires each task to maintain its
+     * own exec return value. */
+    pxTopOfStack--;
+    *pxTopOfStack = portINITIAL_EXC_RETURN;
+
+    pxTopOfStack -= 8; /* R11, R10, R9, R8, R7, R6, R5 and R4. */
 
     return pxTopOfStack;
 }
@@ -220,15 +241,16 @@ __asm void vPortSVCHandler( void )
 /* *INDENT-OFF* */
     PRESERVE8
 
-    ldr r3, = pxCurrentTCB   /* Restore the context. */
-    ldr r1, [ r3 ] /* Use pxCurrentTCBConst to get the pxCurrentTCB address. */
-    ldr r0, [ r1 ]           /* The first item in pxCurrentTCB is the task top of stack. */
-    ldmia r0 !, { r4 - r11 } /* Pop the registers that are not automatically saved on exception entry and the critical nesting count. */
-    msr psp, r0 /* Restore the task stack pointer. */
+    /* Get the location of the current TCB. */
+    ldr r3, =pxCurrentTCB
+    ldr r1, [ r3 ]
+    ldr r0, [ r1 ]
+    /* Pop the core registers. */
+    ldmia r0!, { r4-r11, r14 }
+    msr psp, r0
     isb
-    mov r0, # 0
+    mov r0, #0
     msr basepri, r0
-    orr r14, # 0xd
     bx r14
 /* *INDENT-ON* */
 }
@@ -243,9 +265,15 @@ __asm void prvStartFirstTask( void )
     ldr r0, =0xE000ED08
     ldr r0, [ r0 ]
     ldr r0, [ r0 ]
-
     /* Set the msp back to the start of the stack. */
     msr msp, r0
+
+    /* Clear the bit that indicates the FPU is in use in case the FPU was used
+     * before the scheduler was started - which would otherwise result in the
+     * unnecessary leaving of space in the SVC stack for lazy saving of FPU
+     * registers. */
+    mov r0, #0
+    msr control, r0
     /* Globally enable interrupts. */
     cpsie i
     cpsie f
@@ -254,6 +282,24 @@ __asm void prvStartFirstTask( void )
     /* Call SVC to start the first task. */
     svc 0
     nop
+    nop
+/* *INDENT-ON* */
+}
+/*-----------------------------------------------------------*/
+
+__asm void prvEnableVFP( void )
+{
+/* *INDENT-OFF* */
+    PRESERVE8
+
+    /* The FPU enable bits are in the CPACR. */
+    ldr.w r0, =0xE000ED88
+    ldr r1, [ r0 ]
+
+    /* Enable CP10 and CP11 coprocessors, then save back. */
+    orr r1, r1, #( 0xf << 20 )
+    str r1, [ r0 ]
+    bx r14
     nop
 /* *INDENT-ON* */
 }
@@ -333,7 +379,6 @@ BaseType_t xPortStartScheduler( void )
 
     /* Make PendSV and SysTick the lowest priority interrupts. */
     portNVIC_SHPR3_REG |= portNVIC_PENDSV_PRI;
-
     portNVIC_SHPR3_REG |= portNVIC_SYSTICK_PRI;
 
     /* Start the timer that generates the tick ISR.  Interrupts are disabled
@@ -342,6 +387,12 @@ BaseType_t xPortStartScheduler( void )
 
     /* Initialise the critical nesting count ready for the first task. */
     uxCriticalNesting = 0;
+
+    /* Ensure the VFP is enabled - it should be anyway. */
+    prvEnableVFP();
+
+    /* Lazy save always. */
+    *( portFPCCR ) |= portASPEN_AND_LSPEN_BITS;
 
     /* Start the first task. */
     prvStartFirstTask();
@@ -399,30 +450,57 @@ __asm void xPortPendSVHandler( void )
 
     mrs r0, psp
     isb
-
-    ldr r3, =pxCurrentTCB /* Get the location of the current TCB. */
+    /* Get the location of the current TCB. */
+    ldr r3, =pxCurrentTCB
     ldr r2, [ r3 ]
 
-    stmdb r0 !, { r4 - r11 } /* Save the remaining registers. */
-    str r0, [ r2 ] /* Save the new top of stack into the first member of the TCB. */
+    /* Is the task using the FPU context?  If so, push high vfp registers. */
+    tst r14, #0x10
+    it eq
+    vstmdbeq r0!, {s16-s31}
 
-    stmdb sp !, { r3, r14 }
+    /* Save the core registers. */
+    stmdb r0!, {r4-r11, r14 }
+
+    /* Save the new top of stack into the first member of the TCB. */
+    str r0, [ r2 ]
+
+    stmdb sp!, { r0, r3 }
     mov r0, #configMAX_SYSCALL_INTERRUPT_PRIORITY
+    cpsid i
     msr basepri, r0
     dsb
     isb
+    cpsie i
     bl vTaskSwitchContext
     mov r0, #0
     msr basepri, r0
-    ldmia sp !, { r3, r14 }
+    ldmia sp!, { r0, r3 }
 
+    /* The first item in pxCurrentTCB is the task top of stack. */
     ldr r1, [ r3 ]
-    ldr r0, [ r1 ] /* The first item in pxCurrentTCB is the task top of stack. */
-    ldmia r0 !, { r4 - r11 } /* Pop the registers and the critical nesting count. */
+    ldr r0, [ r1 ]
+
+    /* Pop the core registers. */
+    ldmia r0!, { r4-r11, r14 }
+
+    /* Is the task using the FPU context?  If so, pop the high vfp registers
+     * too. */
+    tst r14, #0x10
+    it eq
+    vldmiaeq r0!, { s16-s31 }
+
     msr psp, r0
     isb
+    #ifdef WORKAROUND_PMU_CM001 /* XMC4000 specific errata */
+        #if WORKAROUND_PMU_CM001 == 1
+            push { r14 }
+            pop { pc }
+            nop
+        #endif
+    #endif
+
     bx r14
-    nop
 /* *INDENT-ON* */
 }
 /*-----------------------------------------------------------*/
@@ -739,10 +817,10 @@ __asm uint32_t vPortGetIPSR( void )
              * be set to a value equal to or numerically *higher* than
              * configMAX_SYSCALL_INTERRUPT_PRIORITY.
              *
-             * Interrupts that	use the FreeRTOS API must not be left at their
-             * default priority of	zero as that is the highest possible priority,
+             * Interrupts that use the FreeRTOS API must not be left at their
+             * default priority of zero as that is the highest possible priority,
              * which is guaranteed to be above configMAX_SYSCALL_INTERRUPT_PRIORITY,
-             * and	therefore also guaranteed to be invalid.
+             * and therefore also guaranteed to be invalid.
              *
              * FreeRTOS maintains separate thread and ISR API functions to ensure
              * interrupt entry is as fast and simple as possible.

@@ -1,9 +1,9 @@
 gx\heap_4.o: ..\Middle\FreeRTOS\portable\MemMang\heap_4.c
-gx\heap_4.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdlib.h
-gx\heap_4.o: D:\keil5\ARM\ARMCC\Bin\..\include\string.h
+gx\heap_4.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\heap_4.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\heap_4.o: ../Middle/FreeRTOS/include/FreeRTOS.h
-gx\heap_4.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
-gx\heap_4.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\heap_4.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\heap_4.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdint.h
 gx\heap_4.o: ../Inc/FreeRTOSConfig.h
 gx\heap_4.o: ../Middle/FreeRTOS/include/projdefs.h
 gx\heap_4.o: ../Middle/FreeRTOS/include/portable.h

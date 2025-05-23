@@ -189,9 +189,11 @@
             /* Set BASEPRI to the max syscall priority to effect a critical
              * section. */
 /* *INDENT-OFF* */
+            cpsid i
             msr basepri, ulNewBASEPRI
             dsb
             isb
+            cpsie i
 /* *INDENT-ON* */
         }
     }
@@ -221,9 +223,11 @@
              * section. */
 /* *INDENT-OFF* */
             mrs ulReturn, basepri
+            cpsid i
             msr basepri, ulNewBASEPRI
             dsb
             isb
+            cpsie i
 /* *INDENT-ON* */
         }
 
@@ -255,7 +259,6 @@
 
         return xReturn;
     }
-
 
 /* *INDENT-OFF* */
 #ifdef __cplusplus

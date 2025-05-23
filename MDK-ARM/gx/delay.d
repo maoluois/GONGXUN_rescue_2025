@@ -1,4 +1,5 @@
 gx\delay.o: ..\Src\Delay.c
+gx\delay.o: ../Inc/Delay.h
 gx\delay.o: ../Inc/main.h
 gx\delay.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h
 gx\delay.o: ../Inc/stm32h7xx_hal_conf.h
@@ -7,7 +8,7 @@ gx\delay.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h
 gx\delay.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h7xx.h
 gx\delay.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h750xx.h
 gx\delay.o: ../Drivers/CMSIS/Include/core_cm7.h
-gx\delay.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\delay.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdint.h
 gx\delay.o: ../Drivers/CMSIS/Include/cmsis_version.h
 gx\delay.o: ../Drivers/CMSIS/Include/cmsis_compiler.h
 gx\delay.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
@@ -15,8 +16,8 @@ gx\delay.o: ../Drivers/CMSIS/Include/mpu_armv7.h
 gx\delay.o: ../Drivers/CMSIS/Device/ST/STM32H7xx/Include/system_stm32h7xx.h
 gx\delay.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h
 gx\delay.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
-gx\delay.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
-gx\delay.o: D:\keil5\ARM\ARMCC\Bin\..\include\math.h
+gx\delay.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\delay.o: D:\Keli5\ARM\ARMCC\Bin\..\include\math.h
 gx\delay.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_rcc_ex.h
 gx\delay.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h
 gx\delay.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio_ex.h

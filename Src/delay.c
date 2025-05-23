@@ -1,4 +1,4 @@
-#include "main.h"
+#include "Delay.h"
 /**
   * @brief  微秒级延时
   * @param  xus 延时时长，范围：0~233015
@@ -6,7 +6,7 @@
   */
 void delay_us(uint32_t xus)
 {
-    uint32_t tick = xus/4;
+    uint32_t tick = xus*480;
 	while(tick--)
     {
         __NOP();

@@ -1,5 +1,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
+#include "encoder.h"
+#include "jy901s.h"
 
 #define RESCUE_CAR_START_STACK                 128
 #define RESCUE_CAR_START_PRIORITY              1
@@ -67,19 +69,22 @@ void Rescue_Car_Start(void* pv)
 
 void Data_Task(void* pv)
 {
-
+    TickType_t pxPreviousWakeTime = xTaskGetTickCount();
+    
     while(1)
     {
         
+        xTaskDelayUntil(&pxPreviousWakeTime, 10);
     }
 }
 
 void Control_Task(void* pv)
 {
-    TickType_t pxPreviousWakeTime = xTaskGetTickCount();
+    
+    
     while(1)
     {
-
+        vTaskDelay(100);
     }
 }
 
@@ -88,6 +93,18 @@ void Show_Task(void* pv)
     while(1)
     {
        
-        
+       
+        vTaskDelay(100);
+    }
+}
+
+
+void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart)
+{
+    if(huart->Instance == USART2)
+    {
+        if(__HAL_DMA_GET_COUNTER(&hdma_usart2_rx)==0)
+            rxflag = 1;//打开接收标志，进数据处理函数
+        HAL_UART_Receive_DMA(&huart2, (uint8_t*) rxbuffer, 44);
     }
 }

@@ -87,10 +87,10 @@ void Error_Handler(void);
 #define AIN1_GPIO_Port GPIOD
 #define Servo1_Pin GPIO_PIN_13
 #define Servo1_GPIO_Port GPIOD
-#define SCL_Pin GPIO_PIN_5
-#define SCL_GPIO_Port GPIOD
-#define SDA_Pin GPIO_PIN_6
-#define SDA_GPIO_Port GPIOD
+#define IMU_TX_Pin GPIO_PIN_5
+#define IMU_TX_GPIO_Port GPIOD
+#define IMU_RX_Pin GPIO_PIN_6
+#define IMU_RX_GPIO_Port GPIOD
 #define XBOX_RX_Pin GPIO_PIN_0
 #define XBOX_RX_GPIO_Port GPIOE
 #define XBOX_TX_Pin GPIO_PIN_1

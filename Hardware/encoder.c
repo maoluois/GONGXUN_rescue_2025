@@ -5,13 +5,14 @@
   * @param  两个编码指的指针
   * @retval 无
   */
-
-  //正负测一下
-void Get_Encoder(float* countennum1, float* countennum2)
+//l-----1;r-----2;
+void Get_Encoder(short* countennuml, short* countennumr)
 {
-    *countennum1  = __HAL_TIM_GET_COUNTER(&htim1);
+    long long temp;
+    temp = __HAL_TIM_GET_COUNTER(&htim1);
+    *countennuml  = -(__HAL_TIM_GET_COUNTER(&htim1));
+    *countennumr  = __HAL_TIM_GET_COUNTER(&htim2);
     __HAL_TIM_SetCounter(&htim1, 0);
-    *countennum2  = __HAL_TIM_GET_COUNTER(&htim2);
     __HAL_TIM_SetCounter(&htim2, 0);
 }
- 
+

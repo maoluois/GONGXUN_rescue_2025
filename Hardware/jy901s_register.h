@@ -70,4 +70,11 @@
 #define q2          0x53
 #define q3          0x54
 
+#define DIO_MODE_AIN 0
+#define DIO_MODE_DIN 1
+#define DIO_MODE_DOH 2
+#define DIO_MODE_DOL 3
+#define DIO_MODE_DOPWM 4
+#define DIO_MODE_GPS 5
+
 #endif

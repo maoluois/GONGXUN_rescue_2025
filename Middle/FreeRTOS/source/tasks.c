@@ -1964,7 +1964,7 @@ void vTaskStartScheduler( void )
 
         /* The Idle task is created using user provided RAM - obtain the
          * address of the RAM then create the idle task. */
-        vApplicationGetIdleTaskMemory( &pxIdleTaskTCBBuffer, &pxIdleTaskStackBuffer, &ulIdleTaskStackSize );
+//        vApplicationGetIdleTaskMemory( &pxIdleTaskTCBBuffer, &pxIdleTaskStackBuffer, &ulIdleTaskStackSize );
         xIdleTaskHandle = xTaskCreateStatic( prvIdleTask,
                                              configIDLE_TASK_NAME,
                                              ulIdleTaskStackSize,

@@ -1,9 +1,9 @@
 gx\tasks.o: ..\Middle\FreeRTOS\source\tasks.c
-gx\tasks.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdlib.h
-gx\tasks.o: D:\keil5\ARM\ARMCC\Bin\..\include\string.h
+gx\tasks.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\tasks.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\tasks.o: ../Middle/FreeRTOS/include/FreeRTOS.h
-gx\tasks.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
-gx\tasks.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\tasks.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\tasks.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdint.h
 gx\tasks.o: ../Inc/FreeRTOSConfig.h
 gx\tasks.o: ../Middle/FreeRTOS/include/projdefs.h
 gx\tasks.o: ../Middle/FreeRTOS/include/portable.h

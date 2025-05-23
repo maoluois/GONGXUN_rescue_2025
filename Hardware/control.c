@@ -9,42 +9,39 @@
   * @param  输入pwm
   * @retval 无
   */
-void Set_motor1(float speed)
+//l对应1，  r2；
+void Set_Motor(float speedl, float speedr)
 {
-    if (speed > 0)
+	if (speedl > 0)
     {
         // Set the motor to move forward
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, speed);
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, speedl);
         HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_RESET);
     }
     else
     {
         // Set the motor to move backward
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, -speed);
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, -speedl);
         HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_SET);
     }
-}
-void Set_motor2(float speed)
-{
-    if (speed > 0)
+    
+    if (speedr > 0)
     {
         // Set the motor to move forward
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, speed);
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, speedr);
         HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_SET);
         HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_RESET);
     }
     else
     {
         // Set the motor to move backward
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, -speed);
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_4, -speedr);
         HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_RESET);
         HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_SET);
     }
 }
-
-
 
 //舵机先打注释了
 //void Set_servo1(float angle)
