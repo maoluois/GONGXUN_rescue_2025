@@ -118,11 +118,7 @@ void Error_Handler(void);
 #define XBOX_BUFFER_SIZE  88 //XBOX 数组容量大小
 #define Oran_BUFFER_SIZE  88 //Oran 数组容量大小
 // Xbox parameters
-#define V_F_MAX 50    // 遥控速度范围 // 极限值为+-127
-#define V_F_MIN -50
-#define W_MAX -3   // 极限值为+-10
-#define W_MIN 3
-#define IMU_RXBUFFER_LEN 33	 //imu 接收3类数据，一共33位
+
 // JY901s cfg
 #define ACC_UPDATE		0x01
 #define GYRO_UPDATE		0x02

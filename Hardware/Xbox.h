@@ -6,7 +6,10 @@
 #define XBOX_H
 #include <stdint.h>
 #include <main.h>
+
 void Get_Data_Xbox(uint8_t *Rx_data);
+
+void calculate_target_speeds(uint16_t x, uint16_t y, float* v_f, float* w);
 
 extern uint16_t XboxData[4];
 extern volatile uint8_t class;

@@ -7,7 +7,11 @@
 
 
 
-// 初始化PID控制器
+/**
+  * @brief  初始化PID结构体
+  * @param  结构体指针，pid参数，目标值
+  * @retval 无
+  */
 void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float setpoint) {
     pid->Kp = kp;
     pid->Ki = ki;
@@ -19,6 +23,11 @@ void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float set
     pid->output = 0.0f;
 }
 
+/**
+  * @brief  计算输出值
+  * @param  pid结构体，当前测量值
+  * @retval 无
+  */
 float PID_Compute(PID_ControllerTypeDef *pid, float measurement) {
     float error = pid->setpoint - measurement;
 
@@ -36,34 +45,11 @@ float PID_Compute(PID_ControllerTypeDef *pid, float measurement) {
     return pid->Kp * error + pid->Ki * pid->integral + pid->Kd * derivative;
 }
 
-// 增量PID控制
-float PID_Incremental(PID_ControllerTypeDef *pid, float currentSpeed) {
-    float error = pid->setpoint - currentSpeed;
-    float deltaError = error - pid->lastError;
-    float deltaError2 = error - 2 * pid->lastError + pid->lastLastError;
-
-    // 计算增量PID控制量
-    float deltaOutput = pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2;
-    // float deltaOutput = (pid->Kp * deltaError + pid->Ki * error + pid->Kd * deltaError2);
-
-    // 更新PID输出
-    pid->output += deltaOutput;
-
-    // 限制PID输出在合理范围内
-    pid->output = PID_Clamp(pid->output, -100, 100);
-
-    if (pid->setpoint < 0.1 || pid->setpoint > -0.1) {
-        pid->Ki = 0;
-    }
-
-    // 更新误差
-    pid->lastLastError = pid->lastError;
-    pid->lastError = error;
-
-    return pid->output;
-}
-
-// 更新PID控制器并计算输出
+/**
+  * @brief  速度环
+  * @param  pid结构体，编码值
+  * @retval 无
+  */
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     // 计算PID控制量
     float integral;
@@ -71,19 +57,10 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     integral = pid->integral + pid->Ki * error;
     float proportional = pid->Kp * error;
 
-    float derivative = pid->Kd * (error - pid->lastError);
-
-    pid->output = proportional + integral + derivative;
-
-    // 限制PID输出在合理范围内
-    pid->output = PID_Clamp(pid->output, -100, 100);
+    pid->output = proportional + integral;
 
     // 更新积分项和记录上一次误差
     pid->integral = integral;
-    pid->lastError = error;
-
-    // 死区控制
-    if (pid->setpoint < 0.1 && pid->setpoint > -0.1) pid->integral = 0;
 
     return pid->output;
 }
@@ -134,7 +111,7 @@ float PID_Position(PID_ControllerTypeDef *pid, float currentPosition) {
     return pid->output;
 }
 
-// 转向环
+
 float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro) {
     // 1. 计算角度误差，处理角度环绕问题
     float Angle_bias = pid->setpoint - Angle;
@@ -157,20 +134,24 @@ float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro) {
 }
 
 
-// 直立环
-float PID_Balance(PID_ControllerTypeDef *pid, float Angle)
-{
-    float Angle_bias, Gyro_bias;
-    Angle_bias = Middle_angle - Angle;                    			//求出平衡的角度中值 和机械相关
-    float Gyro = Angle - pid->lastError;                          	//求出角速度
-    Gyro_bias = 0 - Gyro;
-    pid->output= -pid->Kp * Angle_bias - Gyro_bias * pid->Kd ;      //计算平衡控制的电机PWM  PD控制   kp是P系数 kd是D系数
-    pid->lastError = Angle;                                			//记录角度
+//// 直立环
+//float PID_Balance(PID_ControllerTypeDef *pid, float Angle)
+//{
+//    float Angle_bias, Gyro_bias;
+//    Angle_bias = Middle_angle - Angle;                    			//求出平衡的角度中值 和机械相关
+//    float Gyro = Angle - pid->lastError;                          	//求出角速度
+//    Gyro_bias = 0 - Gyro;
+//    pid->output= -pid->Kp * Angle_bias - Gyro_bias * pid->Kd ;      //计算平衡控制的电机PWM  PD控制   kp是P系数 kd是D系数
+//    pid->lastError = Angle;                                			//记录角度
 
-    return pid->output;
-}
+//    return pid->output;
+//}
 
-// 对值进行限幅
+/**
+  * @brief  输出限幅
+  * @param  输出值，上下限
+  * @retval 无
+  */
 float PID_Clamp(float value, float min, float max) {
     if (value > max) {
         return max;

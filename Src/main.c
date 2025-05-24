@@ -32,6 +32,8 @@
 #include "encoder.h"
 #include "jy901s.h"
 #include "usart.h"
+#include "arm_math.h"
+#include "arm_const_structs.h"
 //#include "retarget.h"
 //#include "filter.h"
 //#include "Algorithm.h"
@@ -101,32 +103,7 @@
 //xUART_TypeDef xUSART6 = {0};  // 串口6;
 //xUART_TypeDef xUART7 = {0};  // 串口7;
 xUART_TypeDef xUART8 = {0};  // 串口8;
-//    // Imu JY901s PV
-    // ########################################################################
-    #define Receiveing 1
-    #define Free 0
-    uint8_t recieve_flag = 0 ;
-
-    uint8_t data_ok = 0;
-
-    // uint8_t Test_data(uint8_t* str , uint8_t lenth)
-    // {
-    //     uint8_t result = 0 ;
-    //     for( uint8_t i = 0 ; i < lenth ; i++ )
-    //     {
-    //         result = result + str[i];
-    //
-    //     }
-    //     return result;
-    // }
-    // ###############################################################################
-    float yaw = 0;
-    float yawF = 0;
-
-    // Xbox PV
-    uint16_t XboxData[4]  = {9, 9, 0 ,0};
-
-    // camera PV
+// 
 
 
 /* USER CODE END PV */
@@ -193,12 +170,11 @@ int main(void)
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
-
-
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
+        delay_us(10);
 //  while (xUART5.ReceiveNum == 0);
 
-	Rescue_Car_Init();
+//	Rescue_Car_Init();
 
   /* USER CODE END 2 */
 
@@ -206,9 +182,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-
-
+        
+        
+    
 //      if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是9,9,0,0
 //      {
 

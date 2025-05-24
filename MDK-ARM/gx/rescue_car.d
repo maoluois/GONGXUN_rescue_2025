@@ -1,4 +1,5 @@
 gx\rescue_car.o: ..\App\Rescue_Car.c
+gx\rescue_car.o: ..\App\Rescue_Car.h
 gx\rescue_car.o: ../Middle/FreeRTOS/include/FreeRTOS.h
 gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stddef.h
 gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdint.h
@@ -53,3 +54,6 @@ gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdio.h
 gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\rescue_car.o: ../Hardware/Xbox.h
 gx\rescue_car.o: ../Hardware/Algorithm.h
+gx\rescue_car.o: ../App/Rescue_Car.h
+gx\rescue_car.o: ../Hardware/pid.h
+gx\rescue_car.o: ../Hardware/control.h

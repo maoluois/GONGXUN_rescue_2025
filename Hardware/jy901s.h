@@ -8,7 +8,6 @@ typedef struct
 {
     short acc[3];
     short gyro[3];
-    short mag[3];
     short angle[3];  
 }jydata;
 
@@ -16,12 +15,11 @@ typedef struct
 {
     double ax, ay, az;
     double gx, gy, gz;
-    double mx, my, mz;
     double pitch, roll, yaw;
 }imudata;
 
 
-uint8_t JY901S_GetData(jydata* initdata);
+void JY901S_GetData(jydata* initdata);
 void JY901S_DataConverse(imudata* data);
 
 extern char imu_buffer[100];

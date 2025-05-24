@@ -1,9 +1,4 @@
-#include "FreeRTOS.h"
-#include "task.h"
-#include "encoder.h"
-#include "jy901s.h"
-#include "Xbox.h"
-#include "Algorithm.h"
+#include "Rescue_Car.h"
 
 #define RESCUE_CAR_START_STACK                 128
 #define RESCUE_CAR_START_PRIORITY              1
@@ -69,25 +64,38 @@ void Rescue_Car_Start(void* pv)
 上面是任务初始化，下面是执行的任务
 ==============================================*/
 imudata angle;
+short enl, enr;
+
 void Data_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
     
     while(1)
     {
-        JY901S_DataConverse(&angle);
-        printf("%.1lf\r\n", angle.yaw);
+        JY901S_DataConverse(&angle);//获取角度
+        Get_Encoder(&enl, &enr);//获取编码值
+//        printf("%.1lf\r\n", angle.yaw);
+        //给控制任务通知
+        xTaskNotifyGive(contro_task_handle);//给控制任务通知
         xTaskDelayUntil(&pxPreviousWakeTime, 10);
     }
 }
 
+PID_ControllerTypeDef velocity_pid;
+PID_ControllerTypeDef turn_pid;
 void Control_Task(void* pv)
 {
-    
+    PID_Init(&velocity_pid,0, 0, 0, 0);
     
     while(1)
     {
-        vTaskDelay(100);
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);//等待通知
+        float velocity_out = PID_Velocity(&velocity_pid, (enl+enr));//速度环
+        float pwm_l = velocity_out;//获取总pwm
+        float pwm_r = velocity_out;
+        PID_Clamp(pwm_l, PWM_MIN, PWM_MAX);//限幅
+        PID_Clamp(pwm_r, PWM_MIN, PWM_MAX);
+        Set_Motor(pwm_l, pwm_r);//输入给电机
     }
 }
 
@@ -96,28 +104,30 @@ void Show_Task(void* pv)
     uint8_t xb_data[4] = {0,0,0,0};
     while(1)
     {
+        //XB给速度、角度的目标值
        if(xUART8.ReceiveNum != 0)
        {
            xUART8.ReceiveNum = 0;
            Get_Data_Xbox(xb_data);
             if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)
             {
-//                calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
+                calculate_target_speeds(XboxData[2], XboxData[3], &velocity_pid.setpoint, &turn_pid.setpoint);
                 //死区防止静止时抖动
-//                if (SpeedY < 3.99 && SpeedY > -3.99)
-//              {
-//                  SpeedY = 0;
-//                  // printf("%f\n", SpeedY);
-//              }
-//              if (angular_speed < 0.05 && angular_speed > -0.05)
-//              {
-//                  angular_speed = 0;
-//                  // printf("%f\n", angular_speed);
-//              }
-
+                if (velocity_pid.setpoint < 3.99f && velocity_pid.setpoint > -3.99f)
+              {
+                  velocity_pid.setpoint = 0;
+                  // printf("%f\n", SpeedY);
+              }
+              if (turn_pid.setpoint < 0.05f && turn_pid.setpoint > -0.05f)
+              {
+                  turn_pid.setpoint = 0;
+                  // printf("%f\n", angular_speed);
+              }
             }
        }
-        vTaskDelay(50);
+       
+       printf("%.1lf\r\n", angle.yaw);
+       vTaskDelay(50);
     }
 }
 
@@ -141,10 +151,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
    
     if(huart->Instance == USART2)
     {
-        
         if(imurxflag == 0)
         {
-            memcpy(jytempdata, imu_buffer, Size);
+            memcpy(jytempdata, imu_buffer, 44);
             imurxflag = 1;
             imurxsize = Size;
         }

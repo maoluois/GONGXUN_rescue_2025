@@ -4,12 +4,12 @@
 //#include "pid.h"
 
 
+
 /**
   * @brief  设置两个电机速度
   * @param  输入pwm
   * @retval 无
   */
-//l对应1，  r2；
 void Set_Motor(float speedl, float speedr)
 {
 	if (speedl > 0)
