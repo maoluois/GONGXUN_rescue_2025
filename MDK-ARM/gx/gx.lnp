@@ -43,6 +43,9 @@
 "gx\control.o"
 "gx\encoder.o"
 "gx\jy901s.o"
+"gx\filter.o"
+"gx\xbox.o"
+"gx\algorithm.o"
 "gx\rescue_car.o"
 --strict --scatter "gx\gx.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols

@@ -300,14 +300,9 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-    if(__HAL_UART_GET_FLAG(&huart2, UART_FLAG_IDLE))
-    {
-        if(rxbuffer[0]!= 0x55)
-            HAL_UART_AbortReceive_IT(&huart2);//把数据调整成帧头为起始字节
-        if(__HAL_DMA_GET_COUNTER(&hdma_usart2_rx)==0)//接收到4组数据后停止接收
-             HAL_UART_AbortReceive_IT(&huart2);
-        __HAL_UART_CLEAR_IDLEFLAG(&huart2);
-    }
+    
+    //IMU--USART2空闲中断
+
   /* USER CODE END USART2_IRQn 1 */
 }
 
@@ -323,6 +318,19 @@ void TIM5_IRQHandler(void)
   /* USER CODE BEGIN TIM5_IRQn 1 */
 
   /* USER CODE END TIM5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMAMUX1 overrun interrupt.
+  */
+void DMAMUX1_OVR_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMAMUX1_OVR_IRQn 0 */
+
+  /* USER CODE END DMAMUX1_OVR_IRQn 0 */
+  /* USER CODE BEGIN DMAMUX1_OVR_IRQn 1 */
+
+  /* USER CODE END DMAMUX1_OVR_IRQn 1 */
 }
 
 /**

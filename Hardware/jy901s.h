@@ -12,11 +12,23 @@ typedef struct
     short angle[3];  
 }jydata;
 
-void JY901S_GetData(jydata* intialdata);
+typedef struct 
+{
+    double ax, ay, az;
+    double gx, gy, gz;
+    double mx, my, mz;
+    double pitch, roll, yaw;
+}imudata;
 
-extern char rxbuffer[100];
-extern uint8_t rxflag;
 
+uint8_t JY901S_GetData(jydata* initdata);
+void JY901S_DataConverse(imudata* data);
+
+extern char imu_buffer[100];
+extern uint8_t imurxflag;
+extern uint8_t imuerrflag;
+extern char jytempdata[44];
+extern uint8_t imurxsize;
 #endif
 
 

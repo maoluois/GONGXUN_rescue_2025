@@ -2,6 +2,8 @@
 #include "task.h"
 #include "encoder.h"
 #include "jy901s.h"
+#include "Xbox.h"
+#include "Algorithm.h"
 
 #define RESCUE_CAR_START_STACK                 128
 #define RESCUE_CAR_START_PRIORITY              1
@@ -66,14 +68,15 @@ void Rescue_Car_Start(void* pv)
 /*===========================================
 上面是任务初始化，下面是执行的任务
 ==============================================*/
-
+imudata angle;
 void Data_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
     
     while(1)
     {
-        
+        JY901S_DataConverse(&angle);
+        printf("%.1lf\r\n", angle.yaw);
         xTaskDelayUntil(&pxPreviousWakeTime, 10);
     }
 }
@@ -90,21 +93,71 @@ void Control_Task(void* pv)
 
 void Show_Task(void* pv)
 {
+    uint8_t xb_data[4] = {0,0,0,0};
     while(1)
     {
-       
-       
-        vTaskDelay(100);
+       if(xUART8.ReceiveNum != 0)
+       {
+           xUART8.ReceiveNum = 0;
+           Get_Data_Xbox(xb_data);
+            if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)
+            {
+//                calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
+                //死区防止静止时抖动
+//                if (SpeedY < 3.99 && SpeedY > -3.99)
+//              {
+//                  SpeedY = 0;
+//                  // printf("%f\n", SpeedY);
+//              }
+//              if (angular_speed < 0.05 && angular_speed > -0.05)
+//              {
+//                  angular_speed = 0;
+//                  // printf("%f\n", angular_speed);
+//              }
+
+            }
+       }
+        vTaskDelay(50);
     }
 }
 
 
+/*===================================================================================*/
+//各种回调
 void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart)
 {
+    //IMU--USART2串口回调
     if(huart->Instance == USART2)
     {
         if(__HAL_DMA_GET_COUNTER(&hdma_usart2_rx)==0)
-            rxflag = 1;//打开接收标志，进数据处理函数
-        HAL_UART_Receive_DMA(&huart2, (uint8_t*) rxbuffer, 44);
+        {
+            imurxflag = 1;
+        }
+    }
+}
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+   
+    if(huart->Instance == USART2)
+    {
+        
+        if(imurxflag == 0)
+        {
+            memcpy(jytempdata, imu_buffer, Size);
+            imurxflag = 1;
+            imurxsize = Size;
+        }
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
+    }
+    
+    if (huart == &huart8)                                                                    // 判断串口
+    {
+        __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
+        xUART8.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
+        memset(xUART8.ReceiveData, 0, sizeof(xUART8.ReceiveData));                         // 清0前一帧的接收数据
+        memcpy(xUART8.ReceiveData, xUART8.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
+// 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
     }
 }

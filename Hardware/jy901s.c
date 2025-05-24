@@ -1,55 +1,93 @@
 #include "jy901s.h"
 
-char rxbuffer[100];
-uint8_t rxflag;
-
-void JY901S_GetData(jydata* intialdata)
+char imu_buffer[100];
+char jytempdata[44];
+uint8_t imurxflag;
+uint8_t imuerrflag;
+uint8_t imurxsize;
+/**
+  * @brief  获取陀螺仪原始数据
+  * @param  jy901s的数据结构体指针
+  * @retval 无
+  */
+uint8_t JY901S_GetData(jydata* initdata)
 {
-    char data[44];
-    uint8_t k;//传入指针数组索引
-    uint8_t i;//data的索引
-    if(rxflag == 1)
-    {
-        rxflag = 0;
-        memcpy(data, rxbuffer, 44);
+    uint8_t k = 0;//传入指针数组索引
+    uint8_t n = 0;//data的索引
         
-        for(uint8_t j = 0; j<4; j++)
+    if(imurxflag == 1)
+    {
+        if(imurxsize < 11)
         {
-            k = 0;
-            if (data[j*11]!=0x55)//判断帧头
-                break;
-
-            switch(data[1+j*11])
+          imurxflag = 0;
+          return 1;
+        }
+        else
+        {
+            while(jytempdata[n] != 0x55 && jytempdata[n+11] != 0x55)
             {
-                //根据第二个字节判断数据类型
-                case 0x51:
+                 n++;
+                if(imurxsize - n < 11)
                 {
-                    //只取3-8位
-                    for(i = 2; i<7; i+=2)
-                        intialdata->acc[k++] = (data[i+j*11]<<8)|data[i+1+j*11];
-                    break;
-                }
-                case 0x52:
-                {
-                    for(i = 2; i<7; i+=2)
-                        intialdata->gyro[k++] = (data[i+j*11]<<8)|data[i+1+j*11];
-                    break;
-                }
-                case 0x53:
-                {
-                    for(i = 2; i<7; i+=2)
-                        intialdata->angle[k++] = (data[i+j*11]<<8)|data[i+1+j*11];
-                    break;
-                }
-                case 0x54:
-                {
-                    for(i = 2; i<7; i+=2)
-                        intialdata->mag[k++] = (data[i+j*11]<<8)|data[i+1+j*11];
-                    break;
+                    imurxflag = 0;
+                    return 1;
                 }
             }
+            for(uint8_t j = 0; j<3; j++)
+            {
+                switch(jytempdata[n+j*11])
+                {
+                    //根据第二个字节判断数据类型
+                    case 0x51:
+                    {
+                        //只取3-8位
+                        for(uint8_t i = n+2; i<7; i+=2)
+                            initdata->acc[k++] = (jytempdata[i+1+j*11]<<8)|jytempdata[i+j*11];
+                        break;
+                    }
+                    case 0x52:
+                    {
+                        for(uint8_t i = n+2; i<7; i+=2)
+                            initdata->gyro[k++] = (jytempdata[i+1+j*11]<<8)|jytempdata[i+j*11];
+                        break;
+                    }
+                    case 0x53:
+                    {
+                        for(uint8_t i = n+2; i<7; i+=2)
+                            initdata->angle[k++] = (jytempdata[i+1+j*11]<<8)|jytempdata[i+j*11];
+                        break;
+                    }
+                }
+            }
+            imurxflag = 0;
+            return 0;
         }
+        
     }
+    else
+        return 1;
 }
 
+/**
+  * @brief  获取陀螺仪单位转换后的数据
+  * @param  jy901s的数据结构体指针
+  * @retval 无
+  */
+jydata initdata;
+void JY901S_DataConverse(imudata* data)
+{
+    uint8_t ref;
+    ref = JY901S_GetData(&initdata);
+    if(ref == 1)
+        return;
+    data->ax = (double)initdata.acc[0]*0.0004883;
+    data->ay = (double)initdata.acc[1]*0.0004883;
+    data->az = (double)initdata.acc[2]*0.0004883;
+    data->gx = (double)initdata.gyro[0]*0.061035;
+    data->gy = (double)initdata.gyro[1]*0.061035;
+    data->gz = (double)initdata.gyro[2]*0.061035;
+    data->roll = (double)initdata.angle[0]*0.0054932;
+    data->pitch = (double)initdata.angle[1]*0.0054932;
+    data->yaw = (double)initdata.angle[2]*0.0054932;
+}
 

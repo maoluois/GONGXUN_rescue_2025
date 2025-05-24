@@ -31,6 +31,7 @@
 #include "Delay.h"
 #include "encoder.h"
 #include "jy901s.h"
+#include "usart.h"
 //#include "retarget.h"
 //#include "filter.h"
 //#include "Algorithm.h"
@@ -94,34 +95,17 @@
 //float angular_speed = 0;      // 角速度
 
 //// usart PV
-//xUART_TypeDef xUSART1 = {0};  // 串口1;
 //xUART_TypeDef xUSART3 = {0};  // 串口3;
 //xUART_TypeDef xUART4 = {0};  // 串口4;
 //OranUART_TypeDef xUART5 = {0};  // 串口5;
 //xUART_TypeDef xUSART6 = {0};  // 串口6;
 //xUART_TypeDef xUART7 = {0};  // 串口7;
-//xUART_TypeDef xUART8 = {0};  // 串口8;
+xUART_TypeDef xUART8 = {0};  // 串口8;
 //    // Imu JY901s PV
     // ########################################################################
     #define Receiveing 1
     #define Free 0
     uint8_t recieve_flag = 0 ;
-
-    uint8_t buf ;
-    uint8_t str_data[100];
-    uint8_t str_index = 0;
-
-    float accelerate_x ;
-    float accelerate_y ;
-    float accelerate_z ;
-
-    float angel_velocity_x ;
-    float angel_velocity_y ;
-    float angel_velocity_z ;
-
-    float angle_x ;
-    float angle_y ;
-    float angle_z ;
 
     uint8_t data_ok = 0;
 
@@ -139,52 +123,11 @@
     float yaw = 0;
     float yawF = 0;
 
-//    // Xbox PV
-//    uint16_t XboxData[4]  = {9, 9, 0 ,0};
+    // Xbox PV
+    uint16_t XboxData[4]  = {9, 9, 0 ,0};
 
-//    // camera PV
-//    volatile class_Ogpi red_ball = {0};
-//    volatile class_Ogpi blue_ball = {0};
-//    volatile class_Ogpi yellow_ball = {0};
-//    volatile class_Ogpi black_ball = {0};
-//    volatile class_Ogpi blue_aim = {0};
-//    volatile class_Ogpi red_aim = {0};
-//    volatile class_Ogpi blue_base = {0};
-//    volatile class_Ogpi red_base = {0};
-//    volatile uint8_t class = 0;
-//    float biasX = 0;
-//    float biasY = 0;
+    // camera PV
 
-//// fliter PV
-//float mean_buff1[fliter_buffer_size];             // 滤波缓冲
-//float mean_buff2[fliter_buffer_size];
-//float mean_buff3[fliter_buffer_size];
-//int buff_index1 = 0;                // 滤波缓冲区索引
-//int buff_index2 = 0;
-
-//// DMA PV
-//// extern uint8_t Rx_data8[BUFFER_SIZE];    // 接收数组
-//// extern uint8_t Rx_len8;    // 接收长度
-//// extern volatile uint8_t Rx_flag; // 接收标志
-
-//// struct PID
-//PID_ControllerTypeDef motor1PID_V = {0};
-//PID_ControllerTypeDef motor2PID_V = {0};
-//PID_ControllerTypeDef motor1PID_P = {0};
-//PID_ControllerTypeDef motor2PID_P = {0};
-//PID_ControllerTypeDef distancePID = {0};
-//PID_ControllerTypeDef anglePID = {0};
-//PID_ControllerTypeDef ImuPID = {0};
-//float pidOutputV1 = 0;
-//float pidOutputV2 = 0;
-//float pidOutputYaw = 0;
-//float pid_out_position1 = 0;
-//float pid_out_position2 = 0;
-//float Position_out_Y = 0;
-//float Position_pid_outer1 = 0;
-//float Position_pid_outer2 = 0;
-//// float pidOutputBc = 0;
-//// float pid_end = 0;
 
 /* USER CODE END PV */
 
@@ -192,22 +135,7 @@
 void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
-//// vofa串口调试函数
-//void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
-//float Get_Data(void);
 
-//// 任务执行函数
-//void CalculateWheelSpeeds(class_Ogpi ball, float* motor1_speed, float* motor2_speed, float* biasX, float* biasY);
-//void InitializeAll() {
-//    InitializeOgpi(&red_ball, RED_BALL);
-//    InitializeOgpi(&blue_ball, BLUE_BALL);
-//    InitializeOgpi(&yellow_ball, YELLOW_BALL);
-//    InitializeOgpi(&black_ball, BLACK_BALL);
-//    InitializeOgpi(&blue_aim, BLUE_AIM);
-//    InitializeOgpi(&red_aim, RED_AIM);
-//    InitializeOgpi(&blue_base, BLUE_BASE);
-//    InitializeOgpi(&red_base, RED_BASE);
-//}
 
 /* USER CODE END PFP */
 
@@ -265,344 +193,20 @@ int main(void)
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-    __HAL_UART_ENABLE_IT(&huart2, UART_IT_IDLE);
-    __HAL_UART_CLEAR_IDLEFLAG(&huart2);
-    HAL_UART_Receive_DMA(&huart2, (uint8_t*) rxbuffer, 44);
-//  RetargetInit(&huart1);
-//  delay_init(480);
-//  //JY901s_Init(&JY901s);  // 初始化JY901串口
-//  PID_Init(&motor1PID_V, 8.8f, 0.066f, 39.9f, 0);
-//  PID_Init(&motor2PID_V, 8.1f, 0.066f, 38.8f, 0);
-//  PID_Init(&motor1PID_P, 0.60f, 0, 0, 0);
-//  PID_Init(&motor2PID_P, 0.66f, 0, 0, 0);
-//  PID_Init(&distancePID, -0.050f, 0, 0, 0);
-//  PID_Init(&anglePID, 0.0023f, 0, 0, 0);
-//  HAL_TIM_Base_Init(&htim4);
-//  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
 
-  
-//  HAL_TIM_Base_Start_IT(&htim17);
-//  HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
-//  HAL_UART_Receive_IT( &huart2 , (uint8_t *)&buf ,1);
-//  HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
-//  HAL_UARTEx_ReceiveToIdle_DMA(&huart5, xUART5.BuffTemp, sizeof(xUART5.BuffTemp));
-//  //HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
-//  InitializeAll();
-//  HAL_Delay(500); // 初始化的编码器有误差 需要延时，等编码器稳定后，将位置归0
-//  wheel1_total_position = 0;
-//  wheel2_total_position = 0;
-//  Set_servo1(open);
-//  HAL_Delay(1000);
-//  printf("Init OK!\n");
 
 //  while (xUART5.ReceiveNum == 0);
 
-//	Rescue_Car_Init();
+	Rescue_Car_Init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      //电机测试
-//        Get_Encoder(&el, &er);
-//        printf("%hd   %hd\r\n", el, er);
-//        HAL_Delay(10);
-      
-      
-//        printf("%d\n", state);
-//      // 角度调参
-//      // printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
 
-//      // 速度环使用
-//      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, motor2PID_V.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, motor1PID_V.setpoint, motor2PID_V.setpoint);
-
-//      // 位置环使用
-//      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_P.Kp, motor2PID_P.Kp, wheel1_total_position, wheel2_total_position, motor1PID_P.setpoint, motor2PID_P.setpoint, wheel1_speedF, wheel2_speedF);
-
-//      // HAL_Delay(2);
-//      // 获取角度
-//      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
-//      // printf("%d\n", state);
-//      // // ********************************************************************************************
-//    //  任务代码
-//      if (task == 0)
-//    {
-//        switch (state)
-//        {
-//        case 0: // 旋转直到找到蓝球
-//            if (blue_ball.x == Camera_centerX && blue_ball.y == Camera_centerY)
-//            {
-//                turn_around();
-//                state = 0;
-//                break;
-//            }
-//            else
-//            {
-//                state = 1;
-//                break;
-//            }
-
-//        case 1: // 只夹蓝球
-//            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            printf("%f,%f\n", biasX, biasY);
-//            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-//            {
-//                Set_servo1(close);
-//                delay_ms(500); // 等待夹取完成
-//                InitializeOgpi(&blue_aim, BLUE_AIM);
-//                state = 2;
-//                break;
-//            }
-//            else
-//            {
-//                state = 1;
-//                break;
-//            }
-
-//        case 2: // 旋转直到找到蓝安全区
-//            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-//            {
-//                turn_around();
-//                state = 2;
-//                break;
-//            }
-//            else
-//            {
-//                state = 3;
-//                break;
-//            }
-
-//        case 3:
-//            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            if (biasX < 20 && biasX > -20 && biasY < 270 && biasY > 0)
-//            {
-//                Set_servo1(open);  // 放球
-//                delay_ms(500);
-//                state = 4;
-//                break;
-//            }
-//            else
-//            {
-//                state = 3;
-//                break;
-//            }
-
-//        case 4: // 后退
-//            back_forward();
-//            delay_ms(1800);
-//            stop();
-//            delay_ms(300);
-//            state = 5;
-//            InitializeOgpi(&blue_ball, BLUE_BALL);
-//            break;
-
-//        case 5: // 旋转直到找到第二个蓝球
-//            if (blue_ball.x == Camera_centerX && blue_ball.y == Camera_centerY)
-//            {
-//                state = 5;
-//                turn_around();
-//                break;
-//            }
-//            else
-//            {
-//                state = 6;
-//                break;
-//            }
-
-//        case 6: // 只夹第二个蓝球
-//            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            // printf("%f,%f\n", biasX, biasY);
-//            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-//            {
-//                Set_servo1(close);
-//                delay_ms(500); // 等待夹取完成
-//                state = 7;
-//                InitializeOgpi(&blue_aim, BLUE_AIM);
-//                break;
-//            }
-//            else
-//            {
-//                state = 6;
-//                break;
-//            }
-
-//        case 7: // 旋转直到找到蓝安全区
-//            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-//            {
-//                turn_around();
-//                state = 7;
-//                break;
-//            }
-//            else
-//            {
-//                state = 8;
-//                break;
-//            }
-
-//        case 8:
-//            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            if (biasX < 20 && biasX > -20 && biasY < 270 && biasY > 0)
-//            {
-//                Set_servo1(open);  // 放球
-//                delay_ms(500);
-//                state = 9;
-//                break;
-//            }
-//            else
-//            {
-//                state = 8;
-//                break;
-//            }
-
-//        case 9: // 后退
-//            back_forward();
-//            delay_ms(1800);
-//            stop();
-//            delay_ms(300);
-//            state = 10;
-//            InitializeOgpi(&black_ball, BLACK_BALL);
-//            break;
-
-//        case 10: // 旋转直到找到黑球
-//            if (black_ball.x == Camera_centerX && black_ball.y == Camera_centerY)
-//            {
-//                state = 10;
-//                turn_around();
-//                break;
-//            }
-//            else
-//            {
-//                state = 11;
-//                break;
-//            }
-
-//        case 11: // 只夹黑球
-//            CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            // printf("%f,%f\n", biasX, biasY);
-//            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-//            {
-//                Set_servo1(close);
-//                delay_ms(500); // 等待夹取完成
-//                state = 12;
-//                InitializeOgpi(&blue_aim, BLUE_AIM);
-//                break;
-//            }
-//            else
-//            {
-//                state = 11;
-//                break;
-//            }
-
-//        case 12: // 旋转直到找到蓝安全区
-//            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-//            {
-//                turn_around();
-//                state = 12;
-//                break;
-//            }
-//            else
-//            {
-//                state = 13;
-//                break;
-//            }
-
-//        case 13:
-//            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            if (biasX < 20 && biasX > -20 && biasY < 250 && biasY > 0)
-//            {
-//                Set_servo1(open);  // 放球
-//                delay_ms(500);
-//                state = 14;
-//                break;
-//            }
-//            else
-//            {
-//                state = 13;
-//                break;
-//            }
-
-//        case 14: // 后退
-//            back_forward();
-//            delay_ms(1800);
-//            stop();
-//            delay_ms(300);
-//            state = 15;
-//            InitializeOgpi(&yellow_ball, YELLOW_BALL);
-//            break;
-
-//        case 15: // 旋转直到找到黄球
-//            if (yellow_ball.x == Camera_centerX && yellow_ball.y == Camera_centerY)
-//            {
-//                state = 15;
-//                turn_around();
-//                break;
-//            }
-//            else
-//            {
-//                state = 16;
-//                break;
-//            }
-
-//        case 16: // 只夹黄球
-//            CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            // printf("%f,%f\n", biasX, biasY);
-//            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-//            {
-//                Set_servo1(close);
-//                delay_ms(500); // 等待夹取完成
-//                state = 17;
-//                InitializeOgpi(&blue_aim, BLUE_AIM);
-//                break;
-//            }
-//            else
-//            {
-
-//                state = 16;
-//                break;
-//            }
-
-//        case 17: // 旋转直到找到蓝安全区
-//            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-//            {
-//                turn_around();
-//                state = 17;
-//                break;
-//            }
-//            else
-//            {
-//                state = 18;
-//                break;
-//            }
-
-//        case 18:
-//            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-//            if (biasX < 20 && biasX > -20 && biasY < 250 && biasY > 0)
-//            {
-//                Set_servo1(open);  // 放球
-//                delay_ms(500);
-//                state = 19;
-//                break;
-//            }
-//            else
-//            {
-//                state = 18;
-//                break;
-//            }
-
-//        case 19: // 后退
-//            back_forward();
-//            delay_ms(1800);
-//            stop();
-//            delay_ms(300);
-//            state = 20;
-//            break;
-
-//        default:
-//            break;
-//        }
-//    }
-//      // stop();
 
 
 //      if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是9,9,0,0
@@ -867,53 +471,7 @@ void SystemClock_Config(void)
 
 //}
 
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-{
-    // printf("enter\r\n");
-    // 未调试
-    // if (huart == &huart1)  // 判断是否是串口1产生的中断
-    // {
-    //     __HAL_UNLOCK(huart);
-    //     xUSART1.ReceiveNum ++;                        // 每接收到一个数据，接收长度加1
-    //     xUSART1.ReceiveData[xUSART1.ReceiveNum - 1] = xUSART1.BuffTemp[0];  // 将接收到的数据存入缓存数组
-    //
-    //     if (xUSART1.BuffTemp[0] == '!')         // 判断是否接收到结束标志（这里以0x21为例，可以根据实际情况修改）
-    //     {
-    //         // printf("RXLen=%d\r\n", xUSART1.ReceiveNum);  // 输出接收到的指令长度
-    //         // for (int i = 0; i < xUSART1.ReceiveNum; i++)
-    //         //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
-    //
-    //         USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-    //         USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-    //         USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-    //         memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
-    //         xUSART1.ReceiveNum = 0;  // 重置接收长度计数
-    //     }
-    //     xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
-    //     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, xUSART1.BuffTemp, sizeof(xUSART1.BuffTemp));
-    // }
-    // 未调试
 
-//    if (huart == &huart5)                                                                    // 判断串口
-//    {
-//        __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
-//        xUART5.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
-//        memset(xUART5.ReceiveData, 0, sizeof(xUART5.ReceiveData));                         // 清0前一帧的接收数据
-//        memcpy(xUART5.ReceiveData, xUART5.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
-//        HAL_UARTEx_ReceiveToIdle_DMA(&huart5, xUART5.BuffTemp, sizeof(xUART5.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
-//        // 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
-//    }
-
-//    if (huart == &huart8)                                                                    // 判断串口
-//    {
-//        __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
-//        xUART8.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
-//        memset(xUART8.ReceiveData, 0, sizeof(xUART8.ReceiveData));                         // 清0前一帧的接收数据
-//        memcpy(xUART8.ReceiveData, xUART8.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
-//        HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
-//// 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
-//    }
-}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 {
