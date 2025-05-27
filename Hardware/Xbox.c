@@ -1,10 +1,12 @@
 #include "Xbox.h"
 #include "Algorithm.h"
+#include "pid.h"
+#include "Rescue_Car.h"
 
 uint16_t XboxData[4];
 /**
   * @brief  获取XB发送的数据
-  * @param  四个字节的数组指针
+  * @param  接收到XB数据的数组指针
   * @retval 无
   */
 void Get_Data_Xbox(uint8_t *Rx_data) {
@@ -69,10 +71,12 @@ float map(float value, float in_min, float in_max, float out_min, float out_max)
   * @param  XB接两个收值，目标速度、角度
   * @retval 无
   */
-void calculate_target_speeds(uint16_t x, uint16_t y, float* v_f, float* w) {
+void calculate_target_speeds(uint16_t x, uint16_t y, float* w, float* v) {
     // 将速度和角度映射到目标范围
-    *v_f = (int8_t)map(y, 0, 65535, XB_V_MIN, XB_V_MAX); // 假设归一化输入速度范围为[0, 1]
-    *w = (int8_t)map(x, 0, 65535, XB_W_MIN, XB_W_MAX);
+    *v = -(int8_t)map(y, 0, 65535, XB_V_MIN, XB_V_MAX); // 假设归一化输入速度范围为[0, 1]
+    *w = -(int16_t)map(x, 0, 65535, XB_W_MIN, XB_W_MAX);
 }
+
+
 
 

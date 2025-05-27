@@ -6,19 +6,24 @@ TaskHandle_t rescue_car_start_handle;
 void Rescue_Car_Start(void* pv);
 
 #define DATA_TASK_STACK                 128
-#define DATA_TASK_STACK_PRIORITY        4
+#define DATA_TASK_STACK_PRIORITY        5
 TaskHandle_t data_task_handle;
 void Data_Task(void* pv);
 
-#define CONTROL_TASK_STACK              128
-#define CONTROL_TASK_STACK_PRIORITY     3
-TaskHandle_t contro_task_handle;
+#define CONTROL_TASK_STACK              128*2
+#define CONTROL_TASK_STACK_PRIORITY     4
+TaskHandle_t control_task_handle;
 void Control_Task(void* pv);
 
 #define SHOW_TASK_STACK                 128
-#define SHOW_TASK_STACK_PRIORITY        2
+#define SHOW_TASK_STACK_PRIORITY        3
 TaskHandle_t show_task_handle;
 void Show_Task(void* pv);
+
+#define DEBUG_TASK_STACK                 128
+#define DEBUG_TASK_STACK_PRIORITY        2
+TaskHandle_t debug_task_handle;
+void Debug_Task(void* pv);
 
 void Rescue_Car_Init(void)
 {
@@ -47,7 +52,7 @@ void Rescue_Car_Start(void* pv)
                 (configSTACK_DEPTH_TYPE) CONTROL_TASK_STACK,
                 (void *) NULL,
                 (UBaseType_t) CONTROL_TASK_STACK_PRIORITY,
-                (TaskHandle_t *) &contro_task_handle );
+                (TaskHandle_t *) &control_task_handle );
                 
     xTaskCreate( (TaskFunction_t) Show_Task,
                 (char *) "Show_Task", 
@@ -55,6 +60,12 @@ void Rescue_Car_Start(void* pv)
                 (void *) NULL,
                 (UBaseType_t) SHOW_TASK_STACK_PRIORITY,
                 (TaskHandle_t *) &show_task_handle );
+    xTaskCreate( (TaskFunction_t) Debug_Task,
+                (char *) "Debug_Task", 
+                (configSTACK_DEPTH_TYPE) DEBUG_TASK_STACK,
+                (void *) NULL,
+                (UBaseType_t) DEBUG_TASK_STACK_PRIORITY,
+                (TaskHandle_t *) &debug_task_handle );
                 
     vTaskDelete(NULL);
                 
@@ -65,7 +76,6 @@ void Rescue_Car_Start(void* pv)
 ==============================================*/
 imudata angle;
 short enl, enr;
-
 void Data_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
@@ -74,77 +84,98 @@ void Data_Task(void* pv)
     {
         JY901S_DataConverse(&angle);//获取角度
         Get_Encoder(&enl, &enr);//获取编码值
-//        printf("%.1lf\r\n", angle.yaw);
         //给控制任务通知
-        xTaskNotifyGive(contro_task_handle);//给控制任务通知
+//        xTaskNotifyGive(control_task_handle);//给控制任务通知
         xTaskDelayUntil(&pxPreviousWakeTime, 10);
     }
 }
 
 PID_ControllerTypeDef velocity_pid;
+PID_ControllerTypeDef gyro_pid;
 PID_ControllerTypeDef turn_pid;
+float current;
+float pwm_l;
+float pwm_r;
 void Control_Task(void* pv)
 {
-    PID_Init(&velocity_pid,0, 0, 0, 0);
-    
+    TickType_t pxPreviousWakeTime = xTaskGetTickCount();
+    PID_Init(&velocity_pid,0, 0, 0, 0);//192   10.4
+    PID_Init(&gyro_pid,7.6, 0.58, 0, 0);//7.6   0.58
+    PID_Init(&turn_pid,4.4, 0.0025, 0, 0);//4.4  0.0025
     while(1)
     {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);//等待通知
-        float velocity_out = PID_Velocity(&velocity_pid, (enl+enr));//速度环
-        float pwm_l = velocity_out;//获取总pwm
-        float pwm_r = velocity_out;
+//        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);//等待通知
+        float velocity_out = PID_Velocity(&velocity_pid, (enl+enr));//速度环 
+        float turn_out = PID_Turn(&turn_pid, angle.yaw);
+        gyro_pid.setpoint = -turn_out;
+        float gyro_out = PID_Gyro(&gyro_pid, angle.gz);
+        pwm_l = velocity_out + gyro_out;//获取总pwm
+        pwm_r = velocity_out- gyro_out;
         PID_Clamp(pwm_l, PWM_MIN, PWM_MAX);//限幅
         PID_Clamp(pwm_r, PWM_MIN, PWM_MAX);
         Set_Motor(pwm_l, pwm_r);//输入给电机
+        xTaskDelayUntil(&pxPreviousWakeTime, 10);
     }
 }
 
+
+
 void Show_Task(void* pv)
 {
-    uint8_t xb_data[4] = {0,0,0,0};
     while(1)
     {
+         printf("%.2f,%.2f\r\n", angle.yaw, turn_pid.setpoint);
         //XB给速度、角度的目标值
        if(xUART8.ReceiveNum != 0)
        {
            xUART8.ReceiveNum = 0;
-           Get_Data_Xbox(xb_data);
+           Get_Data_Xbox(xUART8.ReceiveData);
             if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)
             {
-                calculate_target_speeds(XboxData[2], XboxData[3], &velocity_pid.setpoint, &turn_pid.setpoint);
-                //死区防止静止时抖动
-                if (velocity_pid.setpoint < 3.99f && velocity_pid.setpoint > -3.99f)
-              {
-                  velocity_pid.setpoint = 0;
-                  // printf("%f\n", SpeedY);
-              }
-              if (turn_pid.setpoint < 0.05f && turn_pid.setpoint > -0.05f)
-              {
-                  turn_pid.setpoint = 0;
-                  // printf("%f\n", angular_speed);
-              }
+                
             }
+           
+           calculate_target_speeds(XboxData[2], XboxData[3], &turn_pid.setpoint, &velocity_pid.setpoint);
+                //死区防止静止时抖动
+            if (velocity_pid.setpoint < 3.99f && velocity_pid.setpoint > -3.99f)
+          {
+              velocity_pid.setpoint = 0;
+          }
+          if (turn_pid.setpoint < 10.f &&turn_pid.setpoint > -10.f)
+          {
+              turn_pid.setpoint = 0;
+          }
        }
        
-       printf("%.1lf\r\n", angle.yaw);
        vTaskDelay(50);
     }
 }
 
 
-/*===================================================================================*/
-//各种回调
-void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart)
+char debugrxdata[30];
+uint8_t debugflag;
+void Debug_Task(void* pv)
 {
-    //IMU--USART2串口回调
-    if(huart->Instance == USART2)
+    while(1)
     {
-        if(__HAL_DMA_GET_COUNTER(&hdma_usart2_rx)==0)
+        if(debugflag == 1)
         {
-            imurxflag = 1;
+            if (debugrxdata[0] == 'p') 
+                sscanf(&debugrxdata[1], "%6f,", &turn_pid.Kp);
+             else if(debugrxdata[0] == 'i')
+                sscanf(&debugrxdata[1], "%6f,", &turn_pid.Ki);
+            else if(debugrxdata[0] == 'd')
+                sscanf(&debugrxdata[1], "%6f,", &turn_pid.Kd);
+            debugflag = 0;
         }
+        vTaskDelay(100);
     }
 }
+
+
+
+/*===================================================================================*/
+//各种回调
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
@@ -168,5 +199,15 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         memcpy(xUART8.ReceiveData, xUART8.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
         HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
 // 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
+    }
+    
+}
+
+void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart)
+{
+    if(huart->Instance == USART1)
+    {
+        debugflag = 1;
+        HAL_UART_Receive_IT(&huart1, (uint8_t*)debugrxdata, 30);
     }
 }

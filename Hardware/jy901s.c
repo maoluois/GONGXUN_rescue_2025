@@ -76,15 +76,20 @@ jydata initdata;
 void JY901S_DataConverse(imudata* data)
 {
     JY901S_GetData(&initdata);
-    data->roll = (double)initdata.angle[0]*0.0054932;
-    data->pitch = (double)initdata.angle[1]*0.0054932;
-    data->yaw = (double)initdata.angle[2]*0.0054932;
+//    data->roll = (double)initdata.angle[0]*0.0054932;
+//    data->pitch = (double)initdata.angle[1]*0.0054932;
+//    data->yaw = (double)initdata.angle[2]*0.0054932;
     data->ax = (double)initdata.acc[0]*0.0004883;
     data->ay = (double)initdata.acc[1]*0.0004883;
     data->az = (double)initdata.acc[2]*0.0004883;
     data->gx = (double)initdata.gyro[0]*0.061035;
     data->gy = (double)initdata.gyro[1]*0.061035;
     data->gz = (double)initdata.gyro[2]*0.061035;
+    data->yaw += data->gz*sampletime; 
+    //控制在+-180
+    data->yaw>180  ?data->yaw-=360 : 0;
+    data->yaw<-180 ?data->yaw+=360 : 0;
+    
     
 }
 

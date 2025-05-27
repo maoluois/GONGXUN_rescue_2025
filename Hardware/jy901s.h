@@ -4,6 +4,8 @@
 #include "usart.h"
 #include "string.h"
 
+#define sampletime 0.01
+
 typedef struct
 {
     short acc[3];

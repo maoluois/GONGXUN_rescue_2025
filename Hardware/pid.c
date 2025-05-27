@@ -1,7 +1,3 @@
-//
-// Created by Administrator on 24-9-21.
-//
-
 #include "math.h"
 #include "PID.h"
 
@@ -56,7 +52,7 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     float error = pid->setpoint - currentSpeed;
     integral = pid->integral + pid->Ki * error;
     float proportional = pid->Kp * error;
-
+    
     pid->output = proportional + integral;
 
     // 更新积分项和记录上一次误差
@@ -65,9 +61,49 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     return pid->output;
 }
 
+
+/**
+  * @brief  角速度环
+  * @param  pid结构体，编码值
+  * @retval 无
+  */
+float PID_Gyro(PID_ControllerTypeDef *pid, float gyro) 
+{
+
+    // 2. 计算角速度误差
+    float bias = gyro - pid->setpoint; // 假设目标角速度为0（稳定状态）
+    // 3. 计算PID输出
+    float proportional = pid->Kp * bias;
+    float integral = pid->integral + pid->Ki * bias;
+    integral>3500 ? integral = 3500  : 0;
+    integral<-3500? integral = -3500 : 0;
+    pid->output = proportional + integral;
+    // 4. 更新上一次的角度误差
+    pid->integral = integral;
+    
+    return pid->output;
+}
+
+float PID_Turn(PID_ControllerTypeDef *pid, float yaw) 
+{
+    // 2. 计算角速度误差
+    float bias = yaw - pid->setpoint; // 假设目标角速度为0（稳定状态）
+    // 3. 计算PID输出
+    float proportional = pid->Kp * bias;
+    float integral = pid->integral + pid->Ki * bias;
+    float derivative = bias - pid->lastError;
+    pid->output = proportional + integral + derivative;
+    
+    
+    // 4. 更新上一次的角度误差
+    pid->integral = integral;
+    pid->lastError = bias;
+    
+    return pid->output;
+}
+
 float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float currentSpeedRight, float angle) {
     float error = pid->setpoint - (currentSpeedLeft + currentSpeedRight) / 2;
-
     // 计算PID控制量
     float proportional = pid->Kp * error;
     float integral = pid->integral + pid->Ki * error;
@@ -110,29 +146,6 @@ float PID_Position(PID_ControllerTypeDef *pid, float currentPosition) {
 
     return pid->output;
 }
-
-
-float PID_Turn(PID_ControllerTypeDef *pid, float Angle, float Gyro) {
-    // 1. 计算角度误差，处理角度环绕问题
-    float Angle_bias = pid->setpoint - Angle;
-    if (Angle_bias > 180.0f) {
-        Angle_bias -= 360.0f;
-    } else if (Angle_bias < -180.0f) {
-        Angle_bias += 360.0f;
-    }
-
-    // 2. 计算角速度误差
-    float Gyro_bias = 0 - Gyro; // 假设目标角速度为0（稳定状态）
-
-    // 3. 计算PID输出
-    pid->output = pid->Kp * Angle_bias + pid->Kd * Gyro_bias;
-
-    // 4. 更新上一次的角度误差
-    pid->lastError = Angle_bias;
-
-    return pid->output;
-}
-
 
 //// 直立环
 //float PID_Balance(PID_ControllerTypeDef *pid, float Angle)

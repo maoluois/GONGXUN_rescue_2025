@@ -14,3 +14,4 @@ gx\tasks.o: ../Middle/FreeRTOS/include/task.h
 gx\tasks.o: ../Middle/FreeRTOS/include/list.h
 gx\tasks.o: ../Middle/FreeRTOS/include/timers.h
 gx\tasks.o: ../Middle/FreeRTOS/include/stack_macros.h
+gx\tasks.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdio.h

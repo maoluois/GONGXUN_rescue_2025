@@ -57,3 +57,4 @@ gx\xbox.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\xbox.o: ../Hardware/Algorithm.h
 gx\xbox.o: ../Hardware/pid.h
 gx\xbox.o: ../Hardware/control.h
+gx\xbox.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h

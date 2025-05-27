@@ -57,3 +57,4 @@ gx\algorithm.o: ../Hardware/Xbox.h
 gx\algorithm.o: ../Hardware/Algorithm.h
 gx\algorithm.o: ../Hardware/pid.h
 gx\algorithm.o: ../Hardware/control.h
+gx\algorithm.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h

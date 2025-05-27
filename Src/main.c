@@ -32,8 +32,7 @@
 #include "encoder.h"
 #include "jy901s.h"
 #include "usart.h"
-#include "arm_math.h"
-#include "arm_const_structs.h"
+
 //#include "retarget.h"
 //#include "filter.h"
 //#include "Algorithm.h"
@@ -171,10 +170,15 @@ int main(void)
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
-        delay_us(10);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
+    __HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart1);
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)debugrxdata, 30);
+    
+
 //  while (xUART5.ReceiveNum == 0);
 
-//	Rescue_Car_Init();
+	Rescue_Car_Init();
 
   /* USER CODE END 2 */
 
