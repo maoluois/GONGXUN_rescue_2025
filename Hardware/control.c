@@ -1,10 +1,4 @@
-#include "tim.h"
-//#include <math.h>
-//#include <stdint.h>
-//#include "pid.h"
-
-
-
+#include "control.h"
 /**
   * @brief  设置两个电机速度
   * @param  输入pwm
@@ -42,33 +36,3 @@ void Set_Motor(float speedl, float speedr)
         HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_SET);
     }
 }
-
-//舵机先打注释了
-//void Set_servo1(float angle)
-//{
-//    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_2, angle);
-//}
-
-//void Set_postionY(float target_position)
-//{
-//    motor1PID_P.setpoint = -target_position;
-//    motor2PID_P.setpoint = -target_position;
-//}
-
-//void turn_around(void)
-//{
-//    motor1PID_V.setpoint = 10;
-//    motor2PID_V.setpoint = -10;
-//}
-
-//void back_forward(void)
-//{
-//   motor1PID_V.setpoint = 30;
-//   motor2PID_V.setpoint = 30;
-//}
-
-//void stop(void)
-//{
-//    motor1PID_V.setpoint = 0;
-//    motor2PID_V.setpoint = 0;
-//}

@@ -46,13 +46,6 @@ int ferror(FILE *f)
 
 
 
-
-
-// uint8_t Rx_data8[BUFFER_SIZE];  //接收数据缓存数组
-// volatile uint8_t Rx_len8;  //接收一帧数据的长度
-// volatile uint8_t Rx_flag; //一帧数据接收完成标志
-
-
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart5;

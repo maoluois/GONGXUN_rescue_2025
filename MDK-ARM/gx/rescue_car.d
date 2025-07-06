@@ -53,8 +53,11 @@ gx\rescue_car.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
 gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdio.h
 gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\rescue_car.o: ../Hardware/Xbox.h
-gx\rescue_car.o: ../Hardware/Algorithm.h
 gx\rescue_car.o: ../App/Rescue_Car.h
+gx\rescue_car.o: ../Hardware/Algorithm.h
 gx\rescue_car.o: ../Hardware/pid.h
 gx\rescue_car.o: ../Hardware/control.h
+gx\rescue_car.o: ../Inc/tim.h
 gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\rescue_car.o: ../Hardware/position.h
+gx\rescue_car.o: ../Hardware/filter.h

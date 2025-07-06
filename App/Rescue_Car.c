@@ -5,7 +5,7 @@
 TaskHandle_t rescue_car_start_handle;
 void Rescue_Car_Start(void* pv);
 
-#define DATA_TASK_STACK                 128
+#define DATA_TASK_STACK                 128*2
 #define DATA_TASK_STACK_PRIORITY        5
 TaskHandle_t data_task_handle;
 void Data_Task(void* pv);
@@ -15,7 +15,7 @@ void Data_Task(void* pv);
 TaskHandle_t control_task_handle;
 void Control_Task(void* pv);
 
-#define SHOW_TASK_STACK                 128
+#define SHOW_TASK_STACK                 128*2
 #define SHOW_TASK_STACK_PRIORITY        3
 TaskHandle_t show_task_handle;
 void Show_Task(void* pv);
@@ -76,6 +76,8 @@ void Rescue_Car_Start(void* pv)
 ==============================================*/
 imudata angle;
 short enl, enr;
+float linear_speed, accspeed;
+float x, y;
 void Data_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
@@ -84,6 +86,7 @@ void Data_Task(void* pv)
     {
         JY901S_DataConverse(&angle);//获取角度
         Get_Encoder(&enl, &enr);//获取编码值
+        Get_Position(enl, enr, angle, &x, &y);
         //给控制任务通知
 //        xTaskNotifyGive(control_task_handle);//给控制任务通知
         xTaskDelayUntil(&pxPreviousWakeTime, 10);
@@ -93,24 +96,31 @@ void Data_Task(void* pv)
 PID_ControllerTypeDef velocity_pid;
 PID_ControllerTypeDef gyro_pid;
 PID_ControllerTypeDef turn_pid;
-float current;
+PID_ControllerTypeDef position_pid;
 float pwm_l;
 float pwm_r;
 void Control_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
-    PID_Init(&velocity_pid,0, 0, 0, 0);//192   10.4
-    PID_Init(&gyro_pid,7.6, 0.58, 0, 0);//7.6   0.58
-    PID_Init(&turn_pid,4.4, 0.0025, 0, 0);//4.4  0.0025
+    PID_Init(&velocity_pid,192, 10.4, 0, 0);//192   10.4
+    PID_Init(&gyro_pid,7.0, 0.59, 2, 0);//7.6   0.58
+    PID_Init(&turn_pid,4.2, 0.0026, 0, 0);//4.4  0.0025
+    PID_Init(&position_pid, 2.2, 0.01, x, y);
+    position_pid.lastError = 1000;
     while(1)
     {
 //        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);//等待通知
+        if(positionflag != 0)
+        {
+            float position_out = PID_Position(&position_pid, x, y, xset, yset);
+            velocity_pid.setpoint = position_out;
+        }
         float velocity_out = PID_Velocity(&velocity_pid, (enl+enr));//速度环 
-        float turn_out = PID_Turn(&turn_pid, angle.yaw);
-        gyro_pid.setpoint = -turn_out;
-        float gyro_out = PID_Gyro(&gyro_pid, angle.gz);
+        float turn_out = PID_Turn(&turn_pid, angle.yaw);//转向环
+        gyro_pid.setpoint = -turn_out;//串给角速度环
+        float gyro_out = PID_Gyro(&gyro_pid, angle.gz);//角速度环
         pwm_l = velocity_out + gyro_out;//获取总pwm
-        pwm_r = velocity_out- gyro_out;
+        pwm_r = velocity_out - gyro_out;
         PID_Clamp(pwm_l, PWM_MIN, PWM_MAX);//限幅
         PID_Clamp(pwm_r, PWM_MIN, PWM_MAX);
         Set_Motor(pwm_l, pwm_r);//输入给电机
@@ -122,35 +132,36 @@ void Control_Task(void* pv)
 
 void Show_Task(void* pv)
 {
+    float turntemp = 0;
     while(1)
     {
-         printf("%.2f,%.2f\r\n", angle.yaw, turn_pid.setpoint);
         //XB给速度、角度的目标值
        if(xUART8.ReceiveNum != 0)
        {
            xUART8.ReceiveNum = 0;
            Get_Data_Xbox(xUART8.ReceiveData);
-            if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)
-            {
-                
-            }
-           
-           calculate_target_speeds(XboxData[2], XboxData[3], &turn_pid.setpoint, &velocity_pid.setpoint);
+//            if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)
+//            {
+//                
+//            }
+//           
+           calculate_target_speeds(XboxData[2], XboxData[3], &turntemp, &velocity_pid.setpoint);
                 //死区防止静止时抖动
             if (velocity_pid.setpoint < 3.99f && velocity_pid.setpoint > -3.99f)
           {
               velocity_pid.setpoint = 0;
           }
-          if (turn_pid.setpoint < 10.f &&turn_pid.setpoint > -10.f)
+          if (turntemp < 0.3f && turntemp > -0.3f)
           {
-              turn_pid.setpoint = 0;
+              turntemp = 0;
           }
+          turn_pid.setpoint += turntemp;
+          turn_pid.setpoint <-180 ? turn_pid.setpoint += 360 : 0;
+          turn_pid.setpoint > 180 ? turn_pid.setpoint -= 360 : 0;
        }
-       
        vTaskDelay(50);
     }
 }
-
 
 char debugrxdata[30];
 uint8_t debugflag;
@@ -158,14 +169,22 @@ void Debug_Task(void* pv)
 {
     while(1)
     {
+        printf("%.2f,%.2f\r\n", current, position_pid.setpoint);
         if(debugflag == 1)
         {
             if (debugrxdata[0] == 'p') 
-                sscanf(&debugrxdata[1], "%6f,", &turn_pid.Kp);
+                sscanf(&debugrxdata[1], "%4f,", &position_pid.Kp);
              else if(debugrxdata[0] == 'i')
-                sscanf(&debugrxdata[1], "%6f,", &turn_pid.Ki);
+                sscanf(&debugrxdata[1], "%4f,", &position_pid.Ki);
             else if(debugrxdata[0] == 'd')
-                sscanf(&debugrxdata[1], "%6f,", &turn_pid.Kd);
+                sscanf(&debugrxdata[1], "%4f,", &position_pid.Kd);
+            else if(debugrxdata[0] == '(')
+            {
+                positionflag = 1;
+                sscanf(&debugrxdata[1], "%f,%f", &xset, &yset);
+                turn_pid.setpoint = atan2f(xset-x, yset-y)*57.296f;
+                position_pid.setpoint = sqrt((x-xset)*(x-xset) + (y-yset)*(y-yset));
+            }
             debugflag = 0;
         }
         vTaskDelay(100);

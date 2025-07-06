@@ -57,9 +57,11 @@ gx\main.o: ../Hardware/jy901s.h
 gx\main.o: ../Hardware/jy901s_register.h
 gx\main.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\main.o: ../Hardware/Xbox.h
-gx\main.o: ../Hardware/Algorithm.h
 gx\main.o: ../App/Rescue_Car.h
+gx\main.o: ../Hardware/Algorithm.h
 gx\main.o: ../Hardware/pid.h
 gx\main.o: ../Hardware/control.h
 gx\main.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\main.o: ../Hardware/position.h
+gx\main.o: ../Hardware/filter.h
 gx\main.o: ../Inc/Delay.h

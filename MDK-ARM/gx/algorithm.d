@@ -54,7 +54,11 @@ gx\algorithm.o: ../Inc/usart.h
 gx\algorithm.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdio.h
 gx\algorithm.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
 gx\algorithm.o: ../Hardware/Xbox.h
+gx\algorithm.o: ../App/Rescue_Car.h
 gx\algorithm.o: ../Hardware/Algorithm.h
 gx\algorithm.o: ../Hardware/pid.h
 gx\algorithm.o: ../Hardware/control.h
+gx\algorithm.o: ../Inc/tim.h
 gx\algorithm.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\algorithm.o: ../Hardware/position.h
+gx\algorithm.o: ../Hardware/filter.h

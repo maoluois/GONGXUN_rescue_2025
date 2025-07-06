@@ -1,12 +1,12 @@
-//
-// Created by Administrator on 24-12-29.
-//
-
 #ifndef XBOX_H
 #define XBOX_H
+
 #include <stdint.h>
 #include <main.h>
+#include "Rescue_Car.h"
 
+
+#define XBOX_BUFFER_SIZE  88 //XBOX 数组容量大小
 
 void Get_Data_Xbox(uint8_t *Rx_data);
 

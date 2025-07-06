@@ -1,7 +1,4 @@
-#include "math.h"
-#include "PID.h"
-
-
+#include "pid.h"
 
 /**
   * @brief  初始化PID结构体
@@ -48,10 +45,12 @@ float PID_Compute(PID_ControllerTypeDef *pid, float measurement) {
   */
 float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     // 计算PID控制量
-    float integral;
     float error = pid->setpoint - currentSpeed;
-    integral = pid->integral + pid->Ki * error;
+    float integral = pid->integral + pid->Ki * error;
     float proportional = pid->Kp * error;
+    
+    integral > 8000?  integral = 8000  : 0;
+    integral < -8000? integral = -8000 : 0;
     
     pid->output = proportional + integral;
 
@@ -80,27 +79,75 @@ float PID_Gyro(PID_ControllerTypeDef *pid, float gyro)
     pid->output = proportional + integral;
     // 4. 更新上一次的角度误差
     pid->integral = integral;
-    
+    pid->output = PID_Clamp(pid->output, -3000, 3000);
     return pid->output;
 }
 
 float PID_Turn(PID_ControllerTypeDef *pid, float yaw) 
 {
+    float bias;
     // 2. 计算角速度误差
-    float bias = yaw - pid->setpoint; // 假设目标角速度为0（稳定状态）
+    bias = yaw - pid->setpoint; 
+    if(bias>180) 
+        bias -= 360;
+    if(bias<-180) 
+        bias += 360;
     // 3. 计算PID输出
     float proportional = pid->Kp * bias;
     float integral = pid->integral + pid->Ki * bias;
     float derivative = bias - pid->lastError;
     pid->output = proportional + integral + derivative;
     
-    
     // 4. 更新上一次的角度误差
     pid->integral = integral;
     pid->lastError = bias;
     
+    if(positionflag == 1)
+        if(fabs(bias)<1)
+            positionflag = 2;
     return pid->output;
 }
+
+uint8_t positionflag;
+float current;
+float xset, yset;
+float temp;
+// 位置环
+float PID_Position(PID_ControllerTypeDef *pid, float x, float y, float xset, float yset) {
+    if(positionflag == 2)
+    {
+        float error = sqrt((x-xset)*(x-xset) + (y-yset)*(y-yset));
+        current = pid->setpoint - error;
+        
+        temp = pid->lastError - error;
+        
+        if(fabs(error) < 0.5 || pid->lastError - error < 0)
+        {
+            pid->integral = 0;
+            pid->lastError = 1000;
+            pid->output = 0;
+            positionflag = 0;
+        }
+        else
+        {
+            float proportional = pid->Kp * error;
+            float integral = pid->integral + pid->Ki * error;
+            float derivative = pid->Kd * (error - pid->lastError);
+
+            pid->output = proportional + integral + derivative;
+
+            
+            // 更新积分项和记录上一次误差
+            pid->integral = integral;
+            pid->lastError = error;
+        }
+        pid->output = PID_Clamp(pid->output, -3000, 3000);
+        return pid->output;
+    }
+    else
+        return 0;
+}
+
 
 float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float currentSpeedRight, float angle) {
     float error = pid->setpoint - (currentSpeedLeft + currentSpeedRight) / 2;
@@ -121,28 +168,6 @@ float PID_Velocity2(PID_ControllerTypeDef *pid, float currentSpeedLeft, float cu
     else pid->integral = integral;
 
     pid->lastError = error;
-
-    return pid->output;
-}
-
-// 位置环
-float PID_Position(PID_ControllerTypeDef *pid, float currentPosition) {
-    // 计算位置误差
-    float positionError = pid->setpoint - currentPosition;
-
-    // 计算PID控制量
-    float proportional = pid->Kp * positionError;
-    float integral = pid->integral + pid->Ki * positionError;
-    float derivative = pid->Kd * (positionError - pid->lastError);
-
-    pid->output = proportional + integral + derivative;
-
-    // 限制PID输出在合理范围内
-    pid->output = PID_Clamp(pid->output, -1000, 1000);
-
-    // 更新积分项和记录上一次误差
-    pid->integral = integral;
-    pid->lastError = positionError;
 
     return pid->output;
 }

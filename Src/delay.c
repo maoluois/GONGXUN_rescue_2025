@@ -20,7 +20,8 @@ void delay_us(uint32_t xus)
   */
 void delay_ms(uint32_t xms)
 {
-	HAL_Delay(xms);
+    while(xms--)
+        delay_us(1000);
 }
  
 /**

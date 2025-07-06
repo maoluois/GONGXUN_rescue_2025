@@ -1,4 +1,5 @@
 gx\control.o: ..\Hardware\control.c
+gx\control.o: ..\Hardware\control.h
 gx\control.o: ../Inc/tim.h
 gx\control.o: ../Inc/main.h
 gx\control.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h

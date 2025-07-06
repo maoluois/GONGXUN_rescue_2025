@@ -16,6 +16,7 @@ void JY901S_GetData(jydata* initdata)
         
     if(imurxflag == 1)
     {
+        //一个包为11个数据
         if(imurxsize < 11)
         {
           imurxflag = 0;
@@ -23,6 +24,7 @@ void JY901S_GetData(jydata* initdata)
         }
         else
         {
+            //找到帧头0x55
             while(jytempdata[n] != 0x55|| jytempdata[n+11] != 0x55)
             {
                  n++;
@@ -89,6 +91,7 @@ void JY901S_DataConverse(imudata* data)
     //控制在+-180
     data->yaw>180  ?data->yaw-=360 : 0;
     data->yaw<-180 ?data->yaw+=360 : 0;
+    
     
     
 }

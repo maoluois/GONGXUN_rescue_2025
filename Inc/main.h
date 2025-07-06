@@ -97,34 +97,18 @@ void Error_Handler(void);
 #define XBOX_TX_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
-#define ConvertParam (13.0f*30.0f*4.0f) // 从脉冲转到转速的转换参数 转速 = 脉冲数 / (线数 * 减速比 * 4) (转/10毫秒)
-#define WheelDistance 23.156f // 单位：cm
-#define WheelRadius 3.25f // 单位：cm
-#define WheelCircumference 20.42f // 单位：cm
-// tim
-#define RELOADVALUE 60000
 
 // fliter
 #define fliter_mean_sample1 16
 #define fliter_buffer_size 1000
 #define low_pase_a 0.1f
-// Motor code
-#define motor1 0
-#define motor2 1
-#define motor3 2
+
 // Servo parameters
 #define open 203
 #define close 183
 #define XBOX_BUFFER_SIZE  88 //XBOX 数组容量大小
 #define Oran_BUFFER_SIZE  88 //Oran 数组容量大小
 // Xbox parameters
-
-// JY901s cfg
-#define ACC_UPDATE		0x01
-#define GYRO_UPDATE		0x02
-#define ANGLE_UPDATE	0x04
-#define MAG_UPDATE		0x08
-#define READ_UPDATE		0x80
 
 #define Camera_centerX 320
 #define Camera_centerY 0

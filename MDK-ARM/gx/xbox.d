@@ -37,7 +37,6 @@ gx\xbox.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim.h
 gx\xbox.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_tim_ex.h
 gx\xbox.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart.h
 gx\xbox.o: ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h
-gx\xbox.o: ..\Hardware\Algorithm.h
 gx\xbox.o: ../App/Rescue_Car.h
 gx\xbox.o: ../Middle/FreeRTOS/include/FreeRTOS.h
 gx\xbox.o: ../Inc/FreeRTOSConfig.h
@@ -54,7 +53,12 @@ gx\xbox.o: ../Hardware/jy901s_register.h
 gx\xbox.o: ../Inc/usart.h
 gx\xbox.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdio.h
 gx\xbox.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
+gx\xbox.o: ../Hardware/Xbox.h
 gx\xbox.o: ../Hardware/Algorithm.h
+gx\xbox.o: ../App/Rescue_Car.h
 gx\xbox.o: ../Hardware/pid.h
 gx\xbox.o: ../Hardware/control.h
+gx\xbox.o: ../Inc/tim.h
 gx\xbox.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
+gx\xbox.o: ../Hardware/position.h
+gx\xbox.o: ../Hardware/filter.h

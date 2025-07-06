@@ -1,7 +1,4 @@
 #include "Xbox.h"
-#include "Algorithm.h"
-#include "pid.h"
-#include "Rescue_Car.h"
 
 uint16_t XboxData[4];
 /**
@@ -73,7 +70,7 @@ float map(float value, float in_min, float in_max, float out_min, float out_max)
   */
 void calculate_target_speeds(uint16_t x, uint16_t y, float* w, float* v) {
     // 将速度和角度映射到目标范围
-    *v = -(int8_t)map(y, 0, 65535, XB_V_MIN, XB_V_MAX); // 假设归一化输入速度范围为[0, 1]
+    *v = -(int8_t)map(y, 0, 65535, XB_V_MIN, XB_V_MAX);
     *w = -(int16_t)map(x, 0, 65535, XB_W_MIN, XB_W_MAX);
 }
 
