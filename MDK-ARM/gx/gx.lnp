@@ -48,6 +48,7 @@
 "gx\algorithm.o"
 "gx\pid.o"
 "gx\position.o"
+"gx\saccelerate.o"
 "gx\rescue_car.o"
 --strict --scatter "gx\gx.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols

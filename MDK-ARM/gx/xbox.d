@@ -62,3 +62,4 @@ gx\xbox.o: ../Inc/tim.h
 gx\xbox.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
 gx\xbox.o: ../Hardware/position.h
 gx\xbox.o: ../Hardware/filter.h
+gx\xbox.o: ../Hardware/Saccelerate.h

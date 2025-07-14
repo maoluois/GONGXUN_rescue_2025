@@ -64,4 +64,5 @@ gx\main.o: ../Hardware/control.h
 gx\main.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
 gx\main.o: ../Hardware/position.h
 gx\main.o: ../Hardware/filter.h
+gx\main.o: ../Hardware/Saccelerate.h
 gx\main.o: ../Inc/Delay.h

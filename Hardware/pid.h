@@ -21,7 +21,6 @@ typedef struct{
 
 
 extern uint8_t positionflag;
-extern float current;
 extern float xset, yset;
 
 void PID_Init(PID_ControllerTypeDef *pid,float kp, float ki, float kd, float setpoint);

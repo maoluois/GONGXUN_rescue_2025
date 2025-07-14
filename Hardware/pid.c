@@ -48,9 +48,7 @@ float PID_Velocity(PID_ControllerTypeDef *pid, float currentSpeed) {
     float error = pid->setpoint - currentSpeed;
     float integral = pid->integral + pid->Ki * error;
     float proportional = pid->Kp * error;
-    
-    integral > 8000?  integral = 8000  : 0;
-    integral < -8000? integral = -8000 : 0;
+    integral = PID_Clamp(integral, -6000, 6000);
     
     pid->output = proportional + integral;
 
@@ -76,10 +74,12 @@ float PID_Gyro(PID_ControllerTypeDef *pid, float gyro)
     float integral = pid->integral + pid->Ki * bias;
     integral>3500 ? integral = 3500  : 0;
     integral<-3500? integral = -3500 : 0;
-    pid->output = proportional + integral;
+    float derivative = (bias - pid->lastError)*pid->Kd;
+    pid->output = proportional + integral+derivative;
     // 4. 更新上一次的角度误差
     pid->integral = integral;
-    pid->output = PID_Clamp(pid->output, -3000, 3000);
+    pid->lastError = bias;
+    pid->output = PID_Clamp(pid->output, -4000, 4000);
     return pid->output;
 }
 
@@ -95,7 +95,8 @@ float PID_Turn(PID_ControllerTypeDef *pid, float yaw)
     // 3. 计算PID输出
     float proportional = pid->Kp * bias;
     float integral = pid->integral + pid->Ki * bias;
-    float derivative = bias - pid->lastError;
+//    integral = PID_Clamp(pid->integral, );
+    float derivative = (bias - pid->lastError)*pid->Kd;
     pid->output = proportional + integral + derivative;
     
     // 4. 更新上一次的角度误差
@@ -109,7 +110,6 @@ float PID_Turn(PID_ControllerTypeDef *pid, float yaw)
 }
 
 uint8_t positionflag;
-float current;
 float xset, yset;
 float temp;
 // 位置环
@@ -117,7 +117,7 @@ float PID_Position(PID_ControllerTypeDef *pid, float x, float y, float xset, flo
     if(positionflag == 2)
     {
         float error = sqrt((x-xset)*(x-xset) + (y-yset)*(y-yset));
-        current = pid->setpoint - error;
+//        current = pid->setpoint - error;
         
         temp = pid->lastError - error;
         

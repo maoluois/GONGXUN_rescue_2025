@@ -5,7 +5,7 @@
 TaskHandle_t rescue_car_start_handle;
 void Rescue_Car_Start(void* pv);
 
-#define DATA_TASK_STACK                 128*2
+#define DATA_TASK_STACK                 128
 #define DATA_TASK_STACK_PRIORITY        5
 TaskHandle_t data_task_handle;
 void Data_Task(void* pv);
@@ -78,6 +78,7 @@ imudata angle;
 short enl, enr;
 float linear_speed, accspeed;
 float x, y;
+float v_target;
 void Data_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
@@ -87,7 +88,7 @@ void Data_Task(void* pv)
         JY901S_DataConverse(&angle);//获取角度
         Get_Encoder(&enl, &enr);//获取编码值
         Get_Position(enl, enr, angle, &x, &y);
-        //给控制任务通知
+//        //给控制任务通知
 //        xTaskNotifyGive(control_task_handle);//给控制任务通知
         xTaskDelayUntil(&pxPreviousWakeTime, 10);
     }
@@ -97,16 +98,21 @@ PID_ControllerTypeDef velocity_pid;
 PID_ControllerTypeDef gyro_pid;
 PID_ControllerTypeDef turn_pid;
 PID_ControllerTypeDef position_pid;
+sacc_typedef s_velocity;
+sacc_typedef s_turn;
+
 float pwm_l;
 float pwm_r;
 void Control_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
-    PID_Init(&velocity_pid,192, 10.4, 0, 0);//192   10.4
-    PID_Init(&gyro_pid,7.0, 0.59, 2, 0);//7.6   0.58
-    PID_Init(&turn_pid,4.2, 0.0026, 0, 0);//4.4  0.0025
+    PID_Init(&velocity_pid,220, 10.0, 0, 0);//192   10.4
+    PID_Init(&gyro_pid,9.0, 0.1, 1, 0);//7.0   0.3   4.0
+    PID_Init(&turn_pid,7.5, 0.0007, 0, 0);//8.0  0  3.0
     PID_Init(&position_pid, 2.2, 0.01, x, y);
     position_pid.lastError = 1000;
+    Sacc_Init(&s_velocity, 600.0f, 200.0f, 20.0f, 5.0f);
+    Sacc_Init(&s_turn, 500.0f, 200.0f, 20.0f, 1.0f);
     while(1)
     {
 //        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);//等待通知
@@ -115,10 +121,20 @@ void Control_Task(void* pv)
             float position_out = PID_Position(&position_pid, x, y, xset, yset);
             velocity_pid.setpoint = position_out;
         }
-        float velocity_out = PID_Velocity(&velocity_pid, (enl+enr));//速度环 
+        
+        
+        acc_calculate(&s_velocity);
+        velocity_pid.setpoint = s_velocity.current;
+        acc_calculate(&s_turn);
+        turn_pid.setpoint = s_turn.current;
+        
+         
+//        float velocity_out = PID_Velocity(&velocity_pid, (enl+enr));//速度环 
+        float velocity_out = 0;
         float turn_out = PID_Turn(&turn_pid, angle.yaw);//转向环
         gyro_pid.setpoint = -turn_out;//串给角速度环
         float gyro_out = PID_Gyro(&gyro_pid, angle.gz);//角速度环
+//        float gyro_out = 0;
         pwm_l = velocity_out + gyro_out;//获取总pwm
         pwm_r = velocity_out - gyro_out;
         PID_Clamp(pwm_l, PWM_MIN, PWM_MAX);//限幅
@@ -145,19 +161,21 @@ void Show_Task(void* pv)
 //                
 //            }
 //           
-           calculate_target_speeds(XboxData[2], XboxData[3], &turntemp, &velocity_pid.setpoint);
-                //死区防止静止时抖动
-            if (velocity_pid.setpoint < 3.99f && velocity_pid.setpoint > -3.99f)
+           calculate_target_speeds(XboxData[2], XboxData[3], &turntemp, &s_velocity.target);
+          //死区防止静止时抖动
+          if (s_velocity.target < 3.99f && s_velocity.target > -3.99f)
           {
-              velocity_pid.setpoint = 0;
+              s_velocity.target = 0;
           }
-          if (turntemp < 0.3f && turntemp > -0.3f)
+          if (turntemp < 5.0f && turntemp > -5.0f)
           {
               turntemp = 0;
           }
-          turn_pid.setpoint += turntemp;
-          turn_pid.setpoint <-180 ? turn_pid.setpoint += 360 : 0;
-          turn_pid.setpoint > 180 ? turn_pid.setpoint -= 360 : 0;
+          s_turn.target = turntemp;
+          Angle_Constrain(&s_turn);
+          time_calculate(&s_velocity);
+          time_calculate(&s_turn);
+          
        }
        vTaskDelay(50);
     }
@@ -165,26 +183,20 @@ void Show_Task(void* pv)
 
 char debugrxdata[30];
 uint8_t debugflag;
+
 void Debug_Task(void* pv)
 {
     while(1)
     {
-        printf("%.2f,%.2f\r\n", current, position_pid.setpoint);
+        
+        printf("%.2f, %.2f, %.2f\r\n", turn_pid.setpoint, angle.yaw, gyro_pid.output);
         if(debugflag == 1)
         {
-            if (debugrxdata[0] == 'p') 
-                sscanf(&debugrxdata[1], "%4f,", &position_pid.Kp);
-             else if(debugrxdata[0] == 'i')
-                sscanf(&debugrxdata[1], "%4f,", &position_pid.Ki);
-            else if(debugrxdata[0] == 'd')
-                sscanf(&debugrxdata[1], "%4f,", &position_pid.Kd);
-            else if(debugrxdata[0] == '(')
-            {
-                positionflag = 1;
-                sscanf(&debugrxdata[1], "%f,%f", &xset, &yset);
-                turn_pid.setpoint = atan2f(xset-x, yset-y)*57.296f;
-                position_pid.setpoint = sqrt((x-xset)*(x-xset) + (y-yset)*(y-yset));
-            }
+            sscanf(debugrxdata, "%4f", &v_target);
+            s_turn.target = v_target;
+            time_calculate(&s_turn);
+            turn_pid.setpoint <-180 ? turn_pid.setpoint += 360 : 0;
+          turn_pid.setpoint > 180 ? turn_pid.setpoint -= 360 : 0;
             debugflag = 0;
         }
         vTaskDelay(100);

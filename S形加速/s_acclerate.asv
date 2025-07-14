@@ -10,8 +10,8 @@ t = 0;
 a0 = 20;
 a = a0;
 a_pre = 0;
-v_target = 140;
-v_current = -120;
+v_target = -140;
+v_current = 120;
 v = v_current;
 v_delta = v_target - v_current
 
@@ -26,11 +26,11 @@ i = 1;
 flag = 0;
 
 
-% if v_delta>180
-%     v_delta = v_delta-360
-% elseif v_delta <  -180
-%     v_delta = v_delta+360
-% end
+if v_delta>180
+    v_delta = v_delta-360
+elseif v_delta <  -180
+    v_delta = v_delta+360
+end
 
 if a0 == 0
     v_th = a_max^2/j_max
