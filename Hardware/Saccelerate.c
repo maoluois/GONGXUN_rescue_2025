@@ -11,16 +11,16 @@ void Sacc_Init(sacc_typedef* sacc, float j_max, float a_max, float a_supplement,
 
 void Angle_Constrain(sacc_typedef* sacc)
 {
+    sacc->delta = sacc->target - sacc->current;
     if(sacc->delta > 180)
         sacc->delta -= 360;
     else if(sacc->delta < -180)
         sacc->delta += 360;
 }
 
+
 void time_calculate(sacc_typedef* sacc)
 {
-    
-    sacc->delta = sacc->target - sacc->current;
     if(fabs(sacc->delta) < sacc->mininum)
     {
         sacc->time_flag = -1;

@@ -15,8 +15,8 @@
 
 #define XB_V_MAX 70    // 遥控速度范围 // 极限值为+-100
 #define XB_V_MIN -70
-#define XB_W_MAX 90  // 极限值为+-10
-#define XB_W_MIN -90
+#define XB_W_MAX 10  // 极限值为+-10
+#define XB_W_MIN -10
 #define PWM_MAX 4900
 #define PWM_MIN -4900
 
