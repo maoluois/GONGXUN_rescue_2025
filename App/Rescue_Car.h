@@ -12,6 +12,7 @@
 #include "stdlib.h"
 #include "position.h"
 #include "Saccelerate.h"
+#include "dma.h"
 
 #define XB_V_MAX 70    // 遥控速度范围 // 极限值为+-100
 #define XB_V_MIN -70
@@ -21,7 +22,10 @@
 #define PWM_MIN -4900
 
 void Rescue_Car_Init(void);
-extern PID_ControllerTypeDef velocity_pid;
+
 extern char debugrxdata[30];
+extern float mileage;
+extern uint8_t positionflag;
+
 #endif
 

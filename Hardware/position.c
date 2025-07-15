@@ -19,9 +19,9 @@ void Get_Position(short enl, short enr, imudata angle, float* x, float* y)
     p_yaw = angle.yaw*0.01745;
     Get_LinearSpeed(enl, enr, angle, &linear_speed);
     *y += linear_speed*cosf(p_yaw)*sampletime;
-    *x += linear_speed*sinf(p_yaw)*sampletime;
-
+    *x -= linear_speed*sinf(p_yaw)*sampletime;
 }
+
 
 void InverseKinematics_differential(float linear_speed, imudata angle, float wheel_distance, float *wheel1_speed, float *wheel2_speed)
 {

@@ -301,6 +301,7 @@ float fast_sqrt(float a)
         x = 0.5*(x+a/x);
         x = 0.5*(x+a/x);
         x = 0.5*(x+a/x);
+        x = 0.5*(x+a/x);
         return x;
     }
 }

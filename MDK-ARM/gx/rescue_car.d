@@ -62,3 +62,4 @@ gx\rescue_car.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
 gx\rescue_car.o: ../Hardware/position.h
 gx\rescue_car.o: ../Hardware/filter.h
 gx\rescue_car.o: ../Hardware/Saccelerate.h
+gx\rescue_car.o: ../Inc/dma.h

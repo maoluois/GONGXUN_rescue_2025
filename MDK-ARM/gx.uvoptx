@@ -153,52 +153,57 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_velocity,0x10</ItemText>
+          <ItemText>angle</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>angle</ItemText>
+          <ItemText>velocity_pid</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>jytempdata</ItemText>
+          <ItemText>turn_pid</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>velocity_pid</ItemText>
+          <ItemText>s_turn</ItemText>
         </Ww>
         <Ww>
           <count>4</count>
           <WinNumber>1</WinNumber>
-          <ItemText>derivative</ItemText>
+          <ItemText>position_pid</ItemText>
         </Ww>
         <Ww>
           <count>5</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gyro_pid</ItemText>
+          <ItemText>x</ItemText>
         </Ww>
         <Ww>
           <count>6</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_turn.current</ItemText>
+          <ItemText>y</ItemText>
         </Ww>
         <Ww>
           <count>7</count>
           <WinNumber>1</WinNumber>
-          <ItemText>turn_pid</ItemText>
+          <ItemText>positionflag</ItemText>
         </Ww>
         <Ww>
           <count>8</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_turn</ItemText>
+          <ItemText>mileage</ItemText>
         </Ww>
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_turn.target</ItemText>
+          <ItemText>tx</ItemText>
+        </Ww>
+        <Ww>
+          <count>10</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>ty</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

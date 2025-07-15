@@ -132,24 +132,22 @@ int main(void)
   MX_TIM16_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
     HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
     HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
-
     HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
     __HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
-    __HAL_UART_CLEAR_IDLEFLAG(&huart1);
     HAL_UART_Receive_IT(&huart1, (uint8_t*)debugrxdata, 30);
-    HAL_UART_Transmit(&huart2, (uint8_t*)command1, 5, 0xfff);
-    HAL_Delay(200);
-    HAL_UART_Transmit(&huart2, (uint8_t*)command2, 5, 0xfff);
-    HAL_Delay(4000);
-    HAL_UART_Transmit(&huart2, (uint8_t*)command3, 5, 0xfff);
-    HAL_Delay(100);
-    HAL_UART_Transmit(&huart2, (uint8_t*)command4, 5, 0xfff);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart1);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command1, 5, 0xfff);
+//    HAL_Delay(200);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command2, 5, 0xfff);
+//    HAL_Delay(4000);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command3, 5, 0xfff);
+//    HAL_Delay(100);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command4, 5, 0xfff);
 	Rescue_Car_Init();
 
   /* USER CODE END 2 */

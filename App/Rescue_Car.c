@@ -76,15 +76,28 @@ void Rescue_Car_Start(void* pv)
 ==============================================*/
 imudata angle;
 short enl, enr;
-float linear_speed, accspeed;
-float x, y;
-float v_target;
+float x, y; 
+float tx, ty;
+char debugrxdata[30];
+uint8_t debugflag;
+uint8_t positionflag = 10;
+
 void Data_Task(void* pv)
 {
     TickType_t pxPreviousWakeTime = xTaskGetTickCount();
     
     while(1)
     {
+        //imu获取数据可能有bug，用这个来重置
+        if((uint32_t*)imu_buffer[0] == 0 || (uint32_t*)imu_buffer[1] == 0) 
+        {
+            MX_DMA_Init();
+            MX_USART2_UART_Init();
+            SET_BIT(huart2.Instance->CR3, USART_CR3_DMAR);
+            SET_BIT(huart2.Instance->CR3, USART_CR3_EIE);
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
+        }
+        
         JY901S_DataConverse(&angle);//获取角度
         Get_Encoder(&enl, &enr);//获取编码值
         Get_Position(enl, enr, angle, &x, &y);
@@ -94,49 +107,52 @@ void Data_Task(void* pv)
     }
 }
 
-PID_ControllerTypeDef velocity_pid;
-PID_ControllerTypeDef gyro_pid;
-PID_ControllerTypeDef turn_pid;
-PID_ControllerTypeDef position_pid;
+
 sacc_typedef s_velocity;
 sacc_typedef s_turn;
-
 float pwm_l;
 float pwm_r;
+
 void Control_Task(void* pv)
 {
 //    TickType_t pxPreviousWakeTime = xTaskGetTickCount();
-    PID_Init(&velocity_pid,220, 10.0, 0, 0);//192   10.4
-    PID_Init(&gyro_pid,9.0, 0.7, 1, 0);//7.0   0.3   4.0
-    PID_Init(&turn_pid,7.5, 0.0007, 0, 0);//8.0  0  3.0
-    PID_Init(&position_pid, 2.2, 0.01, x, y);
+    PID_Init(&velocity_pid,220, 10.0, 0, 0);//220, 10.0, 0, 0
+    PID_Init(&gyro_pid, 7.5, 0.7, 0, 0);//9.0, 0.7, 1, 0
+    PID_Init(&turn_pid, 6.0, 0.0007, 2, 0);//7.5, 0.0007, 0, 0
+    PID_Init(&position_pid, 2.0, 0.01, 0, 0);//2.2, 0.01, 0, 0
     position_pid.lastError = 1000;
     Sacc_Init(&s_velocity, 650.0f, 200.0f, 20.0f, 5.0f);
     Sacc_Init(&s_turn, 550.0f, 200.0f, 20.0f, 1.0f);
+    
     while(1)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);//等待通知
-        if(positionflag != 0)
+        
+        //位置环串速度环
+        if(positionflag != 10)
         {
-            float position_out = PID_Position(&position_pid, x, y, xset, yset);
+            float position_out;
+            if(turn_pid.setpoint == s_turn.current && positionflag == 1)
+                positionflag = 2;
+            position_out = PID_Position(&position_pid, tx, ty, x, y);
             velocity_pid.setpoint = position_out;
         }
+        else//xbox来控制速度
+        {
+            acc_calculate(&s_velocity);
+            velocity_pid.setpoint = s_velocity.current;
+        }
         
-        
-        acc_calculate(&s_velocity);
-        velocity_pid.setpoint = s_velocity.current;
+        //转向环s形加速
         acc_calculate(&s_turn);
         s_turn.current > 180 ? s_turn.current = -180 : 0;
         s_turn.current < -180 ? s_turn.current = 180 : 0;
         turn_pid.setpoint = s_turn.current;
         
-         
         float velocity_out = PID_Velocity(&velocity_pid, (enl+enr));//速度环 
-//        float velocity_out = 0;
         float turn_out = PID_Turn(&turn_pid, angle.yaw);//转向环
         gyro_pid.setpoint = -turn_out;//串给角速度环
         float gyro_out = PID_Gyro(&gyro_pid, angle.gz);//角速度环
-//        float gyro_out = 0;
         pwm_l = velocity_out + gyro_out;//获取总pwm
         pwm_r = velocity_out - gyro_out;
         PID_Clamp(pwm_l, PWM_MIN, PWM_MAX);//限幅
@@ -145,8 +161,6 @@ void Control_Task(void* pv)
 //        xTaskDelayUntil(&pxPreviousWakeTime, 10);
     }
 }
-
-
 
 void Show_Task(void* pv)
 {
@@ -173,6 +187,7 @@ void Show_Task(void* pv)
           {
               turntemp = 0;
           }
+          //s形加速时间计算
           s_turn.target += turntemp;
           s_turn.target <-180 ? s_turn.target += 360 : 0;
           s_turn.target > 180 ? s_turn.target -= 360 : 0;
@@ -185,28 +200,31 @@ void Show_Task(void* pv)
     }
 }
 
-char debugrxdata[30];
-uint8_t debugflag;
-
 void Debug_Task(void* pv)
 {
     while(1)
     {
         
-        printf("%.2f, %d\r\n",velocity_pid.setpoint, enl+enr);
+//        printf("%.2f, %.2f\r\n", mileage, position_pid.setpoint);
         if(debugflag == 1)
         {
-//            sscanf(debugrxdata, "%4f", &v_target);
-//            s_turn.target = v_target;
-//            time_calculate(&s_turn);
+            
+            if(positionflag != 10)
+            {
+                sscanf(debugrxdata, "%4f,%4f", &tx, &ty);
+                s_turn.target = -atan2(tx-x, ty-y)* 57.296;
+                Angle_Constrain(&s_turn); 
+                time_calculate(&s_turn);
+                positionflag = 1;
+            }
+            if(debugrxdata[0] == 0x41)
+                positionflag = 0;
             
             debugflag = 0;
         }
         vTaskDelay(100);
     }
 }
-
-
 
 /*===================================================================================*/
 //各种回调

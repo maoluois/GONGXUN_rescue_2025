@@ -63,3 +63,4 @@ gx\saccelerate.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
 gx\saccelerate.o: ../Hardware/position.h
 gx\saccelerate.o: ../Hardware/filter.h
 gx\saccelerate.o: ../Hardware/Saccelerate.h
+gx\saccelerate.o: ../Inc/dma.h

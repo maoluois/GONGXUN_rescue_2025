@@ -63,3 +63,4 @@ gx\algorithm.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdlib.h
 gx\algorithm.o: ../Hardware/position.h
 gx\algorithm.o: ../Hardware/filter.h
 gx\algorithm.o: ../Hardware/Saccelerate.h
+gx\algorithm.o: ../Inc/dma.h
