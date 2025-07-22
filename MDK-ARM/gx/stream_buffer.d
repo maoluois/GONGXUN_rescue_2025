@@ -1,0 +1,14 @@
+gx\stream_buffer.o: ..\Middle\FreeRTOS\source\stream_buffer.c
+gx\stream_buffer.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\stream_buffer.o: D:\Keli5\ARM\ARMCC\Bin\..\include\string.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/FreeRTOS.h
+gx\stream_buffer.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\stream_buffer.o: ../Inc/FreeRTOSConfig.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/projdefs.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/portable.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/deprecated_definitions.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/portable/portmacro.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/mpu_wrappers.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/task.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/list.h
+gx\stream_buffer.o: ../Middle/FreeRTOS/include/stream_buffer.h

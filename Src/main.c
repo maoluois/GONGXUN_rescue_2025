@@ -26,16 +26,21 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "retarget.h"
+#include "Rescue_Car.h"
 #include "control.h"
-#include "filter.h"
-#include "Algorithm.h"
-#include "pid.h"
-#include <stdio.h>
-#include <string.h>
+#include "Delay.h"
+#include "encoder.h"
 #include "jy901s.h"
-#include "Xbox.h"
-#include "delay.h"
+#include "usart.h"
+
+//#include "retarget.h"
+//#include "filter.h"
+//#include "Algorithm.h"
+//#include "pid.h"
+//#include <stdio.h>
+//#include <string.h>
+//#include "Xbox.h"
+//#include "delay.h"
 
 
 /* USER CODE END Includes */
@@ -58,132 +63,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+char command1[] = {0xFF, 0XAA, 0X69, 0X88, 0XB5};
+char command2[] = {0xFF, 0xAA, 0x01, 0x01, 0x00};
+char command3[] = {0xFF, 0xAA, 0x01, 0x00, 0x00};
+char command4[] = {0xFF, 0xAA, 0x00, 0x00, 0x00};
 // controller PV
-int mode = 0;                 // 控制模式
-int task = 0;                 // 任务
-int state = 0;                // 状态
-int flag = 0;
 
-// encoder PV
-int32_t totalAngle1 = 0;      // 总的角度
-int32_t totalAngle2 = 0;
-int32_t lastAngle = 0;        // 上一次的角度
-// int16_t loopNum1 = 0;      // 防超上限
-// int16_t loopNum2 = 0;
-float wheel1_speed = 0;       // 轮子速度 （单位：cm/s）
-float wheel2_speed = 0;
-float wheel1_position = 0;    // 轮子位置
-float wheel2_position = 0;
-float wheel1_total_position = 0;       // 轮子总位移
-float wheel2_total_position = 0;       // 轮子总位移
-float last_wheel1_speed = 0;  // 上一次的轮子速度
-float last_wheel2_speed = 0;
-float wheel1_speedF = 0;      // 滤波后的轮子速度
-float wheel2_speedF = 0;
-float SetSpeed1 = 0;          // 设置目标速度（单位：cm/s）
-float SetSpeed2 = 0;
-float SetSpeed6 = 0;
-
-// car centre PV
-float CurrentDistance = 0;
-float linear_speed = 0;       // 线速度
-float SpeedY = 0;         // 目标速度（单位：cm/s）
-float angular_speed = 0;      // 角速度
-
-// usart PV
-xUART_TypeDef xUSART1 = {0};  // 串口1;
-xUART_TypeDef xUSART2 = {0};  // 串口2;
-xUART_TypeDef xUSART3 = {0};  // 串口3;
-xUART_TypeDef xUART4 = {0};  // 串口4;
-OranUART_TypeDef xUART5 = {0};  // 串口5;
-xUART_TypeDef xUSART6 = {0};  // 串口6;
-xUART_TypeDef xUART7 = {0};  // 串口7;
 xUART_TypeDef xUART8 = {0};  // 串口8;
-    // Imu JY901s PV
-    JY_USART JY901s = {0};   // 本例中具有JY901s使用串口2
-    // ########################################################################
-    #define Receiveing 1
-    #define Free 0
-    uint8_t recieve_flag = 0 ;
+// 
 
-    uint8_t buf ;
-    uint8_t str_data[100];
-    uint8_t str_index = 0;
-
-    float accelerate_x ;
-    float accelerate_y ;
-    float accelerate_z ;
-
-    float angel_velocity_x ;
-    float angel_velocity_y ;
-    float angel_velocity_z ;
-
-    float angle_x ;
-    float angle_y ;
-    float angle_z ;
-
-    uint8_t data_ok = 0;
-
-    // uint8_t Test_data(uint8_t* str , uint8_t lenth)
-    // {
-    //     uint8_t result = 0 ;
-    //     for( uint8_t i = 0 ; i < lenth ; i++ )
-    //     {
-    //         result = result + str[i];
-    //
-    //     }
-    //     return result;
-    // }
-    // ###############################################################################
-    float yaw = 0;
-    float yawF = 0;
-
-    // Xbox PV
-    uint16_t XboxData[4]  = {9, 9, 0 ,0};
-
-    // camera PV
-    volatile class_Ogpi red_ball = {0};
-    volatile class_Ogpi blue_ball = {0};
-    volatile class_Ogpi yellow_ball = {0};
-    volatile class_Ogpi black_ball = {0};
-    volatile class_Ogpi blue_aim = {0};
-    volatile class_Ogpi red_aim = {0};
-    volatile class_Ogpi blue_base = {0};
-    volatile class_Ogpi red_base = {0};
-    volatile uint8_t class = 0;
-    float biasX = 0;
-    float biasY = 0;
-
-// fliter PV
-float mean_buff1[fliter_buffer_size];             // 滤波缓冲
-float mean_buff2[fliter_buffer_size];
-float mean_buff3[fliter_buffer_size];
-int buff_index1 = 0;                // 滤波缓冲区索引
-int buff_index2 = 0;
-
-// DMA PV
-// extern uint8_t Rx_data8[BUFFER_SIZE];    // 接收数组
-// extern uint8_t Rx_len8;    // 接收长度
-// extern volatile uint8_t Rx_flag; // 接收标志
-
-// struct PID
-PID_ControllerTypeDef motor1PID_V = {0};
-PID_ControllerTypeDef motor2PID_V = {0};
-PID_ControllerTypeDef motor1PID_P = {0};
-PID_ControllerTypeDef motor2PID_P = {0};
-PID_ControllerTypeDef distancePID = {0};
-PID_ControllerTypeDef anglePID = {0};
-PID_ControllerTypeDef ImuPID = {0};
-float pidOutputV1 = 0;
-float pidOutputV2 = 0;
-float pidOutputYaw = 0;
-float pid_out_position1 = 0;
-float pid_out_position2 = 0;
-float Position_out_Y = 0;
-float Position_pid_outer1 = 0;
-float Position_pid_outer2 = 0;
-// float pidOutputBc = 0;
-// float pid_end = 0;
 
 /* USER CODE END PV */
 
@@ -191,22 +79,7 @@ float Position_pid_outer2 = 0;
 void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
-// vofa串口调试函数
-void USART_PID_Adjust(uint8_t Motor_n,PID_ControllerTypeDef *pid);
-float Get_Data(void);
 
-// 任务执行函数
-void CalculateWheelSpeeds(class_Ogpi ball, float* motor1_speed, float* motor2_speed, float* biasX, float* biasY);
-void InitializeAll() {
-    InitializeOgpi(&red_ball, RED_BALL);
-    InitializeOgpi(&blue_ball, BLUE_BALL);
-    InitializeOgpi(&yellow_ball, YELLOW_BALL);
-    InitializeOgpi(&black_ball, BLACK_BALL);
-    InitializeOgpi(&blue_aim, BLUE_AIM);
-    InitializeOgpi(&red_aim, RED_AIM);
-    InitializeOgpi(&blue_base, BLUE_BASE);
-    InitializeOgpi(&red_base, RED_BASE);
-}
 
 /* USER CODE END PFP */
 
@@ -251,46 +124,31 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init();
   MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
   MX_TIM17_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
   MX_UART8_Init();
   MX_UART5_Init();
+  MX_TIM16_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
-  RetargetInit(&huart1);
-  delay_init(480);
-  //JY901s_Init(&JY901s);  // 初始化JY901串口
-  PID_Init(&motor1PID_V, 8.8f, 0.066f, 39.9f, 0);
-  PID_Init(&motor2PID_V, 8.1f, 0.066f, 38.8f, 0);
-  PID_Init(&motor1PID_P, 0.60f, 0, 0, 0);
-  PID_Init(&motor2PID_P, 0.66f, 0, 0, 0);
-  PID_Init(&distancePID, -0.050f, 0, 0, 0);
-  PID_Init(&anglePID, 0.0023f, 0, 0, 0);
-  HAL_TIM_Base_Init(&htim3);
-  HAL_TIM_Base_Init(&htim4);
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-  HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-  HAL_TIM_Base_Start_IT(&htim17);
-  HAL_UART_Receive_IT(&huart1, xUSART1.BuffTemp, 1);
-  HAL_UART_Receive_IT( &huart2 , (uint8_t *)&buf ,1);
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart5, xUART5.BuffTemp, sizeof(xUART5.BuffTemp));
-  //HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));
-  InitializeAll();
-  HAL_Delay(500); // 初始化的编码器有误差 需要延时，等编码器稳定后，将位置归0
-  wheel1_total_position = 0;
-  wheel2_total_position = 0;
-  Set_servo1(open);
-  HAL_Delay(1000);
-  printf("Init OK!\n");
-
-  while (xUART5.ReceiveNum == 0);
-
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t*) imu_buffer, 44);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+    HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+    HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));
+    __HAL_UART_ENABLE_IT(&huart1, UART_IT_IDLE);
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)debugrxdata, 30);
+    __HAL_UART_CLEAR_IDLEFLAG(&huart1);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command1, 5, 0xfff);
+//    HAL_Delay(200);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command2, 5, 0xfff);
+//    HAL_Delay(4000);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command3, 5, 0xfff);
+//    HAL_Delay(100);
+//    HAL_UART_Transmit(&huart2, (uint8_t*)command4, 5, 0xfff);
+	Rescue_Car_Init();
 
   /* USER CODE END 2 */
 
@@ -298,381 +156,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      // 调试使用
-      // Set_motor1(100);
-      // Set_servo1(close);
-      // HAL_Delay(1000);
-      // Set_servo1(205);
-      // HAL_Delay(1000);
-      // yaw = JY901s.angle.angle[2];
-      // back_forward();
-      // delay_ms(1000);
-      // stop();
-      // delay_ms(1000);
-
-        printf("%d\n", state);
-      // 角度调参
-      // printf("%f,%f,%f,%f\n",ImuPID.Kp, angle_z, ImuPID.setpoint, angel_velocity_z);
-
-      // 速度环使用
-      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, motor2PID_V.Kp, wheel1_speed, wheel1_speedF, wheel2_speed, wheel2_speedF, motor1PID_V.setpoint, motor2PID_V.setpoint);
-
-      // 位置环使用
-      // printf("%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_P.Kp, motor2PID_P.Kp, wheel1_total_position, wheel2_total_position, motor1PID_P.setpoint, motor2PID_P.setpoint, wheel1_speedF, wheel2_speedF);
-
-      // HAL_Delay(2);
-      // 获取角度
-      // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);
-      // printf("%d\n", state);
-      // // ********************************************************************************************
-    //  任务代码
-      if (task == 0)
-    {
-        switch (state)
-        {
-        case 0: // 旋转直到找到蓝球
-            if (blue_ball.x == Camera_centerX && blue_ball.y == Camera_centerY)
-            {
-                turn_around();
-                state = 0;
-                break;
-            }
-            else
-            {
-                state = 1;
-                break;
-            }
-
-        case 1: // 只夹蓝球
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            printf("%f,%f\n", biasX, biasY);
-            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-            {
-                Set_servo1(close);
-                delay_ms(500); // 等待夹取完成
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                state = 2;
-                break;
-            }
-            else
-            {
-                state = 1;
-                break;
-            }
-
-        case 2: // 旋转直到找到蓝安全区
-            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-            {
-                turn_around();
-                state = 2;
-                break;
-            }
-            else
-            {
-                state = 3;
-                break;
-            }
-
-        case 3:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 20 && biasX > -20 && biasY < 270 && biasY > 0)
-            {
-                Set_servo1(open);  // 放球
-                delay_ms(500);
-                state = 4;
-                break;
-            }
-            else
-            {
-                state = 3;
-                break;
-            }
-
-        case 4: // 后退
-            back_forward();
-            delay_ms(1800);
-            stop();
-            delay_ms(300);
-            state = 5;
-            InitializeOgpi(&blue_ball, BLUE_BALL);
-            break;
-
-        case 5: // 旋转直到找到第二个蓝球
-            if (blue_ball.x == Camera_centerX && blue_ball.y == Camera_centerY)
-            {
-                state = 5;
-                turn_around();
-                break;
-            }
-            else
-            {
-                state = 6;
-                break;
-            }
-
-        case 6: // 只夹第二个蓝球
-            CalculateWheelSpeeds(blue_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            // printf("%f,%f\n", biasX, biasY);
-            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-            {
-                Set_servo1(close);
-                delay_ms(500); // 等待夹取完成
-                state = 7;
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                break;
-            }
-            else
-            {
-                state = 6;
-                break;
-            }
-
-        case 7: // 旋转直到找到蓝安全区
-            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-            {
-                turn_around();
-                state = 7;
-                break;
-            }
-            else
-            {
-                state = 8;
-                break;
-            }
-
-        case 8:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 20 && biasX > -20 && biasY < 270 && biasY > 0)
-            {
-                Set_servo1(open);  // 放球
-                delay_ms(500);
-                state = 9;
-                break;
-            }
-            else
-            {
-                state = 8;
-                break;
-            }
-
-        case 9: // 后退
-            back_forward();
-            delay_ms(1800);
-            stop();
-            delay_ms(300);
-            state = 10;
-            InitializeOgpi(&black_ball, BLACK_BALL);
-            break;
-
-        case 10: // 旋转直到找到黑球
-            if (black_ball.x == Camera_centerX && black_ball.y == Camera_centerY)
-            {
-                state = 10;
-                turn_around();
-                break;
-            }
-            else
-            {
-                state = 11;
-                break;
-            }
-
-        case 11: // 只夹黑球
-            CalculateWheelSpeeds(black_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            // printf("%f,%f\n", biasX, biasY);
-            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-            {
-                Set_servo1(close);
-                delay_ms(500); // 等待夹取完成
-                state = 12;
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                break;
-            }
-            else
-            {
-                state = 11;
-                break;
-            }
-
-        case 12: // 旋转直到找到蓝安全区
-            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-            {
-                turn_around();
-                state = 12;
-                break;
-            }
-            else
-            {
-                state = 13;
-                break;
-            }
-
-        case 13:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 20 && biasX > -20 && biasY < 250 && biasY > 0)
-            {
-                Set_servo1(open);  // 放球
-                delay_ms(500);
-                state = 14;
-                break;
-            }
-            else
-            {
-                state = 13;
-                break;
-            }
-
-        case 14: // 后退
-            back_forward();
-            delay_ms(1800);
-            stop();
-            delay_ms(300);
-            state = 15;
-            InitializeOgpi(&yellow_ball, YELLOW_BALL);
-            break;
-
-        case 15: // 旋转直到找到黄球
-            if (yellow_ball.x == Camera_centerX && yellow_ball.y == Camera_centerY)
-            {
-                state = 15;
-                turn_around();
-                break;
-            }
-            else
-            {
-                state = 16;
-                break;
-            }
-
-        case 16: // 只夹黄球
-            CalculateWheelSpeeds(yellow_ball, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            // printf("%f,%f\n", biasX, biasY);
-            if (biasX < 100 && biasX > -100 && biasY < 60 && biasY > 0)
-            {
-                Set_servo1(close);
-                delay_ms(500); // 等待夹取完成
-                state = 17;
-                InitializeOgpi(&blue_aim, BLUE_AIM);
-                break;
-            }
-            else
-            {
-
-                state = 16;
-                break;
-            }
-
-        case 17: // 旋转直到找到蓝安全区
-            if (blue_aim.x == Camera_centerX && blue_aim.y == Camera_centerY)
-            {
-                turn_around();
-                state = 17;
-                break;
-            }
-            else
-            {
-                state = 18;
-                break;
-            }
-
-        case 18:
-            CalculateWheelSpeeds(blue_aim, &motor1PID_V.setpoint, &motor2PID_V.setpoint, &biasX, &biasY);
-            if (biasX < 20 && biasX > -20 && biasY < 250 && biasY > 0)
-            {
-                Set_servo1(open);  // 放球
-                delay_ms(500);
-                state = 19;
-                break;
-            }
-            else
-            {
-                state = 18;
-                break;
-            }
-
-        case 19: // 后退
-            back_forward();
-            delay_ms(1800);
-            stop();
-            delay_ms(300);
-            state = 20;
-            break;
-
-        default:
-            break;
-        }
-    }
-      // stop();
-
-
-      if (XboxData[0] != 0 && XboxData[0] != 1 && XboxData[1] != 0 && XboxData[1] != 1)  // xbox没连接时是9,9,0,0
-      {
-
-          // motor1PID_V.setpoint = 0;
-          // motor2PID_V.setpoint = 0;   // 罪魁祸首
-          // printf("xbox not connected\n");
-          // mode = 1;  // 位置环模式
-      }
-      else
-      {
-          // printf("xbox connected\n");
-          mode = 0;  // 遥控（速度环）模式
-          task = 1;
-          calculate_target_speeds(XboxData[2], XboxData[3], &SpeedY, &angular_speed);
-          if (XboxData[0] == 1)
-          {
-               Set_servo1(close);
-          }
-          if (XboxData[1] == 1)
-          {
-               Set_servo1(open);
-          }
-          if (SpeedY < 3.99 && SpeedY > -3.99)   // 死区防止静止时抖动
-          {
-              SpeedY = 0;
-              // printf("%f\n", SpeedY);
-          }
-          if (angular_speed < 0.05 && angular_speed > -0.05)
-          {
-              angular_speed = 0;
-              // printf("%f\n", angular_speed);
-          }
-          InverseKinematics_differential(SpeedY, angular_speed, WheelDistance, &motor1PID_V.setpoint, &motor2PID_V.setpoint);
-      }
-
-      // ********************************************************************************************
+        
+        
+//      // ********************************************************************************************
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      // if (JY901s.ReceiveNum)
-      // {
-      //     JY901s_Process();
-      //     printf("ASCII : %f", JY901s.angle.angle[2]);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
-      //     JY901s.ReceiveNum = 0;
-      // }
 
-      // 有一帧数据就解析Xbox数据
-
-      if (xUART8.ReceiveNum)                                                  // 判断字节数
-      {
-          Get_Data_Xbox(xUART8.ReceiveData);// 解析Xbox数据
-          // printf("%s\n", (char *)xUART8.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
-          // printf("%d,%d,%d,%d\n", XboxData[0], XboxData[1], XboxData[2], XboxData[3]);// 显示换行
-          xUART8.ReceiveNum = 0;                                             // 清0接收标记
-
-      }
-
-      if (xUART5.ReceiveNum)// 判断字节数
-      {
-          Get_Data_Ogpi(xUART5.ReceiveData);                                 // 解析Ogpi数据
-          // printf("%s\n", (char *)xUART5.ReceiveData);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
-          // printf("%f,%f,%f,%f\n", linear_speed, angular_speed, motor1PID_V.setpoint, motor2PID_V.setpoint);// 显示换行
-          // printf("%d,%f,%f,%f,%f\n", blue_aim.class, blue_aim.x, blue_aim.y, motor1PID_V.setpoint, motor2PID_V.setpoint);// 显示换行
-          // printf("%d,%f,%f,%f,%f\n", blue_ball.class, blue_ball.x, blue_ball.y, motor1PID_V.setpoint, motor2PID_V.setpoint);// 显示换行
-          xUART5.ReceiveNum = 0;                                             // 清0接收标记
-
-      }
   }
   /* USER CODE END 3 */
 }
@@ -736,405 +227,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void CalculateWheelSpeeds(class_Ogpi ball, float* motor1_speed, float* motor2_speed, float* biasX, float* biasY) {
-    distancePID.setpoint = 640 - Camera_centerY;  // 640是摄像头的高度
-    anglePID.setpoint = Camera_centerX;
-    *biasX = Camera_centerX - ball.x;
-    *biasY = (640 - Camera_centerY) - ball.y;
-    // printf("%f,%f,%f,%f\n", *biasX, *biasY, ball.x, ball.y);
-    float linear_speed = PID_Compute(&distancePID, ball.y);
-    float angular_speed = PID_Compute(&anglePID, ball.x);
-    InverseKinematics_differential(linear_speed, angular_speed, WheelDistance, motor1_speed, motor2_speed);
-}
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    // 定时10ms(240000000 / 2400 / 500 = 200)
-    if (htim->Instance == htim17.Instance)
-    {
 
-        // 获取脉冲
-        int16_t pluse1 = COUNTERNUM1;
-        int16_t pluse2 = COUNTERNUM2;
-
-        totalAngle1 = pluse1;
-        totalAngle2 = pluse2;
-
-        // 计算速度
-        wheel1_speed = -((float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒 （AB相反）
-        wheel2_speed = ((float)(totalAngle2 - RELOADVALUE / 2.0) / ConvertParam) * 200 * WheelCircumference;  // 单位：厘米/秒
-        // printf("%f,%f,%f,%f\n", wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2);
-
-        // 计算位置
-        wheel1_position = (float)(totalAngle1 - RELOADVALUE / 2.0) / ConvertParam * WheelCircumference;  // 单位：厘米
-        wheel1_total_position += wheel1_position;
-        wheel2_position = -(float)(totalAngle2 - RELOADVALUE / 2.0) / ConvertParam * WheelCircumference;  // 单位：厘米
-        wheel2_total_position += wheel2_position;
-
-        // 均值滤波
-        mean_buff1[buff_index1] = wheel1_speed;
-        mean_buff2[buff_index1] = wheel2_speed;
-        buff_index1 ++;
-        mean_buff3[buff_index2++] = JY901s.angle.angle[2];
-        wheel1_speedF = mean_fliter(mean_buff1, buff_index1);
-        wheel2_speedF = mean_fliter(mean_buff2, buff_index1);
-        yawF = mean_fliter(mean_buff3, buff_index2);
-
-        // // 滑动窗口均值滤波
-        // wheel1_speed = Filter_SlidingWindowAvg(motor1, wheel1_speed);
-        // wheel2_speed = Filter_SlidingWindowAvg(motor2, wheel2_speed);
-
-        // 索引更新
-        if (buff_index1 >= fliter_mean_sample1)
-        {
-            buff_index1 = 0;
-            // // 记录上一次的速度
-            // last_wheel1_speed = wheel1_speed;
-        }
-         if (buff_index2 >= fliter_mean_sample1)
-        {
-            buff_index2 = 0;
-            // // 记录上一次的速度
-            // last_wheel2_speed = wheel2_speed;
-        }
-
-//      printf("%d, %d\n", totalAngle, lastAngle);                                // 调试使用
-//      printf("%f, %f\n", (float)(totalAngle - lastAngle), speed);               // 调试使用
-//      lastAngle = totalAngle;
-        //
-        // // 速度PID
-        // pidOutputV1 = PID_Velocity(&motor1PID_V, wheel1_speedF);
-        // pidOutputV2 = PID_Velocity(&motor2PID_V, wheel2_speedF);
-        //
-        // // 输出PWM（用于调试速度PID)
-        // Set_motor1(pidOutputV1);
-        // Set_motor2(pidOutputV2);
-
-        if (mode == 1)
-        {
-            // 位置PID ??? 有问题
-            pid_out_position1 = PID_Position(&motor1PID_P, wheel1_total_position);
-            pid_out_position2 = PID_Position(&motor2PID_P, wheel2_total_position);
-
-            Position_out_Y = (pid_out_position1 + pid_out_position2) / 2.0;
-
-            // 角度PID
-            pidOutputYaw = PID_Turn(&ImuPID, angle_z, angel_velocity_z);
-
-            InverseKinematics_differential(Position_out_Y, pidOutputYaw, WheelDistance, &Position_pid_outer1, &Position_pid_outer2);
-
-            // 速度PID
-            pidOutputV1 = PID_Velocity(&motor1PID_V, Position_pid_outer1);
-            pidOutputV2 = PID_Velocity(&motor2PID_V, Position_pid_outer2);
-
-            Set_motor1(pidOutputV1);
-            Set_motor2(pidOutputV2);
-        }
-        else
-        {
-            // 速度PID
-            pidOutputV1 = PID_Velocity(&motor1PID_V, wheel1_speedF);
-            pidOutputV2 = PID_Velocity(&motor2PID_V, wheel2_speedF);
-
-            // 输出PWM（用于调试速度PID)
-            Set_motor1(pidOutputV1);
-            Set_motor2(pidOutputV2);
-        }
-        // printf("%f,%f,%f\n", pidOutputV1, pidOutputV2, SetSpeed1);
-
-        // // 计算角度PID
-        // pidOutputYaw = PID_Turn(&ImuPID, yaw, fGyro[2]);
-        //
-        // // 输出PWM（用于调试角度PID）
-        // if (pidOutputYaw > 0)           // 方向不一定正确，需要根据实际情况调整
-        // {
-        //     Set_pulse1(pidOutputYaw);
-        //     Set_pulse2(-pidOutputYaw);
-        // }
-        // else
-        // {
-        //     Set_pulse1(-pidOutputYaw);
-        //     Set_pulse2(pidOutputYaw);
-        // }
-
-        // printf("%f,%f,%f,%f,%f,%f,%f,%f,%f\n" ,motor1PID_V.Kp, wheel1_speed, wheel2_speed, SetSpeed1, SetSpeed2, pitch, SetSpeed6, COUNTERNUM1, COUNTERNUM2);
-
-        // 重置计数器 （重置到重装值的中间值，也可以重置到0，不过反转得到的数需要取补码）
-        __HAL_TIM_SetCounter(&htim1, RELOADVALUE / 2);
-        __HAL_TIM_SetCounter(&htim2, RELOADVALUE / 2);
-
-    //  printf("%f, %f, %f, %f, %f, %f\n", motor1PID_V.Kp, motor1PID_V.Ki, motor1PID_V.Kd, speed, SetSpeed, (float)(totalAngle - RELOADVALUE / 2.0)); // 调试使用
-    }
-
-}
-
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-{
-    // printf("enter\r\n");
-    // 未调试
-    // if (huart == &huart1)  // 判断是否是串口1产生的中断
-    // {
-    //     __HAL_UNLOCK(huart);
-    //     xUSART1.ReceiveNum ++;                        // 每接收到一个数据，接收长度加1
-    //     xUSART1.ReceiveData[xUSART1.ReceiveNum - 1] = xUSART1.BuffTemp[0];  // 将接收到的数据存入缓存数组
-    //
-    //     if (xUSART1.BuffTemp[0] == '!')         // 判断是否接收到结束标志（这里以0x21为例，可以根据实际情况修改）
-    //     {
-    //         // printf("RXLen=%d\r\n", xUSART1.ReceiveNum);  // 输出接收到的指令长度
-    //         // for (int i = 0; i < xUSART1.ReceiveNum; i++)
-    //         //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
-    //
-    //         USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-    //         USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-    //         USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-    //         memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
-    //         xUSART1.ReceiveNum = 0;  // 重置接收长度计数
-    //     }
-    //     xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
-    //     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, xUSART1.BuffTemp, sizeof(xUSART1.BuffTemp));
-    // }
-    // 未调试
-    // if (huart == &huart2)
-    // {
-    //    __HAL_UNLOCK(huart);
-    //     JY901s.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体
-    //     memset(JY901s.angle.angle, 0, sizeof(JY901s.angle.angle));                       // 清0前一帧的接收数据
-    //     memset(JY901s.w.w, 0, sizeof(JY901s.w.w));
-    //     memset(JY901s.acc.a, 0, sizeof(JY901s.acc.a));
-    //     JY901s_Process();
-    //     printf("ASCII : %f", JY901s.angle.angle[2]);    // 显示数据，以ASCII方式显示，即以字符串的方式显示
-    //     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, JY901s.BuffTemp, sizeof(JY901s.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
-    // }
-
-    if (huart == &huart5)                                                                    // 判断串口
-    {
-        __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
-        xUART5.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
-        memset(xUART5.ReceiveData, 0, sizeof(xUART5.ReceiveData));                         // 清0前一帧的接收数据
-        memcpy(xUART5.ReceiveData, xUART5.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
-        HAL_UARTEx_ReceiveToIdle_DMA(&huart5, xUART5.BuffTemp, sizeof(xUART5.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
-        // 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
-    }
-
-    if (huart == &huart8)                                                                    // 判断串口
-    {
-        __HAL_UNLOCK(huart);                                                                 // 解锁串口状态
-        xUART8.ReceiveNum  = Size;                                                          // 把接收字节数，存入结构体xUSART8.ReceiveNum，以备使用
-        memset(xUART8.ReceiveData, 0, sizeof(xUART8.ReceiveData));                         // 清0前一帧的接收数据
-        memcpy(xUART8.ReceiveData, xUART8.BuffTemp, Size);                                 // 把新数据，从临时缓存中，复制到xUSART8.ReceiveData[], 以备使用
-        HAL_UARTEx_ReceiveToIdle_DMA(&huart8, xUART8.BuffTemp, sizeof(xUART8.BuffTemp));   // 再次开启DMA空闲中断; 每当接收完指定长度，或者产生空闲中断时，就会来到这个
-// 其实，在CubeMX配置中，DMA有一个选项 ：Mode的circular, 可以让DMA进行连续地的工作，接收完成后，无需在回调函数里再次开启DMA 。但是，目前的CubeMX版本(V6.10），这个参数的选择，会使我们上面的DMA接收与发送，相冲突。那我们二选一好了，自行手工调用。
-    }
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
-{
-    if (UartHandle->Instance == USART1)  // 判断是否是串口1产生的中断
-    {
-        xUSART1.ReceiveNum ++;                        // 每接收到一个数据，接收长度加1
-        xUSART1.ReceiveData[xUSART1.ReceiveNum - 1] = xUSART1.BuffTemp[0];  // 将接收到的数据存入缓存数组
-
-        if (xUSART1.BuffTemp[0] == '!')         // 判断是否接收到结束标志（这里以0x21为例，可以根据实际情况修改）
-        {
-            // printf("RXLen=%d\r\n", xUSART1.ReceiveNum);  // 输出接收到的指令长度
-            // for (int i = 0; i < xUSART1.ReceiveNum; i++)
-            //    printf("UART xUSART1.ReceiveData[%d] = %c\r\n", i, xUSART1.ReceiveData[i]);  // 输出接收到的完整指令
-
-            // USART_PID_Adjust(1, &motor1PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            // USART_PID_Adjust(2, &motor2PID_V);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            USART_PID_Adjust(6, &ImuPID);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            USART_PID_Adjust(8, &motor1PID_P);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            USART_PID_Adjust(9, &motor2PID_P);  // 解析指令并赋值到对应变量（这里示例传入参数1，可根据实际情况修改）
-            memset(xUSART1.ReceiveData, 0, sizeof(xUSART1.ReceiveData));  // 清空接收缓存
-            xUSART1.ReceiveNum = 0;  // 重置接收长度计数
-        }
-        xUSART1.BuffTemp[0] = 0;  // 清空接收缓冲
-        HAL_UART_Receive_IT(&huart1, (uint8_t *)xUSART1.BuffTemp, 1);  // 重新启动串口中断接收下一个字符
-    }
-
-//     if(UartHandle->Instance == USART2)
-//     {
-//
-//         if( buf == 0x55 && recieve_flag == Free )
-//         {
-//             str_data[str_index] = buf ;
-//             str_index++;
-//             recieve_flag = Receiveing ;
-//         }
-//         else if( recieve_flag == Receiveing )
-//         {
-//             str_data[str_index] = buf ;
-//             str_index++;
-//             if( str_index > 70 )
-//             {
-//                 str_index = 0 ;
-//             }
-//             if( str_index == 11 )
-//             {
-//                 uint8_t item = Test_data( str_data , 10 ) ;
-//                 if( item == str_data[10] )
-//                 {
-//                     data_ok = 1 ;
-//                     switch ( str_data[1])
-//                     {
-//                     case 0x51:
-//
-//                         accelerate_x = (float)((((short)str_data[3]<<8)|str_data[2])*1.0/32768*156.8);
-//                         accelerate_y = (float)((((short)str_data[5]<<8)|str_data[4])*1.0/32768*156.8);
-//                         accelerate_z = (float)((((short)str_data[7]<<8)|str_data[6])*1.0/32768*156.8);
-//                         break;
-//
-//                     case 0x52:
-//                         angel_velocity_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*2000 );
-//                         angel_velocity_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*2000 );
-//                         angel_velocity_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*2000 );
-//                         break;
-//
-//                     case 0x53:
-//                         angle_x = (float)( ((short)str_data[3]<<8|str_data[2])*1.0/32768*180 );
-//                         angle_y = (float)( ((short)str_data[5]<<8|str_data[4])*1.0/32768*180 );
-//                         angle_z = (float)( ((short)str_data[7]<<8|str_data[6])*1.0/32768*180 );
-//                         if ((angle_z > 358 && angle_z < 360) || (angle_z < 2 && angle_z > 0))
-//                         {
-//                             angle_z = 0;
-//                         }
-//                         break;
-//
-//                     default:
-//                         break;
-//                     }
-//                     recieve_flag = Free ;
-//
-//                 }
-//                 str_index = 0 ;
-//                 recieve_flag = Free ;
-//             }
-//         }
-//
-//         HAL_UART_Receive_IT(&huart2 , (uint8_t *)&buf ,1);
-//     }
-//
-//
-}
-
-// 解析从指令缓存中提取数据
-float Get_Data(void)
-{
-    float Decimal = 0;            // 小数数据
-    float Integer = 0;            // 整数数据
-    uint8_t data_Decimal_len = 0; // 小数数据长度
-    uint8_t data_Integer_len = 0; // 整数数据长度
-    uint8_t data_Point_Num = 0;   // 小数点位置
-    uint8_t data_Start_Num = 0;   // 数据位开始位置
-    uint8_t data_End_Num = 0;     // 数据位结束位置
-    uint8_t minus_Flag = 0;       // 负数标志
-    float data_return = 0;        // 解析得到的数据
-    // 查找等号、小数点和感叹号的位置
-    for (uint8_t i = 0; i < 200; i++)
-    {
-        if (xUSART1.ReceiveData[i] == '=')
-            data_Start_Num = i + 1;  // 找到等号后面的位置作为数据起始位
-        if (xUSART1.ReceiveData[i] == '.')
-            data_Point_Num = i;
-        if (xUSART1.ReceiveData[i] == '!')
-        {
-            data_End_Num = i - 1;  // 找到感叹号前面的位置作为数据结束位
-            break;
-        }
-    }
-
-    // 判断数据是否为负数
-    if (xUSART1.ReceiveData[data_Start_Num] == '-')
-    {
-        data_Start_Num += 1;  // 如果是负数，数据起始位后移一位
-        minus_Flag = 1;       // 设置负数标志
-    }
-    // 计算整数长度
-    data_Integer_len = data_Point_Num - data_Start_Num;
-    // 计算小数长度
-    data_Decimal_len = data_End_Num - data_Point_Num;
-
-    // 计算整数数据
-    Integer = data_Integer_calculate(data_Integer_len, data_Start_Num, xUSART1.ReceiveData);
-
-    // 计算小数数据
-    Decimal = (data_Decimal_calculate(data_Decimal_len, data_Point_Num, xUSART1.ReceiveData));
-
-    data_return = Integer + Decimal;
-    if (minus_Flag == 1)
-        data_return = -data_return;  // 如果是负数，取负值
-
-    // printf("data_return:%lf\n", data_return);
-
-    return data_return;  // 返回解析得到的数据
-}
-
-// 根据接收到的指令内容进行PID参数调整
-void USART_PID_Adjust(uint8_t Motor_n, PID_ControllerTypeDef *pid)
-{
-    float data_Get = Get_Data();  // 解析得到的数据
-    // 根据指令内容赋值到对应的PID参数或目标变量
-    if (Motor_n == 1)  // 电机1
-    {
-
-        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '1')
-            pid->Kp = data_Get;     // 速度环P参数
-        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '1')
-            pid->Ki = data_Get;     // 速度环I参数
-        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '1')
-            pid->Kd = data_Get;     // 速度环D参数
-        else if ((xUSART1.ReceiveData[0] == 'S' && xUSART1.ReceiveData[1] == 'p') && xUSART1.ReceiveData[2] == 'e')
-            pid->setpoint = data_Get;     // 目标速度
-            SetSpeed1 = pid->setpoint;
-    }
-
-    if (Motor_n == 2)  // 电机2
-    {
-        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '2')
-            pid->Kp = data_Get;     // 速度环P参数
-        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '2')
-            pid->Ki = data_Get;     // 速度环I参数
-        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '2')
-            pid->Kd = data_Get;     // 速度环D参数
-        else if ((xUSART1.ReceiveData[0] == 'S' && xUSART1.ReceiveData[1] == 'p') && xUSART1.ReceiveData[2] == 'e')
-            pid->setpoint = data_Get;     // 目标速度
-            SetSpeed2 = pid->setpoint;
-    }
-
-    if (Motor_n == 6)  // IMU
-    {
-        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '6')
-            pid->Kp = data_Get;     // 速度环P参数
-        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '6')
-            pid->Kd = data_Get;     // 速度环D参数
-        else if ((xUSART1.ReceiveData[0] == 'S' && xUSART1.ReceiveData[1] == 'p') && xUSART1.ReceiveData[2] == 'e')
-            pid->setpoint = data_Get;  // 目标速度
-            SetSpeed6 = pid->setpoint;
-    }
-
-    if (Motor_n == 8)  // 电机1位置环
-    {
-        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '8')
-            pid->Kp = data_Get;     // 位置环P参数
-        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '8')
-            pid->Ki = data_Get;     // 位置环I参数
-        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '8')
-            pid->Kd = data_Get;     // 位置环D参数)
-        else if ((xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == 'o') && xUSART1.ReceiveData[2] == 's')
-            pid->setpoint = data_Get;  // 目标速度)
-    }
-
-    if (Motor_n == 9)  // 电机2位置环
-    {
-        if (xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == '9')
-            pid->Kp = data_Get;     // 位置环P参数
-        else if (xUSART1.ReceiveData[0] == 'I' && xUSART1.ReceiveData[1] == '9')
-            pid->Ki = data_Get;     // 位置环I参数
-        else if (xUSART1.ReceiveData[0] == 'D' && xUSART1.ReceiveData[1] == '9')
-            pid->Kd = data_Get;     // 位置环D参数)
-        else if ((xUSART1.ReceiveData[0] == 'P' && xUSART1.ReceiveData[1] == 'o') && xUSART1.ReceiveData[2] == 's')
-            pid->setpoint = data_Get;  // 目标速度)
-    }
-}
 
 /* USER CODE END 4 */
 
@@ -1165,6 +258,28 @@ void MPU_Config(void)
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM5 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM5)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
 }
 
 /**

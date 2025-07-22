@@ -1,0 +1,13 @@
+gx\croutine.o: ..\Middle\FreeRTOS\source\croutine.c
+gx\croutine.o: ../Middle/FreeRTOS/include/FreeRTOS.h
+gx\croutine.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stddef.h
+gx\croutine.o: D:\Keli5\ARM\ARMCC\Bin\..\include\stdint.h
+gx\croutine.o: ../Inc/FreeRTOSConfig.h
+gx\croutine.o: ../Middle/FreeRTOS/include/projdefs.h
+gx\croutine.o: ../Middle/FreeRTOS/include/portable.h
+gx\croutine.o: ../Middle/FreeRTOS/include/deprecated_definitions.h
+gx\croutine.o: ../Middle/FreeRTOS/portable/portmacro.h
+gx\croutine.o: ../Middle/FreeRTOS/include/mpu_wrappers.h
+gx\croutine.o: ../Middle/FreeRTOS/include/task.h
+gx\croutine.o: ../Middle/FreeRTOS/include/list.h
+gx\croutine.o: ../Middle/FreeRTOS/include/croutine.h
